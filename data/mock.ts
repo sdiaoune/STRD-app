@@ -36,6 +36,7 @@ export type Comment = {
   id: string;
   userId: string;
   text: string;
+  createdAtISO: string;
 };
 
 export type RunPost = {
@@ -48,6 +49,7 @@ export type RunPost = {
   routePreview?: string;
   caption?: string;
   likes: number;
+  likedByCurrentUser: boolean;
   comments: Comment[];
   isFromPartner?: boolean;
 };
@@ -387,9 +389,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=20",
     caption: "Great morning run! The weather was perfect for a tempo session. 🏃‍♂️",
     likes: 12,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c1", userId: "user2", text: "Nice pace! 🔥" },
-      { id: "c2", userId: "user3", text: "Beautiful route!" }
+      { id: "c1", userId: "user2", text: "Nice pace! 🔥", createdAtISO: new Date().toISOString() },
+      { id: "c2", userId: "user3", text: "Beautiful route!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -402,8 +405,9 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=21",
     caption: "Long run along the coast. The views were incredible! 🌊",
     likes: 8,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c3", userId: "user1", text: "Amazing distance!" }
+      { id: "c3", userId: "user1", text: "Amazing distance!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -416,9 +420,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=22",
     caption: "Quick sprint session. Feeling fast today! ⚡",
     likes: 15,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c4", userId: "user4", text: "Incredible pace!" },
-      { id: "c5", userId: "user5", text: "You're on fire! 🔥" }
+      { id: "c4", userId: "user4", text: "Incredible pace!", createdAtISO: new Date().toISOString() },
+      { id: "c5", userId: "user5", text: "You're on fire! 🔥", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -431,8 +436,9 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=23",
     caption: "Trail run in the mountains. Challenging but rewarding! 🏔️",
     likes: 6,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c6", userId: "user6", text: "Beautiful trail!" }
+      { id: "c6", userId: "user6", text: "Beautiful trail!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -445,9 +451,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=24",
     caption: "Evening run through the city. Love the energy! 🌃",
     likes: 9,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c7", userId: "user1", text: "City runs are the best!" },
-      { id: "c8", userId: "user7", text: "Great pace for an evening run!" }
+      { id: "c7", userId: "user1", text: "City runs are the best!", createdAtISO: new Date().toISOString() },
+      { id: "c8", userId: "user7", text: "Great pace for an evening run!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -460,9 +467,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=25",
     caption: "Half marathon training run. Building endurance! 💪",
     likes: 18,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c9", userId: "user2", text: "Amazing distance!" },
-      { id: "c10", userId: "user4", text: "You're ready for the race!" }
+      { id: "c9", userId: "user2", text: "Amazing distance!", createdAtISO: new Date().toISOString() },
+      { id: "c10", userId: "user4", text: "You're ready for the race!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -475,8 +483,9 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=26",
     caption: "Recovery run after yesterday's long session. Feeling good! 😊",
     likes: 5,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c11", userId: "user3", text: "Smart recovery!" }
+      { id: "c11", userId: "user3", text: "Smart recovery!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -489,9 +498,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=27",
     caption: "Group run with the club. Always more fun with friends! 👥",
     likes: 11,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c12", userId: "user5", text: "Group runs are the best!" },
-      { id: "c13", userId: "user6", text: "Great energy today!" }
+      { id: "c12", userId: "user5", text: "Group runs are the best!", createdAtISO: new Date().toISOString() },
+      { id: "c13", userId: "user6", text: "Great energy today!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -504,8 +514,9 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=28",
     caption: "Hill training session. Those inclines are tough! ⛰️",
     likes: 7,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c14", userId: "user4", text: "Hill training builds strength!" }
+      { id: "c14", userId: "user4", text: "Hill training builds strength!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -518,9 +529,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=29",
     caption: "Perfect 5K time! New personal best! 🎉",
     likes: 20,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c15", userId: "user1", text: "Congratulations! 🎉" },
-      { id: "c16", userId: "user7", text: "Amazing achievement!" }
+      { id: "c15", userId: "user1", text: "Congratulations! 🎉", createdAtISO: new Date().toISOString() },
+      { id: "c16", userId: "user7", text: "Amazing achievement!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -533,9 +545,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=30",
     caption: "Long run along the coast. Perfect weather and great company! 🌊",
     likes: 13,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c17", userId: "user2", text: "Beautiful route!" },
-      { id: "c18", userId: "user5", text: "Great distance!" }
+      { id: "c17", userId: "user2", text: "Beautiful route!", createdAtISO: new Date().toISOString() },
+      { id: "c18", userId: "user5", text: "Great distance!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -548,8 +561,9 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=31",
     caption: "Quick morning run to start the day right! ☀️",
     likes: 8,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c19", userId: "user1", text: "Perfect way to start the day!" }
+      { id: "c19", userId: "user1", text: "Perfect way to start the day!", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -562,9 +576,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=32",
     caption: "Marathon training continues. Building that endurance! 🏃‍♀️",
     likes: 16,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c20", userId: "user3", text: "You're crushing it!" },
-      { id: "c21", userId: "user7", text: "Marathon ready! 💪" }
+      { id: "c20", userId: "user3", text: "You're crushing it!", createdAtISO: new Date().toISOString() },
+      { id: "c21", userId: "user7", text: "Marathon ready! 💪", createdAtISO: new Date().toISOString() }
     ]
   },
   {
@@ -577,9 +592,10 @@ export const runPosts: RunPost[] = [
     routePreview: "https://i.pravatar.cc/300?img=33",
     caption: "Evening tempo run. The city lights were magical! ✨",
     likes: 10,
+    likedByCurrentUser: false,
     comments: [
-      { id: "c22", userId: "user2", text: "Night runs are special!" },
-      { id: "c23", userId: "user4", text: "Beautiful pace!" }
+      { id: "c22", userId: "user2", text: "Night runs are special!", createdAtISO: new Date().toISOString() },
+      { id: "c23", userId: "user4", text: "Beautiful pace!", createdAtISO: new Date().toISOString() }
     ]
   }
 ];

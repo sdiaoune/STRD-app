@@ -83,8 +83,8 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
       )}
 
       <View style={styles.actions}>
-        <LikeButton 
-          isLiked={post.likes > 0}
+        <LikeButton
+          isLiked={!!post.likedByCurrentUser}
           likeCount={post.likes}
           onPress={handleLike}
         />
