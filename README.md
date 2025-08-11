@@ -1,50 +1,142 @@
-# Welcome to your Expo app 👋
+# STRD - Social Running & Wellness App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+STRD (pronounced "Stride") is a social running and wellness mobile app built with Expo, React Native, and TypeScript. The app allows users to discover nearby running events, track their runs, and share their fitness journey with the community.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Events Discovery**: Browse nearby running and wellness events with filtering options
+- **Run Tracking**: Simulated GPS tracking with live metrics (timer, distance, pace)
+- **Social Timeline**: Mixed feed of run posts and events with lightning bolt likes
+- **User Profiles**: View stats, recent posts, and personal achievements
+- **Organization Profiles**: Partner and community organization pages
+- **Interactive Posts**: Like, comment, and engage with run posts
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- **Frontend**: Expo + React Native + TypeScript
+- **Navigation**: React Navigation (Bottom Tabs + Native Stack)
+- **State Management**: Zustand
+- **Styling**: StyleSheet (no NativeWind)
+- **Icons**: @expo/vector-icons
+- **Data**: Local mock data (no backend)
 
-   ```bash
-   npx expo start
-   ```
+## Getting Started
 
-In the output, you'll find options to open the app in a
+### Prerequisites
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Node.js (v16 or higher)
+- npm or yarn
+- Expo CLI
+- Expo Go app on your mobile device
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Installation
 
-## Get a fresh project
-
-When you're ready, run:
-
+1. Clone the repository:
 ```bash
-npm run reset-project
+git clone <repository-url>
+cd my-app
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Install dependencies:
+```bash
+npm install
+```
 
-## Learn more
+3. Start the development server:
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+4. Scan the QR code with Expo Go app on your mobile device
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## App Structure
 
-## Join the community
+```
+my-app/
+├── App.tsx                 # Main app entry point
+├── theme/
+│   └── index.ts           # Design system (colors, spacing, typography)
+├── data/
+│   └── mock.ts            # Mock data and types
+├── state/
+│   └── store.ts           # Zustand store and actions
+├── utils/
+│   └── format.ts          # Utility functions for formatting
+├── components/            # Reusable UI components
+│   ├── Avatar.tsx
+│   ├── EventCard.tsx
+│   ├── RunPostCard.tsx
+│   ├── SegmentedControl.tsx
+│   ├── LikeButton.tsx
+│   ├── TagPill.tsx
+│   ├── StatsRow.tsx
+│   └── EmptyState.tsx
+└── screens/               # App screens
+    ├── EventsScreen.tsx
+    ├── EventDetailsScreen.tsx
+    ├── TimelineScreen.tsx
+    ├── PostDetailsScreen.tsx
+    ├── RunScreen.tsx
+    ├── ProfileScreen.tsx
+    └── BusinessProfileScreen.tsx
+```
 
-Join our community of developers creating universal apps.
+## Navigation
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The app uses a bottom tab navigation with four main sections:
+
+1. **Events**: Browse and filter running events
+2. **Timeline**: Social feed with run posts and events
+3. **Run**: Track runs and post results
+4. **Profile**: User profile and stats
+
+Each tab can push to detail screens using native stack navigation.
+
+## Mock Data
+
+The app includes comprehensive mock data:
+- 8 users (including current user)
+- 8 organizations (3 partners, 5 community)
+- 12 events over the next 14 days
+- 14 run posts with varied metrics
+- Timeline items mixing runs and events
+
+## Key Features
+
+### Run Tracking
+- Simulated GPS metrics with realistic pace variations
+- Live timer and distance tracking
+- Route preview placeholder
+- Post-run summary and sharing
+
+### Social Features
+- Lightning bolt (⚡) likes instead of hearts
+- Comment system on run posts
+- Mixed timeline of runs and events
+- User and organization profiles
+
+### Event Discovery
+- "For You" and "All" filtering
+- Event details with organization info
+- Partner badges for official organizations
+- Distance and time information
+
+## Notes
+
+- **Simulated GPS**: All run tracking is simulated for demo purposes
+- **No Backend**: All data is local mock data
+- **Expo Go Compatible**: Works with Expo Go without native dependencies
+- **Partner Badges**: Organizations with type "partner" show special badges
+
+## Development
+
+The app is built with modern React Native practices:
+- TypeScript for type safety
+- Zustand for lightweight state management
+- Consistent design system with theme file
+- Reusable components with proper props
+- Clean navigation structure
+
+## License
+
+This project is for demonstration purposes.
