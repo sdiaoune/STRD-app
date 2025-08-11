@@ -188,11 +188,15 @@ export const RunStatsScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Detailed Statistics</Text>
           <View style={styles.statsGrid}>
             <View style={styles.detailStat}>
-              <Text style={styles.detailStatValue}>{(run.distanceKm / run.durationMin * 60).toFixed(2)}</Text>
+              <Text style={styles.detailStatValue}>
+                {run.durationMin > 0 ? (run.distanceKm / run.durationMin * 60).toFixed(2) : '0.00'}
+              </Text>
               <Text style={styles.detailStatLabel}>km/h</Text>
             </View>
             <View style={styles.detailStat}>
-              <Text style={styles.detailStatValue}>{(run.durationMin / run.distanceKm).toFixed(1)}</Text>
+              <Text style={styles.detailStatValue}>
+                {run.distanceKm > 0 ? (run.durationMin / run.distanceKm).toFixed(1) : '0.0'}
+              </Text>
               <Text style={styles.detailStatLabel}>min/km</Text>
             </View>
             <View style={styles.detailStat}>

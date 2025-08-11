@@ -218,8 +218,8 @@ export const PostDetailsScreen: React.FC = () => {
 
         {/* Actions */}
         <View style={styles.actions}>
-          <LikeButton 
-            isLiked={post.likes > 0}
+          <LikeButton
+            isLiked={!!post.likedByCurrentUser}
             likeCount={post.likes}
             onPress={handleLike}
           />
@@ -241,9 +241,11 @@ export const PostDetailsScreen: React.FC = () => {
                     <Text style={styles.commentUserName}>
                       {commentUser?.name || 'Unknown User'}
                     </Text>
-                    <Text style={styles.commentTime}>
-                      {getRelativeTime(post.createdAtISO)}
-                    </Text>
+                    {comment.createdAtISO && (
+                      <Text style={styles.commentTime}>
+                        {getRelativeTime(comment.createdAtISO)}
+                      </Text>
+                    )}
                   </View>
                   <Text style={styles.commentText}>{comment.text}</Text>
                 </View>

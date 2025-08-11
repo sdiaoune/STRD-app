@@ -71,9 +71,13 @@ export const useStore = create<AppState>((set, get) => ({
   // Actions
   likeToggle: (postId: string) => {
     set((state) => ({
-      runPosts: state.runPosts.map(post => 
-        post.id === postId 
-          ? { ...post, likes: post.likes + (post.likes > 0 ? -1 : 1) }
+      runPosts: state.runPosts.map(post =>
+        post.id === postId
+          ? {
+              ...post,
+              likedByCurrentUser: !post.likedByCurrentUser,
+              likes: post.likes + (post.likedByCurrentUser ? -1 : 1)
+            }
           : post
       )
     }));
@@ -83,7 +87,8 @@ export const useStore = create<AppState>((set, get) => ({
     const newComment: Comment = {
       id: `comment_${Date.now()}`,
       userId: get().currentUser.id,
-      text
+      text,
+      createdAtISO: new Date().toISOString(),
     };
 
     set((state) => ({
@@ -153,6 +158,7 @@ export const useStore = create<AppState>((set, get) => ({
       durationMin: Math.round(elapsedSeconds / 60),
       avgPaceMinPerKm: Math.round(currentPace * 10) / 10,
       likes: 0,
+      likedByCurrentUser: false,
       comments: []
     };
   },
@@ -168,6 +174,7 @@ export const useStore = create<AppState>((set, get) => ({
       routePreview: image,
       caption,
       likes: 0,
+      likedByCurrentUser: false,
       comments: []
     };
 
