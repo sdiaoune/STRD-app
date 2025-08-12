@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
+
 import { colors } from './theme';
 import { EventsScreen } from './screens/EventsScreen';
 import { EventDetailsScreen } from './screens/EventDetailsScreen';
@@ -16,6 +17,8 @@ import { RunStatsScreen } from './screens/RunStatsScreen';
 import { RunScreen } from './screens/RunScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { BusinessProfileScreen } from './screens/BusinessProfileScreen';
+import BlurTabBarBackground, { useBottomTabOverflow } from './components/ui/TabBarBackground.ios';
+import { HapticTab } from './components/HapticTab';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -169,10 +172,14 @@ export default function App() {
             tabBarActiveTintColor: colors.primary,
             tabBarInactiveTintColor: colors.muted,
             tabBarStyle: {
-              backgroundColor: colors.card,
-              borderTopColor: colors.border,
-              borderTopWidth: 1,
+              backgroundColor: colors.bg,
+              borderTopWidth: 0,
+              elevation: 0,
+              shadowOpacity: 0,
             },
+            tabBarBackground: () => <BlurTabBarBackground />,
+            tabBarButton: (props) => <HapticTab {...props} />,
+            tabBarLabelStyle: { fontWeight: '600' },
             headerShown: false,
           })}
         >

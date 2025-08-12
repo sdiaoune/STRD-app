@@ -1,51 +1,36 @@
+// Backwards-compatible theme facade built on top of tokens
+import * as tokens from '../tokens';
+
 export const colors = {
-  bg: "#0B0B0F",
-  card: "#15151C",
-  primary: "#FFD400",
-  text: "#EDEEF3",
-  muted: "#9AA0A6",
-  border: "#20202A"
+  bg: tokens.colors.bg.page,
+  card: tokens.colors.bg.elev1,
+  primary: tokens.colors.accent,
+  text: tokens.colors.text.primary,
+  muted: tokens.colors.text.muted,
+  border: tokens.colors.border,
 };
 
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48
+  xs: tokens.spacing[1],
+  sm: tokens.spacing[2],
+  md: tokens.spacing[4],
+  lg: tokens.spacing[6],
+  xl: tokens.spacing[7],
+  xxl: tokens.spacing[8],
 };
 
 export const borderRadius = {
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16
+  sm: tokens.radii.sm,
+  md: tokens.radii.md,
+  lg: tokens.radii.lg,
+  xl: tokens.radii.xl,
 };
 
 export const typography = {
-  h1: {
-    fontSize: 32,
-    fontWeight: 'bold' as const,
-  },
-  h2: {
-    fontSize: 24,
-    fontWeight: 'bold' as const,
-  },
-  h3: {
-    fontSize: 20,
-    fontWeight: '600' as const,
-  },
-  body: {
-    fontSize: 16,
-    fontWeight: 'normal' as const,
-  },
-  caption: {
-    fontSize: 14,
-    fontWeight: 'normal' as const,
-  },
-  small: {
-    fontSize: 12,
-    fontWeight: 'normal' as const,
-  }
+  h1: tokens.typography.display,
+  h2: tokens.typography.h1,
+  h3: tokens.typography.h2,
+  body: tokens.typography.body,
+  caption: tokens.typography.caption,
+  small: { fontSize: 12, fontWeight: '400' as const },
 };
