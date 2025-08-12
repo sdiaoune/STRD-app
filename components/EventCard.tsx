@@ -19,53 +19,61 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   const organization = orgById(event.orgId);
 
   return (
-    <Card onPress={onPress} className="mb-3 relative">
-      <View className="flex-row justify-between mb-2">
-        <View className="flex-1">
-          <Text className="text-text" style={typography.caption}>
+    <Card onPress={onPress} style={{ marginBottom: spacing[3], position: 'relative' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing[2] }}>
+        <View style={{ flex: 1 }}>
+          <Text accessibilityRole="header" numberOfLines={1} style={[typography.caption, { color: colors.text.primary }]}>
             {organization?.name}
           </Text>
-          {organization?.type === 'partner' && <Badge label="Partner" className="mt-1" />}
+          {organization?.type === 'partner' && (
+            <Badge label="Partner" style={{ marginTop: spacing[1], alignSelf: 'flex-start' }} />
+          )}
         </View>
-        <View className="flex-row items-center">
-          <Ionicons name="location" size={20} color={colors.textMuted} />
-          <Text className="ml-2 text-textMuted" style={typography.caption}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="location" size={20} color={colors.text.muted} />
+          <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}
+                accessibilityLabel={`Distance ${formatDistance(event.distanceFromUserKm)}`}>
             {formatDistance(event.distanceFromUserKm)}
           </Text>
         </View>
       </View>
 
-      <Text className="text-text mb-2" style={typography.h3}>
-        {event.title}
-      </Text>
+      <View style={{ marginBottom: spacing[2] }}>
+        <Text numberOfLines={2} style={[typography.h2, { color: colors.text.primary }]}> 
+          {event.title}
+        </Text>
+      </View>
 
-      <View className="mb-2">
-        <View className="flex-row items-center mb-1">
-          <Ionicons name="calendar" size={20} color={colors.textMuted} />
-          <Text className="ml-2 text-textMuted" style={typography.caption}>
+      <View style={{ marginBottom: spacing[2] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}>
+          <Ionicons name="calendar" size={20} color={colors.text.muted} />
+          <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}>
             {formatEventDate(event.dateISO)} • {formatEventTime(event.dateISO)}
           </Text>
         </View>
-        <View className="flex-row items-center">
-          <Ionicons name="location-outline" size={20} color={colors.textMuted} />
-          <Text className="ml-2 text-textMuted" style={typography.caption}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="location-outline" size={20} color={colors.text.muted} />
+          <Text numberOfLines={1} style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}
+                accessibilityLabel={`Location ${event.location.name}`}>
             {event.location.name}
           </Text>
         </View>
       </View>
 
-      <View className="flex-row flex-wrap">
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {event.tags.slice(0, 3).map((tag) => (
-          <Chip key={tag} label={tag} style={{ marginRight: spacing[1], marginBottom: spacing[1] }} />
+          <Chip 
+            key={tag} 
+            label={tag} 
+            style={{ marginRight: spacing[1], marginBottom: spacing[1] }} 
+          />
         ))}
+        {event.tags.length > 3 && (
+          <Chip label={`+${event.tags.length - 3}`} />
+        )}
       </View>
 
-      <Ionicons
-        name="chevron-forward"
-        size={24}
-        color={colors.textMuted}
-        style={{ position: 'absolute', right: spacing[4] - 4, top: spacing[4] - 4 }}
-      />
+      {/* Distance badge anchored above now present */}
     </Card>
   );
 };

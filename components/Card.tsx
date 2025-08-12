@@ -20,10 +20,16 @@ export const Card: React.FC<Props> = ({
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}
       onPress={onPress}
-      className="bg-surface"
       style={[
-        { padding: spacing[4], borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border },
-        shadows.md,
+        {
+          backgroundColor: colors.bg.elev1,
+          padding: spacing[4],
+          borderRadius: radii.lg,
+          borderWidth: 1,
+          borderColor: colors.border,
+          minHeight: 44,
+        },
+        shadows.hairline,
         style,
       ]}
       {...rest}

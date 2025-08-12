@@ -1,56 +1,109 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Pressable, Text, PressableProps } from 'react-native';
-import { typography } from '../tokens';
+import { colors, spacing, radii, typography } from '../tokens';
 
-export type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'destructive';
-
-interface Props extends Omit<PressableProps, 'style'> {
-  title: string;
-  variant?: ButtonVariant;
+export interface ButtonProps extends PressableProps {
+  variant?: 'primary' | 'outline' | 'ghost' | 'destructive' | 'icon';
+  size?: 'primary' | 'secondary';
+  children: React.ReactNode;
   disabled?: boolean;
 }
 
-export const Button: React.FC<Props> = ({
-  title,
+export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
-  disabled,
-  onPress,
-  ...rest
+  size = 'primary',
+  children,
+  disabled = false,
+  style,
+  ...props
 }) => {
-  const [focused, setFocused] = useState(false);
+  const height = Math.max(size === 'primary' ? 56 : 48, 48);
+  const horizontalPadding = variant === 'icon' ? spacing[2] : spacing[4];
 
-  const baseClasses = 'flex-row items-center justify-center rounded-lg px-4';
-  const heightClass = variant === 'primary' ? 'h-14' : 'h-11';
-  const variantClasses: Record<ButtonVariant, string> = {
-    primary: `bg-primary`,
-    outline: `border border-primary`,
-    ghost: 'bg-transparent',
-    destructive: 'border border-error',
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'primary':
+        return {
+          backgroundColor: colors.accent,
+          borderWidth: 0,
+          borderColor: 'transparent',
+        };
+      case 'outline':
+        return {
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderColor: colors.border,
+        };
+      case 'ghost':
+        return {
+          backgroundColor: 'transparent',
+          borderWidth: 0,
+          borderColor: 'transparent',
+        };
+      case 'destructive':
+        return {
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderColor: colors.danger,
+        };
+      case 'icon':
+        return {
+          backgroundColor: 'transparent',
+          borderWidth: 0,
+          borderColor: 'transparent',
+        };
+      default:
+        return {};
+    }
   };
-  const textClasses: Record<ButtonVariant, string> = {
-    primary: 'text-onPrimary',
-    outline: 'text-primary',
-    ghost: 'text-primary',
-    destructive: 'text-error',
+
+  const getTextColor = () => {
+    if (disabled) return colors.text.muted;
+    
+    switch (variant) {
+      case 'primary':
+        return colors.accentOn;
+      case 'outline':
+      case 'ghost':
+        return colors.text.primary;
+      case 'destructive':
+        return colors.danger;
+      case 'icon':
+        return colors.text.primary;
+      default:
+        return colors.text.primary;
+    }
   };
 
   return (
     <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
+      style={[
+        {
+          height,
+          paddingHorizontal: horizontalPadding,
+          borderRadius: radii.lg,
+          justifyContent: 'center',
+          alignItems: 'center',
+          opacity: disabled ? 0.48 : 1,
+          ...getVariantStyles(),
+        },
+        style,
+      ]}
       disabled={disabled}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      className={[baseClasses, heightClass, variantClasses[variant],
-        focused ? 'ring-2 ring-info' : '', disabled ? 'opacity-50' : ''].join(' ')}
-      style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }] })}
-      {...rest}
+      accessibilityRole="button"
+      hitSlop={12}
+      {...props}
     >
       <Text
-        className={`font-semibold ${textClasses[variant]}`}
-        style={typography.title}
+        style={[
+          typography.body,
+          {
+            color: getTextColor(),
+            fontWeight: '600',
+          },
+        ]}
       >
-        {title}
+        {children}
       </Text>
     </Pressable>
   );

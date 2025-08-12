@@ -11,7 +11,7 @@ type EventDetailsScreenRouteProp = RouteProp<EventsStackParamList, 'EventDetails
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { Avatar } from '../components/Avatar';
-import { TagPill } from '../components/TagPill';
+import { Chip } from '../components/Chip';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
 import { useStore } from '../state/store';
 
@@ -71,7 +71,7 @@ export const EventDetailsScreen: React.FC = () => {
                 </View>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+
           </TouchableOpacity>
 
           {/* Event Title */}
@@ -102,7 +102,7 @@ export const EventDetailsScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Tags</Text>
             <View style={styles.tags}>
               {event.tags.map((tag) => (
-                <TagPill key={tag} tag={tag} style={styles.tag} />
+                <Chip key={tag} label={tag} style={styles.tag} />
               ))}
             </View>
           </View>

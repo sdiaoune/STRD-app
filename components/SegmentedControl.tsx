@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, LayoutChangeEvent, Animated } from 'react-native';
-import { spacing, typography } from '../tokens';
+import { spacing, typography, colors, radii } from '../tokens';
 
 interface Props {
   segments: string[];
@@ -28,14 +28,24 @@ export const SegmentedControl: React.FC<Props> = ({ segments, value, onChange })
   return (
     <View
       onLayout={onLayout}
-      className="flex-row items-center bg-[#1A1E24] rounded-xl p-1"
-      style={{ height: 44 }}
+      accessible
+      accessibilityRole="tablist"
+      style={{
+        height: 44,
+        borderRadius: radii.md,
+        backgroundColor: colors.bg.elev2,
+        padding: spacing[1],
+        flexDirection: 'row',
+        alignItems: 'center',
+      }}
     >
       <Animated.View
-        className="absolute bg-primary rounded-lg"
         style={{
+          position: 'absolute',
           height: 36,
           width: width / segments.length - spacing[1],
+          backgroundColor: colors.accent,
+          borderRadius: 10,
           transform: [{ translateX }],
         }}
       />
@@ -44,13 +54,26 @@ export const SegmentedControl: React.FC<Props> = ({ segments, value, onChange })
         return (
           <Pressable
             key={segment}
-            className="flex-1 items-center justify-center"
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            style={{
+              flex: 1,
+              height: 36,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: spacing[4],
+            }}
             onPress={() => onChange(segment)}
-            accessibilityRole="button"
+            hitSlop={12}
           >
             <Text
-              style={typography.body}
-              className={selected ? 'text-onPrimary' : 'text-text'}
+              style={[
+                typography.body,
+                {
+                  color: selected ? colors.accentOn : colors.text.primary,
+                  fontWeight: '600',
+                },
+              ]}
             >
               {segment}
             </Text>

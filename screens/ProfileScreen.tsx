@@ -73,10 +73,10 @@ export const ProfileScreen: React.FC = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <Avatar source={currentUser.avatar} size={80} />
+          <Avatar source={currentUser.avatar} size={80} label={currentUser.name} />
           <Text style={styles.userName}>{currentUser.name}</Text>
           <Text style={styles.userHandle}>{currentUser.handle}</Text>
-          <Text style={styles.userBio}>
+          <Text style={styles.userBio} numberOfLines={2} ellipsizeMode="tail">
             Passionate runner from {currentUser.city}. Always looking for new challenges and great routes!
           </Text>
         </View>

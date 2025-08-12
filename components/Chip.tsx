@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, ViewProps } from 'react-native';
-import { typography } from '../tokens';
+import { typography, colors, spacing, radii } from '../tokens';
 
 interface Props extends ViewProps {
   label: string;
@@ -9,15 +9,35 @@ interface Props extends ViewProps {
 export const Chip: React.FC<Props> = ({ label, style, ...rest }) => {
   return (
     <View
-      className="border rounded-full justify-center"
-      style={[{ height: 24, paddingHorizontal: 10, borderColor: '#6B5300' }, style]}
+      style={[
+        {
+          minHeight: 24,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: radii.md,
+          borderWidth: 1,
+          borderColor: colors.primary,
+          backgroundColor: colors.primary + '30',
+          justifyContent: 'center',
+          alignItems: 'center',
+          maxWidth: '50%',
+        },
+        style,
+      ]}
       {...rest}
     >
       <Text
         numberOfLines={1}
         ellipsizeMode="tail"
-        className="text-primary"
-        style={[typography.caption]}
+        style={[
+          typography.caption,
+          {
+            color: colors.accent,
+            fontWeight: '600',
+            lineHeight: 18,
+            textAlignVertical: 'center',
+          },
+        ]}
       >
         {label}
       </Text>

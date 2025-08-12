@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, ViewProps } from 'react-native';
-import { typography } from '../tokens';
+import { typography, colors, spacing, radii } from '../tokens';
 
 interface Props extends ViewProps {
   label: string;
@@ -8,11 +8,26 @@ interface Props extends ViewProps {
 
 export const Badge: React.FC<Props> = ({ label, style, ...rest }) => (
   <View
-    className="bg-primary rounded-sm px-2 py-1"
-    style={style}
+    style={[
+      {
+        backgroundColor: colors.accent,
+        borderRadius: radii.sm,
+        paddingHorizontal: spacing[2],
+        paddingVertical: spacing[1],
+      },
+      style,
+    ]}
     {...rest}
   >
-    <Text className="text-onPrimary" style={[typography.overline]}>
+    <Text
+      style={[
+        typography.overline,
+        {
+          color: colors.accentOn,
+          fontWeight: '600',
+        },
+      ]}
+    >
       {label}
     </Text>
   </View>

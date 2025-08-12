@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { EventsStackParamList } from '../types/navigation';
 
 type EventsScreenNavigationProp = NativeStackNavigationProp<EventsStackParamList, 'EventsList'>;
 import { colors, spacing, typography } from '../theme';
+// Removed tab bar height hook to avoid cross-screen state updates during render
 import { SegmentedControl } from '../components/SegmentedControl';
 import { EventCard } from '../components/EventCard';
 import { EmptyState } from '../components/EmptyState';
@@ -14,6 +15,8 @@ import { useStore } from '../state/store';
 
 export const EventsScreen: React.FC = () => {
   const navigation = useNavigation<EventsScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = insets.bottom;
   const { 
     currentUser, 
     eventFilter, 
@@ -22,11 +25,6 @@ export const EventsScreen: React.FC = () => {
   } = useStore();
 
   const events = getFilteredEvents();
-
-  const handleFilterChange = (index: number) => {
-    const scope = index === 0 ? 'forYou' : 'all';
-    filterEvents(scope);
-  };
 
   const handleEventPress = (eventId: string) => {
     navigation.navigate('EventDetails', { eventId });
@@ -40,15 +38,18 @@ export const EventsScreen: React.FC = () => {
 
       <View style={styles.segmentedContainer}>
         <SegmentedControl
-          options={['For You', 'All']}
-          selectedIndex={eventFilter === 'forYou' ? 0 : 1}
-          onSelect={handleFilterChange}
+          segments={['For You', 'All']}
+          value={eventFilter === 'forYou' ? 'For You' : 'All'}
+          onChange={(value) => {
+            const scope = value === 'For You' ? 'forYou' : 'all';
+            filterEvents(scope);
+          }}
         />
       </View>
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
         {events.length > 0 ? (
@@ -100,6 +101,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: 200,
   },
 });

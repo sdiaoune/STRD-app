@@ -4,17 +4,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#FFD233',
-        onPrimary: '#111315',
-        surface: '#171A1F',
-        surfaceAlt: '#0F1115',
-        border: '#2A2F3A',
-        text: '#F5F6F8',
-        textMuted: '#A1A6B0',
-        success: '#22C55E',
-        warning: '#F59E0B',
-        error: '#EF4444',
-        info: '#3B82F6',
+        bg: {
+          page: '#0D0F12',
+          elev1: '#121419',
+          elev2: '#161922',
+        },
+        text: {
+          primary: '#E8EAED',
+          secondary: '#A8AFB9',
+          muted: '#7D8590',
+        },
+        accent: '#F5C84C',
+        accentOn: '#0B0C0F',
+        border: '#242833',
+        success: '#51D675',
+        danger: '#FF6B6B',
       },
       spacing: {
         1: '4px',
@@ -34,5 +38,5 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [require('nativewind/tailwind/css')],
 };

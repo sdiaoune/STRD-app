@@ -1,18 +1,14 @@
 import React from 'react';
-import { Button, ButtonVariant } from './Button';
+import { Button, ButtonProps } from './Button';
 
-interface Props {
-  title: string;
-  onPress?: () => void;
-  variant?: ButtonVariant;
-  disabled?: boolean;
+interface OutlineButtonProps extends Omit<ButtonProps, 'variant'> {
+  children: React.ReactNode;
 }
 
-export const OutlineButton: React.FC<Props> = ({
-  title,
-  onPress,
-  variant = 'outline',
-  disabled,
-}) => {
-  return <Button title={title} onPress={onPress} variant={variant} disabled={disabled} />;
+export const OutlineButton: React.FC<OutlineButtonProps> = ({ children, ...props }) => {
+  return (
+    <Button variant="outline" {...props}>
+      {children}
+    </Button>
+  );
 };

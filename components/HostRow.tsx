@@ -1,21 +1,28 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { Avatar } from './Avatar';
 import { Badge } from './Badge';
-import { typography } from '../tokens';
+import { spacing, typography, colors } from '../tokens';
 
 interface Props {
   name: string;
-  avatar: string;
+  avatarUrl?: string;
   isPartner?: boolean;
+  style?: any;
 }
 
-export const HostRow: React.FC<Props> = ({ name, avatar, isPartner }) => (
-  <View className="flex-row items-center space-x-3">
-    <Avatar source={avatar} size={44} />
-    <Text className="text-text" style={typography.title}>
-      {name}
-    </Text>
-    {isPartner && <Badge label="Partner" />}
-  </View>
-);
+export const HostRow: React.FC<Props> = ({ name, avatarUrl, isPartner, style }) => {
+  return (
+    <View style={[{ flexDirection: 'row', alignItems: 'center' }, style]}>
+      <Avatar size={44} source={avatarUrl} />
+      <View style={{ marginLeft: spacing[3], flex: 1 }}>
+        <Text style={[typography.title, { color: colors.text }]}>
+          {name}
+        </Text>
+      </View>
+      {isPartner && (
+        <Badge label="Partner" />
+      )}
+    </View>
+  );
+};

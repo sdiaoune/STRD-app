@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import type { RunStackParamList } from '../types/navigation';
 
 type RunScreenNavigationProp = NativeStackNavigationProp<RunStackParamList, 'RunTracker'>;
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { formatTime, formatDistance, formatPace } from '../utils/format';
 import { useStore } from '../state/store';
@@ -16,14 +17,17 @@ export const RunScreen: React.FC = () => {
   const [showPostForm, setShowPostForm] = useState(false);
   const [caption, setCaption] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | undefined>();
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [hasMotionPermission, setHasMotionPermission] = useState(true); // mock
+  const [isLowPowerMode, setIsLowPowerMode] = useState(false); // mock
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   
-  const { 
-    runState, 
-    startRun, 
-    tickRun, 
-    endRun, 
-    postRun 
-  } = useStore();
+  const runState = useStore((s) => s.runState);
+  const startRun = useStore((s) => s.startRun);
+  const tickRun = useStore((s) => s.tickRun);
+  const endRun = useStore((s) => s.endRun);
+  const postRun = useStore((s) => s.postRun);
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -44,10 +48,29 @@ export const RunScreen: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [runState.isRunning, tickRun]);
+  }, [runState.isRunning]);
 
   const handleStartRun = () => {
-    startRun();
+    if (!hasLocationPermission) return;
+    setIsCountingDown(true);
+    setCountdown(3);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const id = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(id);
+          setIsCountingDown(false);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          // Defer the startRun call to the next tick to avoid render-phase updates
+          setTimeout(() => {
+            startRun();
+          }, 0);
+          return 0;
+        }
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        return c - 1;
+      });
+    }, 1000);
   };
 
   const handleEndRun = () => {
@@ -90,6 +113,13 @@ export const RunScreen: React.FC = () => {
   const handleAddPhoto = () => {
     // Placeholder for photo picker
     Alert.alert('Photo Picker', 'Photo picker functionality would be implemented here.');
+  };
+
+  const requestLocation = () => {
+    Alert.alert('Location Permission', 'Grant location to enable GPS tracking (mock).', [
+      { text: 'Not now', style: 'cancel' },
+      { text: 'Grant', onPress: () => setHasLocationPermission(true) },
+    ]);
   };
 
   if (showPostForm) {
@@ -182,6 +212,22 @@ export const RunScreen: React.FC = () => {
         {!runState.isRunning ? (
           // Idle State
           <View style={styles.idleState}>
+            {/* Status tiles */}
+            <View style={styles.statusRow}>
+              <View style={styles.statusTile} accessibilityRole="text" accessibilityLabel={`GPS ${hasLocationPermission ? 'OK' : 'Disabled'}`}>
+                <Ionicons name={hasLocationPermission ? 'location' : 'location-outline'} size={18} color={hasLocationPermission ? colors.primary : colors.muted} />
+                <Text style={styles.statusLabel}>GPS</Text>
+              </View>
+              <View style={styles.statusTile} accessibilityRole="text" accessibilityLabel={`Motion ${hasMotionPermission ? 'OK' : 'Disabled'}`}>
+                <Ionicons name={hasMotionPermission ? 'walk' : 'walk-outline'} size={18} color={hasMotionPermission ? colors.primary : colors.muted} />
+                <Text style={styles.statusLabel}>Motion</Text>
+              </View>
+              <View style={styles.statusTile} accessibilityRole="text" accessibilityLabel={`Low Power ${isLowPowerMode ? 'On' : 'Off'}`}>
+                <Ionicons name={isLowPowerMode ? 'battery-dead' : 'battery-half'} size={18} color={isLowPowerMode ? colors.warning : colors.muted} />
+                <Text style={styles.statusLabel}>Low Power</Text>
+              </View>
+            </View>
+
             <View style={styles.idleIcon}>
               <Ionicons name="play-circle" size={80} color={colors.primary} />
             </View>
@@ -189,9 +235,21 @@ export const RunScreen: React.FC = () => {
             <Text style={styles.idleSubtitle}>
               Tap the button below to start tracking your run
             </Text>
-            <TouchableOpacity style={styles.startButton} onPress={handleStartRun}>
-              <Text style={styles.startButtonText}>Start Run</Text>
-            </TouchableOpacity>
+            <View style={{ alignSelf: 'stretch' }}>
+              <TouchableOpacity style={[styles.startButton, !hasLocationPermission && styles.startButtonDisabled]} onPress={handleStartRun} accessibilityRole="button" hitSlop={12} disabled={!hasLocationPermission}>
+                <Text style={styles.startButtonText}>Start Run</Text>
+              </TouchableOpacity>
+              {!hasLocationPermission && (
+                <TouchableOpacity style={styles.enableButton} onPress={requestLocation} accessibilityRole="button" hitSlop={12}>
+                  <Text style={styles.enableButtonText}>Enable Location</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {isCountingDown && (
+              <View style={styles.countdownOverlay} accessibilityLabel={`Starting in ${countdown}`}>
+                <Text style={styles.countdownText}>{countdown}</Text>
+              </View>
+            )}
           </View>
         ) : (
           // Running State
@@ -237,7 +295,7 @@ export const RunScreen: React.FC = () => {
             </View>
 
             {/* End Run Button */}
-            <TouchableOpacity style={styles.endButton} onPress={handleEndRun}>
+            <TouchableOpacity style={styles.endButton} onPress={handleEndRun} accessibilityRole="button" hitSlop={12}>
               <Text style={styles.endButtonText}>End Run</Text>
             </TouchableOpacity>
           </View>
@@ -272,6 +330,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  statusRow: {
+    position: 'absolute',
+    top: spacing.lg,
+    left: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statusTile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statusLabel: {
+    ...typography.caption,
+    color: colors.muted,
+    marginLeft: spacing.xs,
+  },
   idleIcon: {
     marginBottom: spacing.xl,
   },
@@ -294,9 +375,27 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     borderRadius: borderRadius.lg,
   },
+  startButtonDisabled: {
+    opacity: 0.5,
+  },
   startButtonText: {
     ...typography.h3,
     color: colors.bg,
+    fontWeight: '600',
+  },
+  enableButton: {
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  enableButtonText: {
+    ...typography.body,
+    color: colors.text,
     fontWeight: '600',
   },
   runningState: {
@@ -364,6 +463,30 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     backgroundColor: colors.primary,
+  },
+  countdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    paddingTop: 100,
+  },
+  countdownText: {
+    ...typography.h1,
+    color: colors.primary,
+    fontSize: 80,
+    fontWeight: '900',
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    lineHeight: 80,
   },
   endButton: {
     backgroundColor: colors.card,

@@ -67,7 +67,7 @@ export const users: User[] = [
     name: "Alex Chen",
     handle: "@alexrunner",
     avatar: "https://i.pravatar.cc/150?img=1",
-    city: "San Francisco",
+    city: "Charlotte",
     interests: ["5K", "Tempo", "Wellness"],
     followingOrgs: ["org1", "org3", "org5"]
   },
@@ -76,7 +76,7 @@ export const users: User[] = [
     name: "Sarah Johnson",
     handle: "@sarahj",
     avatar: "https://i.pravatar.cc/150?img=2",
-    city: "San Francisco",
+    city: "Charlotte",
     interests: ["Trail", "Marathon", "Wellness"],
     followingOrgs: ["org2", "org4"]
   },
@@ -85,7 +85,7 @@ export const users: User[] = [
     name: "Mike Rodriguez",
     handle: "@mikerun",
     avatar: "https://i.pravatar.cc/150?img=3",
-    city: "San Francisco",
+    city: "Charlotte",
     interests: ["5K", "Sprint", "Wellness"],
     followingOrgs: ["org1", "org6"]
   },
@@ -94,7 +94,7 @@ export const users: User[] = [
     name: "Emma Wilson",
     handle: "@emmaw",
     avatar: "https://i.pravatar.cc/150?img=4",
-    city: "San Francisco",
+    city: "Charlotte",
     interests: ["Trail", "Long Distance", "Wellness"],
     followingOrgs: ["org3", "org5"]
   },
@@ -103,7 +103,7 @@ export const users: User[] = [
     name: "David Kim",
     handle: "@davidk",
     avatar: "https://i.pravatar.cc/150?img=5",
-    city: "San Francisco",
+    city: "Charlotte",
     interests: ["5K", "Tempo", "Sprint"],
     followingOrgs: ["org2", "org4", "org6"]
   },
@@ -112,7 +112,7 @@ export const users: User[] = [
     name: "Lisa Park",
     handle: "@lisap",
     avatar: "https://i.pravatar.cc/150?img=6",
-    city: "San Francisco",
+    city: "Charlotte",
     interests: ["Marathon", "Long Distance", "Wellness"],
     followingOrgs: ["org1", "org3"]
   },
@@ -121,7 +121,7 @@ export const users: User[] = [
     name: "Tom Anderson",
     handle: "@tomand",
     avatar: "https://i.pravatar.cc/150?img=7",
-    city: "San Francisco",
+    city: "Charlotte",
     interests: ["Trail", "5K", "Wellness"],
     followingOrgs: ["org5", "org6"]
   },
@@ -130,7 +130,7 @@ export const users: User[] = [
     name: "Current User",
     handle: "@currentuser",
     avatar: "https://i.pravatar.cc/150?img=8",
-    city: "San Francisco",
+    city: "Charlotte",
     interests: ["5K", "Tempo", "Wellness", "Trail"],
     followingOrgs: ["org1", "org3", "org5"]
   }
@@ -142,56 +142,56 @@ export const organizations: Organization[] = [
     name: "Volt Athletics",
     type: "partner",
     logo: "https://i.pravatar.cc/150?img=10",
-    city: "San Francisco"
+    city: "Charlotte"
   },
   {
     id: "org2",
     name: "SF Running Club",
     type: "community",
     logo: "https://i.pravatar.cc/150?img=11",
-    city: "San Francisco"
+    city: "Charlotte"
   },
   {
     id: "org3",
     name: "Nike Running",
     type: "partner",
     logo: "https://i.pravatar.cc/150?img=12",
-    city: "San Francisco"
+    city: "Charlotte"
   },
   {
     id: "org4",
     name: "Golden Gate Runners",
     type: "community",
     logo: "https://i.pravatar.cc/150?img=13",
-    city: "San Francisco"
+    city: "Charlotte"
   },
   {
     id: "org5",
     name: "Adidas Running",
     type: "partner",
     logo: "https://i.pravatar.cc/150?img=14",
-    city: "San Francisco"
+    city: "Charlotte"
   },
   {
     id: "org6",
     name: "Bay Area Trail Runners",
     type: "community",
     logo: "https://i.pravatar.cc/150?img=15",
-    city: "San Francisco"
+    city: "Charlotte"
   },
   {
     id: "org7",
     name: "Wellness Collective",
     type: "community",
     logo: "https://i.pravatar.cc/150?img=16",
-    city: "San Francisco"
+    city: "Charlotte"
   },
   {
     id: "org8",
     name: "Marathon Training Group",
     type: "community",
     logo: "https://i.pravatar.cc/150?img=17",
-    city: "San Francisco"
+    city: "Charlotte"
   }
 ];
 
@@ -201,7 +201,7 @@ export const events: Event[] = [
     title: "Morning 5K Tempo Run",
     orgId: "org1",
     dateISO: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Golden Gate Park",
       lat: 37.7694,
@@ -216,7 +216,7 @@ export const events: Event[] = [
     title: "Trail Running Workshop",
     orgId: "org6",
     dateISO: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Mount Tamalpais",
       lat: 37.8915,
@@ -231,7 +231,7 @@ export const events: Event[] = [
     title: "Wellness & Recovery Session",
     orgId: "org7",
     dateISO: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Marina Green",
       lat: 37.8063,
@@ -246,7 +246,7 @@ export const events: Event[] = [
     title: "Nike Speed Training",
     orgId: "org3",
     dateISO: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Kezar Stadium",
       lat: 37.7636,
@@ -261,7 +261,7 @@ export const events: Event[] = [
     title: "Long Distance Group Run",
     orgId: "org8",
     dateISO: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Crissy Field",
       lat: 37.8068,
@@ -276,7 +276,7 @@ export const events: Event[] = [
     title: "Adidas Community Run",
     orgId: "org5",
     dateISO: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Embarcadero",
       lat: 37.7952,
@@ -291,7 +291,7 @@ export const events: Event[] = [
     title: "SF Running Club Weekly Meet",
     orgId: "org2",
     dateISO: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Dolores Park",
       lat: 37.7597,
@@ -306,7 +306,7 @@ export const events: Event[] = [
     title: "Golden Gate Bridge Run",
     orgId: "org4",
     dateISO: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Golden Gate Bridge",
       lat: 37.8199,
@@ -321,7 +321,7 @@ export const events: Event[] = [
     title: "Volt Athletics Performance Clinic",
     orgId: "org1",
     dateISO: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Presidio",
       lat: 37.7989,
@@ -336,7 +336,7 @@ export const events: Event[] = [
     title: "Wellness & Nutrition Talk",
     orgId: "org7",
     dateISO: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Fort Mason",
       lat: 37.8065,
@@ -351,7 +351,7 @@ export const events: Event[] = [
     title: "Trail Running Adventure",
     orgId: "org6",
     dateISO: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Lands End",
       lat: 37.7786,
@@ -366,7 +366,7 @@ export const events: Event[] = [
     title: "Nike Recovery & Stretching",
     orgId: "org3",
     dateISO: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString(),
-    city: "San Francisco",
+    city: "Charlotte",
     location: {
       name: "Alamo Square",
       lat: 37.7761,

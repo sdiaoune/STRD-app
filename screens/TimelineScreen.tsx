@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TimelineStackParamList, AppNavigationParamList } from '../types/navigation';
 
 type TimelineScreenNavigationProp = NativeStackNavigationProp<TimelineStackParamList & AppNavigationParamList, 'TimelineList'>;
 import { colors, spacing, typography } from '../theme';
+// Removed tab bar height hook to avoid cross-screen state updates during render
 import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
 import { EmptyState } from '../components/EmptyState';
@@ -15,6 +16,8 @@ import { useStore } from '../state/store';
 export const TimelineScreen: React.FC = () => {
   const navigation = useNavigation<TimelineScreenNavigationProp>();
   const { timelineItems, postById, eventById } = useStore();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = insets.bottom;
 
   const handlePostPress = (postId: string) => {
     navigation.navigate('PostDetails', { postId });
@@ -59,7 +62,7 @@ export const TimelineScreen: React.FC = () => {
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
         {timelineItems.length > 0 ? (
@@ -97,6 +100,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingBottom: 200,
   },
 });

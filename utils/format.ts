@@ -10,7 +10,11 @@ export const formatTime = (seconds: number): string => {
 };
 
 export const formatDistance = (km: number): string => {
-  return `${km.toFixed(1)} km`;
+  if (km <= 0) return '0 m';
+  const meters = Math.round(km * 1000);
+  if (meters < 1000) return `${meters} m`;
+  const kmRounded = Math.round(km * 10) / 10;
+  return `${kmRounded.toFixed(kmRounded % 1 === 0 ? 0 : 1)} km`;
 };
 
 export const formatPace = (minPerKm: number): string => {
@@ -61,11 +65,8 @@ export const formatEventDate = (dateISO: string): string => {
 
 export const formatEventTime = (dateISO: string): string => {
   const date = new Date(dateISO);
-  return date.toLocaleTimeString('en-US', { 
-    hour: 'numeric', 
-    minute: '2-digit',
-    hour12: true 
-  });
+  // Defer formatting to device locale and settings for 12/24h preference
+  return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 };
 
 export const getRelativeTime = (dateISO: string): string => {
