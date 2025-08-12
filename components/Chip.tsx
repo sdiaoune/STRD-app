@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, ViewProps } from 'react-native';
-import { typography, colors, spacing, radii } from '../tokens';
+import { colors } from '../tokens';
 
 interface Props extends ViewProps {
   label: string;
@@ -11,16 +11,17 @@ export const Chip: React.FC<Props> = ({ label, style, ...rest }) => {
     <View
       style={[
         {
-          minHeight: 24,
-          paddingHorizontal: 10,
+          minHeight: 28,
+          paddingHorizontal: 12,
           paddingVertical: 6,
-          borderRadius: radii.md,
+          borderRadius: 999,
           borderWidth: 1,
-          borderColor: colors.primary,
-          backgroundColor: colors.primary + '30',
+          borderColor: '#FFC86E33',
+          backgroundColor: '#FFC86E1A',
           justifyContent: 'center',
           alignItems: 'center',
-          maxWidth: '50%',
+          alignSelf: 'flex-start',
+          maxWidth: '70%',
         },
         style,
       ]}
@@ -30,13 +31,7 @@ export const Chip: React.FC<Props> = ({ label, style, ...rest }) => {
         numberOfLines={1}
         ellipsizeMode="tail"
         style={[
-          typography.caption,
-          {
-            color: colors.accent,
-            fontWeight: '600',
-            lineHeight: 18,
-            textAlignVertical: 'center',
-          },
+          { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.accent },
         ]}
       >
         {label}

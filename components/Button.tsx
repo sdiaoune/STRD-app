@@ -1,6 +1,8 @@
-import React from 'react';
-import { Pressable, Text, PressableProps } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, Text, PressableProps, View } from 'react-native';
 import { colors, spacing, radii, typography } from '../tokens';
+import { gradient } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export interface ButtonProps extends PressableProps {
   variant?: 'primary' | 'outline' | 'ghost' | 'destructive' | 'icon';
@@ -17,6 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   ...props
 }) => {
+  const [pressed, setPressed] = useState(false);
   const height = Math.max(size === 'primary' ? 56 : 48, 48);
   const horizontalPadding = variant === 'icon' ? spacing[2] : spacing[4];
 
@@ -24,36 +27,35 @@ export const Button: React.FC<ButtonProps> = ({
     switch (variant) {
       case 'primary':
         return {
-          backgroundColor: colors.accent,
           borderWidth: 0,
           borderColor: 'transparent',
-        };
+        } as const;
       case 'outline':
         return {
           backgroundColor: 'transparent',
           borderWidth: 1,
           borderColor: colors.border,
-        };
+        } as const;
       case 'ghost':
         return {
           backgroundColor: 'transparent',
           borderWidth: 0,
           borderColor: 'transparent',
-        };
+        } as const;
       case 'destructive':
         return {
           backgroundColor: 'transparent',
           borderWidth: 1,
           borderColor: colors.danger,
-        };
+        } as const;
       case 'icon':
         return {
           backgroundColor: 'transparent',
           borderWidth: 0,
           borderColor: 'transparent',
-        };
+        } as const;
       default:
-        return {};
+        return {} as const;
     }
   };
 
@@ -75,20 +77,93 @@ export const Button: React.FC<ButtonProps> = ({
     }
   };
 
+  const baseContainerStyle = [
+    {
+      height,
+      paddingHorizontal: horizontalPadding,
+      borderRadius: radii.lg,
+      justifyContent: 'center',
+      alignItems: 'center',
+      opacity: disabled ? 0.48 : 1,
+      overflow: 'hidden',
+    },
+    getVariantStyles(),
+    style,
+  ];
+
+  if (variant === 'primary') {
+    return (
+      <Pressable
+        disabled={disabled}
+        accessibilityRole="button"
+        hitSlop={12}
+        style={baseContainerStyle}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
+        {...props}
+      >
+        {/* Outer subtle highlight */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: radii.lg,
+            borderWidth: 1,
+            borderColor: '#FFFFFF14',
+          }}
+        />
+        {/* Gradient background */}
+        <LinearGradient
+          colors={gradient.primary as unknown as string[]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: radii.lg,
+            opacity: disabled ? 0.7 : 1,
+          }}
+        />
+        {/* Pressed overlay (darken ~5%) below text */}
+        {pressed ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.05)',
+              borderRadius: radii.lg,
+            }}
+          />
+        ) : null}
+        <Text
+          style={[
+            typography.body,
+            {
+              color: getTextColor(),
+              fontWeight: '600',
+            },
+          ]}
+        >
+          {children}
+        </Text>
+      </Pressable>
+    );
+  }
+
   return (
     <Pressable
-      style={[
-        {
-          height,
-          paddingHorizontal: horizontalPadding,
-          borderRadius: radii.lg,
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: disabled ? 0.48 : 1,
-          ...getVariantStyles(),
-        },
-        style,
-      ]}
+      style={baseContainerStyle}
       disabled={disabled}
       accessibilityRole="button"
       hitSlop={12}

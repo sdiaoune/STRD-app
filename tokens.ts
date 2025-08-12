@@ -9,7 +9,7 @@ export const colors = {
   // Text
   text: {
     primary: '#E8EAED',
-    secondary: '#A8AFB9',
+    secondary: '#B0B7C1',
     muted: '#7D8590',
   },
   // Accent & semantic
@@ -40,6 +40,12 @@ export const spacing = {
   6: 24,
   7: 32,
   8: 40,
+  // Aliases (non-breaking)
+  xs: 8,
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 32,
 };
 
 export const radii = {
@@ -69,6 +75,34 @@ export const shadows = {
   lg: { shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.45, shadowRadius: 28 },
 };
 
+// Platform-native shadow tokens (non-breaking addition)
+export const nativeShadows = {
+  shadowSm: {
+    ios: { opacity: 0.12, radius: 12, y: 6 },
+    android: { elevation: 2 },
+  },
+  shadowMd: {
+    ios: { opacity: 0.15, radius: 18, y: 10 },
+    android: { elevation: 3 },
+  },
+  shadowLg: {
+    ios: { opacity: 0.18, radius: 24, y: 14 },
+    android: { elevation: 5 },
+  },
+};
+
+// Semi-transparent surface overlays for depth on dark theme
+export const surfaces = {
+  surface1: '#FFFFFF0A',
+  surface2: '#FFFFFF14',
+  surface3: '#FFFFFF1F',
+};
+
+// Gradients
+export const gradient = {
+  primary: ['#F5C84C', '#FFC86E'] as const,
+};
+
 export const motion = {
   press: { duration: 100, easing: [0.2, 0.8, 0.2, 1] as const },
   rebound: { duration: 200, easing: [0.2, 0.8, 0.2, 1] as const },
@@ -82,5 +116,8 @@ export default {
   radii,
   typography,
   shadows,
+  nativeShadows,
+  surfaces,
+  gradient,
   motion,
 };

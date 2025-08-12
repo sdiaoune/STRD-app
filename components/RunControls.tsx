@@ -123,7 +123,7 @@ export const RunControls: React.FC<Props> = ({
           </Animated.View>
           
           <Text style={styles.helperText}>
-            We'll track time, distance & route. You can pause anytime.
+            We&apos;ll track time, distance &amp; route. You can pause anytime.
           </Text>
           
           {!hasLocationPermission && (

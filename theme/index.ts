@@ -8,6 +8,8 @@ export const colors = {
   text: tokens.colors.text.primary,
   muted: tokens.colors.text.muted,
   border: tokens.colors.border,
+  // Non-breaking: expose secondary for finer contrast tuning
+  secondary: tokens.colors.text.secondary,
 };
 
 export const spacing = {
@@ -34,3 +36,8 @@ export const typography = {
   caption: tokens.typography.caption,
   small: { fontSize: 12, fontWeight: '400' as const },
 };
+
+// New re-exports (non-breaking additions)
+export const shadows = tokens.nativeShadows;
+export const surfaces = tokens.surfaces;
+export const gradient = tokens.gradient;
