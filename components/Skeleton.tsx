@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { colors, motion } from '../tokens';
+import { surfaces } from '../theme';
 
 interface Props {
   width?: number | string;
@@ -32,7 +33,7 @@ export const Skeleton: React.FC<Props> = ({
 
   const opacity = shimmerValue.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0.3, 0.7, 0.3],
+    outputRange: [0.16, 0.28, 0.16],
   });
 
   return (
@@ -44,6 +45,7 @@ export const Skeleton: React.FC<Props> = ({
           height,
           borderRadius,
           opacity,
+          backgroundColor: surfaces.surface2,
         },
         style,
       ]}

@@ -10,6 +10,7 @@ import { useStore } from '../state/store';
 import type { RunPost } from '../data/mock';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TimelineStackParamList } from '../types/navigation';
+import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
 
 type RunPostCardNavigationProp = NativeStackNavigationProp<TimelineStackParamList, 'TimelineList'>;
 
@@ -34,70 +35,72 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
   };
 
   return (
-    <TouchableOpacity 
-      style={[styles.container, style]} 
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <Avatar source={user?.avatar || ''} size={40} />
-          <View style={styles.userDetails}>
-            <Text style={styles.userName}>{user?.name}</Text>
-            <Text style={styles.userHandle}>{user?.handle}</Text>
+    <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
+      <TouchableOpacity 
+        style={[styles.container, style]} 
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <Avatar source={user?.avatar || ''} size={40} />
+            <View style={styles.userDetails}>
+              <Text style={styles.userName}>{user?.name}</Text>
+              <Text style={styles.userHandle}>{user?.handle}</Text>
+            </View>
+          </View>
+          <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
+        </View>
+
+        <View style={styles.runStats}>
+          <View style={styles.stat}>
+            <Ionicons name="speedometer" size={20} color={colors.primary} />
+            <Text style={styles.statValue}>{formatDistance(post.distanceKm)}</Text>
+            <Text style={styles.statLabel}>Distance</Text>
+          </View>
+          <View style={styles.stat}>
+            <Ionicons name="time" size={20} color={colors.primary} />
+            <Text style={styles.statValue}>{post.durationMin}m</Text>
+            <Text style={styles.statLabel}>Duration</Text>
+          </View>
+          <View style={styles.stat}>
+            <Ionicons name="flash" size={20} color={colors.primary} />
+            <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm)}</Text>
+            <Text style={styles.statLabel}>Pace</Text>
           </View>
         </View>
-        <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
-      </View>
 
-      <View style={styles.runStats}>
-        <View style={styles.stat}>
-          <Ionicons name="speedometer" size={20} color={colors.primary} />
-          <Text style={styles.statValue}>{formatDistance(post.distanceKm)}</Text>
-          <Text style={styles.statLabel}>Distance</Text>
-        </View>
-        <View style={styles.stat}>
-          <Ionicons name="time" size={20} color={colors.primary} />
-          <Text style={styles.statValue}>{post.durationMin}m</Text>
-          <Text style={styles.statLabel}>Duration</Text>
-        </View>
-        <View style={styles.stat}>
-          <Ionicons name="flash" size={20} color={colors.primary} />
-          <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm)}</Text>
-          <Text style={styles.statLabel}>Pace</Text>
-        </View>
-      </View>
+        {post.routePreview && (
+          <View style={styles.routePreview}>
+            <Image 
+              source={{ uri: post.routePreview }} 
+              style={styles.routeImage}
+              resizeMode="cover"
+            />
+          </View>
+        )}
 
-      {post.routePreview && (
-        <View style={styles.routePreview}>
-          <Image 
-            source={{ uri: post.routePreview }} 
-            style={styles.routeImage}
-            resizeMode="cover"
+        {post.caption && (
+          <Text style={styles.caption}>{post.caption}</Text>
+        )}
+
+        <View style={styles.actions}>
+          <LikeButton
+            isLiked={!!post.likedByCurrentUser}
+            likeCount={post.likes}
+            onPress={handleLike}
           />
+          <TouchableOpacity style={styles.commentButton}>
+            <Ionicons name="chatbubble-outline" size={20} color={colors.muted} />
+            <Text style={styles.commentCount}>{post.comments.length}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.statsButton} onPress={handleViewStats}>
+            <Ionicons name="analytics" size={20} color={colors.primary} />
+            <Text style={styles.statsButtonText}>Stats</Text>
+          </TouchableOpacity>
         </View>
-      )}
-
-      {post.caption && (
-        <Text style={styles.caption}>{post.caption}</Text>
-      )}
-
-      <View style={styles.actions}>
-        <LikeButton
-          isLiked={!!post.likedByCurrentUser}
-          likeCount={post.likes}
-          onPress={handleLike}
-        />
-        <TouchableOpacity style={styles.commentButton}>
-          <Ionicons name="chatbubble-outline" size={20} color={colors.muted} />
-          <Text style={styles.commentCount}>{post.comments.length}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.statsButton} onPress={handleViewStats}>
-          <Ionicons name="analytics" size={20} color={colors.primary} />
-          <Text style={styles.statsButtonText}>Stats</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 

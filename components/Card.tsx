@@ -1,6 +1,7 @@
 import React from 'react';
-import { Pressable, ViewProps } from 'react-native';
-import { radii, spacing, shadows, colors } from '../tokens';
+import { Pressable, View, ViewProps, Platform } from 'react-native';
+import { radii, spacing, colors } from '../tokens';
+import { shadows as themeShadows, surfaces } from '../theme';
 
 interface Props extends ViewProps {
   onPress?: () => void;
@@ -15,6 +16,9 @@ export const Card: React.FC<Props> = ({
   accessibilityHint = 'Open event details',
   ...rest
 }) => {
+  const iosShadow = themeShadows.shadowMd.ios;
+  const androidShadow = themeShadows.shadowMd.android;
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -28,12 +32,32 @@ export const Card: React.FC<Props> = ({
           borderWidth: 1,
           borderColor: colors.border,
           minHeight: 44,
+          overflow: 'hidden',
+          ...(Platform.OS === 'ios'
+            ? {
+                shadowColor: '#000',
+                shadowOpacity: iosShadow.opacity,
+                shadowRadius: iosShadow.radius,
+                shadowOffset: { width: 0, height: iosShadow.y },
+              }
+            : { elevation: androidShadow.elevation }),
         },
-        shadows.hairline,
         style,
       ]}
       {...rest}
     >
+      {/* Subtle surface overlay for depth on dark theme */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: surfaces.surface1,
+        }}
+      />
       {children}
     </Pressable>
   );
