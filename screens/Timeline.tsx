@@ -23,14 +23,14 @@ export const Timeline: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>Timeline</Text>
       </View>
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
         {timelineItems.map(renderItem)}
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
-    paddingBottom: 200,
+    paddingBottom: spacing.lg,
   },
 });
 };

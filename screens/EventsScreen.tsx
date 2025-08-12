@@ -31,7 +31,7 @@ export const EventsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>STRD — {currentUser.city}</Text>
       </View>
@@ -49,7 +49,7 @@ export const EventsScreen: React.FC = () => {
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.lg }]}
         showsVerticalScrollIndicator={false}
       >
         {events.length > 0 ? (
@@ -101,6 +101,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.md,
-    paddingBottom: 200,
+    paddingBottom: spacing.lg,
   },
 });

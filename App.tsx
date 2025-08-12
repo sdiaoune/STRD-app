@@ -173,8 +173,7 @@ export default function App() {
             tabBarInactiveTintColor: colors.muted,
             tabBarStyle: {
               backgroundColor: colors.bg,
-              borderTopColor: colors.border,
-              borderTopWidth: 1,
+              borderTopWidth: 0,
               elevation: 0,
               shadowOpacity: 0,
             },
