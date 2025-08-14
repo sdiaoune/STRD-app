@@ -33,6 +33,7 @@ interface AppState {
   currentUser: User;
   eventFilter: 'forYou' | 'all';
   runState: RunState;
+  isAuthenticated: boolean;
   
   // Actions
   likeToggle: (postId: string) => void;
@@ -42,6 +43,9 @@ interface AppState {
   endRun: () => RunPost;
   postRun: (caption: string, image?: string) => void;
   filterEvents: (scope: 'forYou' | 'all') => void;
+  signIn: (method: 'email' | 'google') => void;
+  signUp: (name: string, email: string) => void;
+  signOut: () => void;
   
   // Helpers
   eventById: (id: string) => Event | undefined;
@@ -67,6 +71,7 @@ export const useStore = create<AppState>((set, get) => ({
     distanceKm: 0,
     currentPace: 5.5
   },
+  isAuthenticated: false,
 
   // Actions
   likeToggle: (postId: string) => {
@@ -189,6 +194,18 @@ export const useStore = create<AppState>((set, get) => ({
 
   filterEvents: (scope: 'forYou' | 'all') => {
     set({ eventFilter: scope });
+  },
+
+  signIn: (method: 'email' | 'google') => {
+    set({ isAuthenticated: true });
+  },
+
+  signUp: (name: string, email: string) => {
+    set({ isAuthenticated: true });
+  },
+
+  signOut: () => {
+    set({ isAuthenticated: false });
   },
 
   // Helper functions

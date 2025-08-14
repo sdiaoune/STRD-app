@@ -19,6 +19,9 @@ import { ProfileScreen } from './screens/ProfileScreen';
 import { BusinessProfileScreen } from './screens/BusinessProfileScreen';
 import BlurTabBarBackground, { useBottomTabOverflow } from './components/ui/TabBarBackground.ios';
 import { HapticTab } from './components/HapticTab';
+import { SignInScreen } from './screens/SignInScreen';
+import { SignUpScreen } from './screens/SignUpScreen';
+import { useStore } from './state/store';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -145,49 +148,77 @@ function ProfileStack() {
   );
 }
 
+function AuthStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.bg },
+        headerTintColor: colors.text,
+        headerTitleStyle: { color: colors.text },
+      }}
+    >
+      <Stack.Screen 
+        name="SignIn" 
+        component={SignInScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="SignUp" 
+        component={SignUpScreen}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
+  const isAuthenticated = useStore(state => state.isAuthenticated);
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Tab.Navigator
-          initialRouteName="Events"
-          screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName: keyof typeof Ionicons.glyphMap;
+        {isAuthenticated ? (
+          <Tab.Navigator
+            initialRouteName="Events"
+            screenOptions={({ route }) => ({
+              tabBarIcon: ({ focused, color, size }) => {
+                let iconName: keyof typeof Ionicons.glyphMap;
 
-              if (route.name === 'Events') {
-                iconName = focused ? 'calendar' : 'calendar-outline';
-              } else if (route.name === 'Timeline') {
-                iconName = focused ? 'home' : 'home-outline';
-              } else if (route.name === 'Run') {
-                iconName = focused ? 'play-circle' : 'play-circle-outline';
-              } else if (route.name === 'Profile') {
-                iconName = focused ? 'person' : 'person-outline';
-              } else {
-                iconName = 'help-outline';
-              }
+                if (route.name === 'Events') {
+                  iconName = focused ? 'calendar' : 'calendar-outline';
+                } else if (route.name === 'Timeline') {
+                  iconName = focused ? 'home' : 'home-outline';
+                } else if (route.name === 'Run') {
+                  iconName = focused ? 'play-circle' : 'play-circle-outline';
+                } else if (route.name === 'Profile') {
+                  iconName = focused ? 'person' : 'person-outline';
+                } else {
+                  iconName = 'help-outline';
+                }
 
-              return <Ionicons name={iconName} size={size} color={color} />;
-            },
-            tabBarActiveTintColor: colors.primary,
-            tabBarInactiveTintColor: colors.muted,
-            tabBarStyle: {
-              backgroundColor: colors.bg,
-              borderTopWidth: 0,
-              elevation: 0,
-              shadowOpacity: 0,
-            },
-            tabBarBackground: () => <BlurTabBarBackground />,
-            tabBarButton: (props) => <HapticTab {...props} />,
-            tabBarLabelStyle: { fontWeight: '600' },
-            headerShown: false,
-          })}
-        >
-          <Tab.Screen name="Events" component={EventsStack} />
-          <Tab.Screen name="Timeline" component={TimelineStack} />
-          <Tab.Screen name="Run" component={RunStack} />
-          <Tab.Screen name="Profile" component={ProfileStack} />
-        </Tab.Navigator>
+                return <Ionicons name={iconName} size={size} color={color} />;
+              },
+              tabBarActiveTintColor: colors.primary,
+              tabBarInactiveTintColor: colors.muted,
+              tabBarStyle: {
+                backgroundColor: colors.bg,
+                borderTopWidth: 0,
+                elevation: 0,
+                shadowOpacity: 0,
+              },
+              tabBarBackground: () => <BlurTabBarBackground />,
+              tabBarButton: (props) => <HapticTab {...props} />,
+              tabBarLabelStyle: { fontWeight: '600' },
+              headerShown: false,
+            })}
+          >
+            <Tab.Screen name="Events" component={EventsStack} />
+            <Tab.Screen name="Timeline" component={TimelineStack} />
+            <Tab.Screen name="Run" component={RunStack} />
+            <Tab.Screen name="Profile" component={ProfileStack} />
+          </Tab.Navigator>
+        ) : (
+          <AuthStack />
+        )}
       </NavigationContainer>
       <StatusBar style="light" />
     </SafeAreaProvider>
