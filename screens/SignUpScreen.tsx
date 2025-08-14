@@ -11,6 +11,7 @@ export const SignUpScreen: React.FC = () => {
   const navigation = useNavigation();
   const signUp = useStore(state => state.signUp);
   const signIn = useStore(state => state.signIn);
+  const authError = useStore(state => state.authError);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -53,7 +54,7 @@ export const SignUpScreen: React.FC = () => {
             style={styles.input}
           />
           <View style={{ height: spacing.lg }} />
-          <Button onPress={() => signUp(name, email)}>Create account</Button>
+          <Button onPress={() => signUp(name, email, password)}>Create account</Button>
         </View>
 
         <View style={styles.dividerRow}>
@@ -63,6 +64,9 @@ export const SignUpScreen: React.FC = () => {
         </View>
 
         <Pressable style={styles.googleButton} onPress={() => signIn('google')} accessibilityRole="button">
+        {!!authError && (
+          <Text style={{ color: 'red', textAlign: 'center', marginTop: spacing.md }}>{authError}</Text>
+        )}
           <Ionicons name="logo-google" size={18} color={colors.text} style={{ marginRight: spacing.sm }} />
           <Text style={styles.googleText}>Sign up with Google</Text>
         </Pressable>

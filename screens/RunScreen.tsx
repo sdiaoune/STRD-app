@@ -91,16 +91,19 @@ export const RunScreen: React.FC = () => {
     );
   };
 
-  const handlePostRun = () => {
-    if (caption.trim()) {
-      postRun(caption.trim(), selectedImage);
+  const handlePostRun = async () => {
+    if (!caption.trim()) {
+      Alert.alert('Error', 'Please add a caption to your run post.');
+      return;
+    }
+    const ok = await postRun(caption.trim(), selectedImage);
+    if (ok) {
       setCaption('');
       setSelectedImage(undefined);
       setShowPostForm(false);
-      // Navigate to timeline - this would need to be handled differently in a real app
-      console.log('Navigate to timeline');
+      Alert.alert('Success', 'Run posted!');
     } else {
-      Alert.alert('Error', 'Please add a caption to your run post.');
+      Alert.alert('Error', 'Failed to publish your run. Please try again.');
     }
   };
 

@@ -1,17 +1,13 @@
 import { create } from 'zustand';
-import { 
-  users, 
-  organizations, 
-  events, 
-  runPosts, 
-  timelineItems,
-  type User,
-  type Organization,
-  type Event,
-  type RunPost,
-  type TimelineItem,
-  type Comment
-} from '../data/mock';
+import type { 
+  User,
+  Organization,
+  Event,
+  RunPost,
+  TimelineItem,
+  Comment
+} from '../types/models';
+import { supabase } from '../supabase/client';
 
 interface RunState {
   isRunning: boolean;
@@ -34,18 +30,21 @@ interface AppState {
   eventFilter: 'forYou' | 'all';
   runState: RunState;
   isAuthenticated: boolean;
+  authError: string | null;
   
   // Actions
-  likeToggle: (postId: string) => void;
-  addComment: (postId: string, text: string) => void;
+  likeToggle: (postId: string) => Promise<void>;
+  addComment: (postId: string, text: string) => Promise<void>;
   startRun: () => void;
   tickRun: () => void;
   endRun: () => RunPost;
-  postRun: (caption: string, image?: string) => void;
+  postRun: (caption: string, image?: string) => Promise<boolean>;
   filterEvents: (scope: 'forYou' | 'all') => void;
-  signIn: (method: 'email' | 'google') => void;
-  signUp: (name: string, email: string) => void;
-  signOut: () => void;
+  signIn: (method: 'email' | 'google', email?: string, password?: string) => Promise<void>;
+  signUp: (name: string, email: string, password?: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  initializeAuth: () => Promise<void>;
+  _loadInitialData: () => Promise<void>;
   
   // Helpers
   eventById: (id: string) => Event | undefined;
@@ -57,12 +56,20 @@ interface AppState {
 
 export const useStore = create<AppState>((set, get) => ({
   // Initial state
-  users,
-  organizations,
-  events,
-  runPosts,
-  timelineItems,
-  currentUser: users.find(u => u.id === 'user8')!,
+  users: [],
+  organizations: [],
+  events: [],
+  runPosts: [],
+  timelineItems: [],
+  currentUser: {
+    id: '',
+    name: null,
+    handle: null,
+    avatar: null,
+    city: null,
+    interests: [],
+    followingOrgs: [],
+  },
   eventFilter: 'forYou',
   runState: {
     isRunning: false,
@@ -72,37 +79,185 @@ export const useStore = create<AppState>((set, get) => ({
     currentPace: 5.5
   },
   isAuthenticated: false,
+  authError: null,
+  // After auth, load initial data
+  // This can be triggered by signIn/signUp
+  _loadInitialData: async () => {
+    const currentUserId = get().currentUser.id;
+    if (!currentUserId) return;
 
-  // Actions
-  likeToggle: (postId: string) => {
-    set((state) => ({
-      runPosts: state.runPosts.map(post =>
-        post.id === postId
-          ? {
-              ...post,
-              likedByCurrentUser: !post.likedByCurrentUser,
-              likes: post.likes + (post.likedByCurrentUser ? -1 : 1)
-            }
-          : post
-      )
+    // profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUserId)
+      .single();
+
+    // org follow
+    const { data: follows } = await supabase
+      .from('user_following_organizations')
+      .select('org_id')
+      .eq('user_id', currentUserId);
+
+    // orgs
+    const { data: orgs } = await supabase
+      .from('organizations')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // events
+    const { data: events } = await supabase
+      .from('events')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // posts with aggregates
+    const { data: posts } = await supabase
+      .from('run_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // likes by current user
+    const { data: likes } = await supabase
+      .from('run_post_likes')
+      .select('*')
+      .eq('user_id', currentUserId);
+
+    // comments per post
+    const { data: comments } = await supabase
+      .from('comments')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    const followingOrgs = (follows || []).map(f => f.org_id);
+
+    const users: User[] = (profile ? [{
+      id: profile.id,
+      name: profile.name,
+      handle: profile.handle,
+      avatar: profile.avatar_url,
+      city: profile.city,
+      interests: profile.interests,
+      followingOrgs,
+    }] : []);
+
+    const organizations: Organization[] = (orgs || []).map(o => ({
+      id: o.id,
+      name: o.name,
+      type: o.type,
+      logo: o.logo_url,
+      city: o.city,
     }));
+
+    const eventsMapped: Event[] = (events || []).map(e => ({
+      id: e.id,
+      title: e.title,
+      orgId: e.org_id,
+      dateISO: e.date,
+      city: e.city,
+      location: {
+        name: e.location_name,
+        lat: e.location_lat,
+        lon: e.location_lon,
+      },
+      tags: e.tags || [],
+      description: e.description,
+      distanceFromUserKm: e.distance_from_user_km ?? 0,
+    }));
+
+    const likesByPostId = new Set((likes || []).map(l => `${l.post_id}`));
+    const commentsByPostId = new Map<string, Comment[]>();
+    (comments || []).forEach(c => {
+      const arr = commentsByPostId.get(c.post_id) || [];
+      arr.push({ id: c.id, userId: c.user_id, text: c.text, createdAtISO: c.created_at });
+      commentsByPostId.set(c.post_id, arr);
+    });
+
+    const runPosts: RunPost[] = (posts || []).map(p => ({
+      id: p.id,
+      userId: p.user_id,
+      createdAtISO: p.created_at,
+      distanceKm: p.distance_km,
+      durationMin: p.duration_min,
+      avgPaceMinPerKm: p.avg_pace_min_per_km,
+      routePreview: p.route_preview_url,
+      caption: p.caption,
+      likes: p.likes_count,
+      likedByCurrentUser: likesByPostId.has(p.id),
+      comments: commentsByPostId.get(p.id) || [],
+      isFromPartner: p.is_from_partner,
+    }));
+
+    // Timeline: latest posts + events
+    const timelineItems: TimelineItem[] = [
+      ...runPosts.map(p => ({ type: 'run' as const, refId: p.id, createdAtISO: p.createdAtISO })),
+      ...eventsMapped.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO })),
+    ].sort((a, b) => new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime());
+
+    set({
+      users,
+      organizations,
+      events: eventsMapped,
+      runPosts,
+      timelineItems,
+      currentUser: users[0] || get().currentUser,
+    });
   },
 
-  addComment: (postId: string, text: string) => {
-    const newComment: Comment = {
-      id: `comment_${Date.now()}`,
-      userId: get().currentUser.id,
-      text,
-      createdAtISO: new Date().toISOString(),
-    };
+  // Actions
+  likeToggle: async (postId: string) => {
+    const state = get();
+    const userId = state.currentUser.id;
+    const target = state.runPosts.find(p => p.id === postId);
+    if (!target) return;
+    const willLike = !target.likedByCurrentUser;
 
+    // optimistic update
+    set(({ runPosts }) => ({
+      runPosts: runPosts.map(p => p.id === postId ? {
+        ...p,
+        likedByCurrentUser: willLike,
+        likes: p.likes + (willLike ? 1 : -1),
+      } : p)
+    }));
+
+    if (willLike) {
+      await supabase.from('run_post_likes').insert({ post_id: postId, user_id: userId });
+      await supabase.rpc('increment_likes_count', { post_id_input: postId }).catch(async () => {
+        await supabase.from('run_posts').update({ likes_count: (target.likes || 0) + 1 }).eq('id', postId);
+      });
+    } else {
+      await supabase.from('run_post_likes').delete().eq('post_id', postId).eq('user_id', userId);
+      await supabase.rpc('decrement_likes_count', { post_id_input: postId }).catch(async () => {
+        await supabase.from('run_posts').update({ likes_count: (target.likes || 0) - 1 }).eq('id', postId);
+      });
+    }
+  },
+
+  addComment: async (postId: string, text: string) => {
+    const currentUserId = get().currentUser.id;
+    const createdAtISO = new Date().toISOString();
+    const optimistic: Comment = { id: `temp_${Date.now()}`, userId: currentUserId, text, createdAtISO };
     set((state) => ({
       runPosts: state.runPosts.map(post => 
         post.id === postId 
-          ? { ...post, comments: [...post.comments, newComment] }
+          ? { ...post, comments: [...post.comments, optimistic] }
           : post
       )
     }));
+    const { data, error } = await supabase.from('comments').insert({ post_id: postId, user_id: currentUserId, text }).select('*').single();
+    if (!error && data) {
+      set((state) => ({
+        runPosts: state.runPosts.map(post => 
+          post.id === postId 
+            ? { 
+                ...post, 
+                comments: post.comments.map(c => c.id === optimistic.id ? { id: data.id, userId: data.user_id, text: data.text, createdAtISO: data.created_at } : c)
+              }
+            : post
+        )
+      }));
+    }
   },
 
   startRun: () => {
@@ -168,44 +323,127 @@ export const useStore = create<AppState>((set, get) => ({
     };
   },
 
-  postRun: (caption: string, image?: string) => {
-    const newRun: RunPost = {
-      id: `run_${Date.now()}`,
-      userId: get().currentUser.id,
-      createdAtISO: new Date().toISOString(),
-      distanceKm: Math.round(get().runState.distanceKm * 100) / 100,
-      durationMin: Math.round(get().runState.elapsedSeconds / 60),
-      avgPaceMinPerKm: Math.round(get().runState.currentPace * 10) / 10,
-      routePreview: image,
-      caption,
-      likes: 0,
-      likedByCurrentUser: false,
-      comments: []
+  postRun: async (caption: string, image?: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const newRun = {
+      user_id: userId,
+      distance_km: Math.round(get().runState.distanceKm * 100) / 100,
+      duration_min: Math.round(get().runState.elapsedSeconds / 60),
+      avg_pace_min_per_km: Math.round(get().runState.currentPace * 10) / 10,
+      route_preview_url: image || null,
+      caption: caption || null,
+      is_from_partner: false,
+      likes_count: 0,
     };
-
-    set((state) => ({
-      runPosts: [newRun, ...state.runPosts],
-      timelineItems: [
-        { type: 'run', refId: newRun.id, createdAtISO: newRun.createdAtISO },
-        ...state.timelineItems
-      ]
-    }));
+    try {
+      const { data, error } = await supabase.from('run_posts').insert(newRun).select('*').single();
+      if (error || !data) return false;
+      const post: RunPost = {
+        id: data.id,
+        userId: data.user_id,
+        createdAtISO: data.created_at,
+        distanceKm: data.distance_km,
+        durationMin: data.duration_min,
+        avgPaceMinPerKm: data.avg_pace_min_per_km,
+        routePreview: data.route_preview_url,
+        caption: data.caption,
+        likes: data.likes_count,
+        likedByCurrentUser: false,
+        comments: [],
+      };
+      set((state) => ({
+        runPosts: [post, ...state.runPosts],
+        timelineItems: [
+          { type: 'run', refId: post.id, createdAtISO: post.createdAtISO },
+          ...state.timelineItems
+        ]
+      }));
+      return true;
+    } catch {
+      return false;
+    }
   },
 
   filterEvents: (scope: 'forYou' | 'all') => {
     set({ eventFilter: scope });
   },
 
-  signIn: (method: 'email' | 'google') => {
-    set({ isAuthenticated: true });
+  signIn: async (method: 'email' | 'google', email?: string, password?: string) => {
+    set({ authError: null });
+    try {
+      if (method === 'email') {
+        if (!email || !password) throw new Error('Missing credentials');
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        set({ isAuthenticated: true });
+        const userId = data.user?.id || '';
+        set((state) => ({ currentUser: { ...state.currentUser, id: userId } }));
+        // Ensure profile row exists to satisfy FKs and RLS
+        if (userId) {
+          const { data: existing } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
+          if (!existing) {
+            await supabase.from('profiles').insert({ id: userId, name: null });
+          }
+        }
+        await get()._loadInitialData();
+      } else if (method === 'google') {
+        const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+        if (error) throw error;
+      }
+    } catch (e: any) {
+      set({ authError: e?.message || 'Sign-in failed' });
+    }
   },
 
-  signUp: (name: string, email: string) => {
-    set({ isAuthenticated: true });
+  signUp: async (name: string, email: string, password?: string) => {
+    set({ authError: null });
+    try {
+      if (!email || !password) throw new Error('Missing credentials');
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      const userId = data.user?.id || '';
+      if (userId) {
+        await supabase.from('profiles').insert({ id: userId, name });
+      }
+      set({ isAuthenticated: true });
+      set((state) => ({ currentUser: { ...state.currentUser, id: userId, name } }));
+      await get()._loadInitialData();
+    } catch (e: any) {
+      set({ authError: e?.message || 'Sign-up failed' });
+    }
   },
 
-  signOut: () => {
-    set({ isAuthenticated: false });
+  signOut: async () => {
+    await supabase.auth.signOut();
+    set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [] });
+  },
+
+  initializeAuth: async () => {
+    const { data } = await supabase.auth.getSession();
+    const userId = data.session?.user?.id;
+    if (userId) {
+      set((state) => ({ isAuthenticated: true, currentUser: { ...state.currentUser, id: userId } }));
+      // Ensure profile exists
+      const { data: existing } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
+      if (!existing) {
+        await supabase.from('profiles').insert({ id: userId, name: null });
+      }
+      await get()._loadInitialData();
+    }
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      const uid = session?.user?.id;
+      if (uid) {
+        set((state) => ({ isAuthenticated: true, currentUser: { ...state.currentUser, id: uid } }));
+        const { data: existing } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
+        if (!existing) {
+          await supabase.from('profiles').insert({ id: uid, name: null });
+        }
+        await get()._loadInitialData();
+      } else {
+        set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [] });
+      }
+    });
   },
 
   // Helper functions

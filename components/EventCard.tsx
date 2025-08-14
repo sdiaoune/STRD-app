@@ -6,7 +6,7 @@ import { Chip } from './Chip';
 import { Badge } from './Badge';
 import { spacing, typography, colors } from '../tokens';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
-import type { Event } from '../data/mock';
+import type { Event } from '../types/models';
 import { useStore } from '../state/store';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
 

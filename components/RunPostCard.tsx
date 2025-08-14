@@ -7,7 +7,7 @@ import { Avatar } from './Avatar';
 import { LikeButton } from './LikeButton';
 import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
 import { useStore } from '../state/store';
-import type { RunPost } from '../data/mock';
+import type { RunPost } from '../types/models';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TimelineStackParamList } from '../types/navigation';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';

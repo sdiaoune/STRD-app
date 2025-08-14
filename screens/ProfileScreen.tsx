@@ -13,10 +13,12 @@ import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
 import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
+import { Button } from '../components/Button';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { currentUser, runPosts, events, postById, eventById } = useStore();
+  const signOut = useStore(state => state.signOut);
 
   // Calculate user stats
   const userRuns = runPosts.filter(post => post.userId === currentUser.id);
@@ -107,6 +109,11 @@ export const ProfileScreen: React.FC = () => {
           )}
         </View>
       </ScrollView>
+      <View style={styles.footerActions}>
+        <Button variant="outline" onPress={async () => { await signOut(); }}>
+          Sign out
+        </Button>
+      </View>
     </SafeAreaView>
   );
 };
@@ -153,5 +160,11 @@ const styles = StyleSheet.create({
     ...typography.h2,
     color: colors.text,
     marginBottom: spacing.md,
+  },
+  footerActions: {
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.bg,
   },
 });

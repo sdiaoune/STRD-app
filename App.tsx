@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -173,6 +173,10 @@ function AuthStack() {
 
 export default function App() {
   const isAuthenticated = useStore(state => state.isAuthenticated);
+  const initializeAuth = useStore(state => state.initializeAuth);
+  useEffect(() => {
+    initializeAuth();
+  }, []);
   return (
     <SafeAreaProvider>
       <NavigationContainer>

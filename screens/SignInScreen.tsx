@@ -10,6 +10,7 @@ import { useStore } from '../state/store';
 export const SignInScreen: React.FC = () => {
   const navigation = useNavigation();
   const signIn = useStore(state => state.signIn);
+  const authError = useStore(state => state.authError);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -42,7 +43,7 @@ export const SignInScreen: React.FC = () => {
             style={styles.input}
           />
           <View style={{ height: spacing.lg }} />
-          <Button onPress={() => signIn('email')}>Sign in</Button>
+          <Button onPress={() => signIn('email', email, password)}>Sign in</Button>
         </View>
 
         <View style={styles.dividerRow}>
@@ -52,6 +53,9 @@ export const SignInScreen: React.FC = () => {
         </View>
 
         <Pressable style={styles.googleButton} onPress={() => signIn('google')} accessibilityRole="button">
+        {!!authError && (
+          <Text style={{ color: 'red', textAlign: 'center', marginTop: spacing.md }}>{authError}</Text>
+        )}
           <Ionicons name="logo-google" size={18} color={colors.text} style={{ marginRight: spacing.sm }} />
           <Text style={styles.googleText}>Continue with Google</Text>
         </Pressable>
