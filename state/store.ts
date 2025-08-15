@@ -8,6 +8,8 @@ import type {
   Comment
 } from '../types/models';
 import { supabase } from '../supabase/client';
+import * as FileSystem from 'expo-file-system';
+import Constants from 'expo-constants';
 
 interface RunState {
   isRunning: boolean;
@@ -15,6 +17,8 @@ interface RunState {
   elapsedSeconds: number;
   distanceKm: number;
   currentPace: number;
+  currentSpeedKmh?: number;
+  lastLocation?: { latitude: number; longitude: number; timestamp: number } | null;
 }
 
 interface AppState {
@@ -38,6 +42,7 @@ interface AppState {
   startRun: () => void;
   tickRun: () => void;
   endRun: () => RunPost;
+  onLocationUpdate: (lat: number, lon: number, timestampMs: number, accuracy?: number, speedMs?: number | null) => void;
   postRun: (caption: string, image?: string) => Promise<boolean>;
   filterEvents: (scope: 'forYou' | 'all') => void;
   signIn: (method: 'email' | 'google', email?: string, password?: string) => Promise<void>;
@@ -45,6 +50,7 @@ interface AppState {
   signOut: () => Promise<void>;
   initializeAuth: () => Promise<void>;
   _loadInitialData: () => Promise<void>;
+  uploadAvatar: (uri: string) => Promise<string | null>;
   
   // Helpers
   eventById: (id: string) => Event | undefined;
@@ -76,7 +82,9 @@ export const useStore = create<AppState>((set, get) => ({
     startTime: null,
     elapsedSeconds: 0,
     distanceKm: 0,
-    currentPace: 5.5
+    currentPace: 5.5,
+    currentSpeedKmh: 0,
+    lastLocation: null
   },
   isAuthenticated: false,
   authError: null,
@@ -280,21 +288,55 @@ export const useStore = create<AppState>((set, get) => ({
     const now = Date.now();
     const elapsedMs = now - state.runState.startTime;
     const elapsedSeconds = Math.floor(elapsedMs / 1000);
-    
-    // Simulate distance increase (0.01-0.03 km per second)
-    const distanceIncrease = 0.01 + Math.random() * 0.02;
-    const newDistance = state.runState.distanceKm + distanceIncrease;
-    
-    // Simulate pace variation (4:30-6:30 min/km)
-    const paceVariation = 4.5 + Math.random() * 2;
-    
+    const newDistance = state.runState.distanceKm; // distance now advanced via GPS
+    const speed = state.runState.currentSpeedKmh || 0;
+    const pace = speed > 0.1 ? 60 / speed : Infinity; // Infinity to render as — /km
+
     set((state) => ({
       runState: {
         ...state.runState,
         elapsedSeconds,
         distanceKm: newDistance,
-        currentPace: paceVariation
+        currentPace: pace
       }
+    }));
+  },
+
+  onLocationUpdate: (lat: number, lon: number, timestampMs: number, accuracy?: number, speedMs?: number | null) => {
+    const state = get();
+    if (!state.runState.isRunning) return;
+    const toRad = (v: number) => (v * Math.PI) / 180;
+    const last = state.runState.lastLocation;
+    let distanceKm = state.runState.distanceKm;
+    let speedKmh = state.runState.currentSpeedKmh || 0;
+
+    // Ignore very inaccurate points (relax to work indoors too)
+    const isAccurate = accuracy == null || accuracy <= 100; // meters
+
+    if (last && isAccurate) {
+      const R = 6371; // km
+      const dLat = toRad(lat - last.latitude);
+      const dLon = toRad(lon - last.longitude);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(last.latitude)) * Math.cos(toRad(lat)) * Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const deltaKm = R * c;
+      const deltaTimeH = Math.max((timestampMs - last.timestamp) / 3600000, 1e-6);
+      const instKmh = speedMs != null && isFinite(speedMs) ? Math.max(speedMs, 0) * 3.6 : (deltaKm / deltaTimeH);
+      // Filter tiny jitter (1 m)
+      const minStepKm = 0.001; // 1 meter
+      if (deltaKm > minStepKm) {
+        distanceKm += deltaKm;
+        speedKmh = instKmh;
+      }
+    }
+
+    set((state) => ({
+      runState: {
+        ...state.runState,
+        distanceKm,
+        currentSpeedKmh: speedKmh,
+        lastLocation: { latitude: lat, longitude: lon, timestamp: timestampMs },
+      },
     }));
   },
 
@@ -444,6 +486,41 @@ export const useStore = create<AppState>((set, get) => ({
         set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [] });
       }
     });
+  },
+
+  uploadAvatar: async (uri: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return null;
+    const fileExt = (uri.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${userId}/${Date.now()}.${fileExt}`;
+    const mime = fileExt === 'png' ? 'image/png' : 'image/jpeg';
+    // Direct binary upload to Storage via FileSystem to avoid zero-byte blobs on iOS
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    const baseUrl = (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_SUPABASE_URL as string;
+    if (!token || !baseUrl) return null;
+    const uploadUrl = `${baseUrl}/storage/v1/object/avatars/${encodeURIComponent(path)}`;
+    const result = await FileSystem.uploadAsync(uploadUrl, uri, {
+      httpMethod: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': mime,
+        'x-upsert': 'false',
+      },
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    });
+    if (result.status !== 200) return null;
+    const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(path);
+    const url = publicUrl.publicUrl;
+    const displayUrl = `${url}?t=${Date.now()}`;
+    // Update profile
+    await supabase.from('profiles').update({ avatar_url: url }).eq('id', userId);
+    // Update local state
+    set((state) => ({
+      currentUser: { ...state.currentUser, avatar: displayUrl },
+      users: state.users.map(u => u.id === userId ? { ...u, avatar: displayUrl } : u),
+    }));
+    return displayUrl;
   },
 
   // Helper functions

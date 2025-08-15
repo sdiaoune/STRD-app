@@ -18,6 +18,9 @@ export const formatDistance = (km: number): string => {
 };
 
 export const formatPace = (minPerKm: number): string => {
+  if (!isFinite(minPerKm) || minPerKm <= 0) return `— /km`;
+  // Clamp unrealistic values
+  if (minPerKm > 30) return `— /km`;
   const minutes = Math.floor(minPerKm);
   const seconds = Math.round((minPerKm - minutes) * 60);
   return `${minutes}:${seconds.toString().padStart(2, '0')} /km`;

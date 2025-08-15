@@ -8,6 +8,7 @@ import type { ProfileStackParamList, AppNavigationParamList } from '../types/nav
 type ProfileScreenNavigationProp = NativeStackNavigationProp<ProfileStackParamList & AppNavigationParamList, 'UserProfile'>;
 import { colors, spacing, typography } from '../theme';
 import { Avatar } from '../components/Avatar';
+import * as ImagePicker from 'expo-image-picker';
 import { StatsRow } from '../components/StatsRow';
 import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
@@ -19,6 +20,42 @@ export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { currentUser, runPosts, events, postById, eventById } = useStore();
   const signOut = useStore(state => state.signOut);
+  const uploadAvatar = useStore(state => state.uploadAvatar);
+  const [uploading, setUploading] = React.useState(false);
+
+  const handleChangeAvatar = async () => {
+    const action = await new Promise<'camera' | 'library' | 'cancel'>(resolve => {
+      // Simple fallback prompt using alerts since we don't have a native action sheet here
+      // User can pick from camera or library
+      // We'll default to library if camera denied
+      resolve('library');
+    });
+    try {
+      setUploading(true);
+      if (action === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          // fallback to library
+          const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8 });
+          if (!res.canceled) await uploadAvatar(res.assets[0].uri);
+          setUploading(false);
+          return;
+        }
+        const res = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.8 });
+        if (!res.canceled) await uploadAvatar(res.assets[0].uri);
+      } else if (action === 'library') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          setUploading(false);
+          return;
+        }
+        const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8 });
+        if (!res.canceled) await uploadAvatar(res.assets[0].uri);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Calculate user stats
   const userRuns = runPosts.filter(post => post.userId === currentUser.id);
@@ -75,7 +112,12 @@ export const ProfileScreen: React.FC = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <Avatar source={currentUser.avatar} size={80} label={currentUser.name} />
+          <View style={{ alignItems: 'center' }}>
+            <Avatar source={currentUser.avatar ?? undefined} size={80} label={currentUser.name ?? undefined} />
+            <Text onPress={handleChangeAvatar} style={styles.changePhoto} accessibilityRole="button">
+              {uploading ? 'Uploading…' : 'Change photo'}
+            </Text>
+          </View>
           <Text style={styles.userName}>{currentUser.name}</Text>
           <Text style={styles.userHandle}>{currentUser.handle}</Text>
           <Text style={styles.userBio} numberOfLines={2} ellipsizeMode="tail">
@@ -160,6 +202,12 @@ const styles = StyleSheet.create({
     ...typography.h2,
     color: colors.text,
     marginBottom: spacing.md,
+  },
+  changePhoto: {
+    ...typography.caption,
+    color: colors.primary,
+    marginTop: spacing.sm,
+    textDecorationLine: 'underline',
   },
   footerActions: {
     padding: spacing.md,

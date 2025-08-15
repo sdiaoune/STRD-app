@@ -3,7 +3,7 @@ import { View, Image, StyleSheet, Text } from 'react-native';
 import { colors } from '../theme';
 
 interface AvatarProps {
-  source: string;
+  source: string | null | undefined;
   size?: number;
   style?: any;
   label?: string;

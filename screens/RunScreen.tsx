@@ -9,6 +9,7 @@ type RunScreenNavigationProp = NativeStackNavigationProp<RunStackParamList, 'Run
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import * as Location from 'expo-location';
 import { formatTime, formatDistance, formatPace } from '../utils/format';
 import { useStore } from '../state/store';
 
@@ -28,6 +29,7 @@ export const RunScreen: React.FC = () => {
   const tickRun = useStore((s) => s.tickRun);
   const endRun = useStore((s) => s.endRun);
   const postRun = useStore((s) => s.postRun);
+  const onLocationUpdate = useStore((s) => s.onLocationUpdate);
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -50,8 +52,21 @@ export const RunScreen: React.FC = () => {
     };
   }, [runState.isRunning]);
 
-  const handleStartRun = () => {
-    if (!hasLocationPermission) return;
+  const locationWatchRef = useRef<Location.LocationSubscription | null>(null);
+
+  const stopLocationWatch = async () => {
+    if (locationWatchRef.current) {
+      locationWatchRef.current.remove();
+      locationWatchRef.current = null;
+    }
+  };
+
+  const handleStartRun = async () => {
+    if (!hasLocationPermission) {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      setHasLocationPermission(true);
+    }
     setIsCountingDown(true);
     setCountdown(3);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -64,6 +79,23 @@ export const RunScreen: React.FC = () => {
           // Defer the startRun call to the next tick to avoid render-phase updates
           setTimeout(() => {
             startRun();
+            // start high-accuracy GPS
+            Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation }).then((pos) => {
+              const { latitude, longitude } = pos.coords;
+              onLocationUpdate(latitude, longitude, pos.timestamp);
+            }).catch(() => {});
+            Location.watchPositionAsync(
+              {
+                accuracy: Location.Accuracy.BestForNavigation,
+                activityType: Location.ActivityType.Fitness,
+                timeInterval: 1000,
+                distanceInterval: 1,
+              },
+              (pos) => {
+                const { latitude, longitude, speed, accuracy } = pos.coords;
+                onLocationUpdate(latitude, longitude, pos.timestamp, accuracy ?? undefined, speed ?? null);
+              }
+            ).then((sub) => { locationWatchRef.current = sub; });
           }, 0);
           return 0;
         }
@@ -85,6 +117,7 @@ export const RunScreen: React.FC = () => {
           onPress: () => {
             endRun();
             setShowPostForm(true);
+            stopLocationWatch();
           }
         }
       ]
@@ -119,10 +152,10 @@ export const RunScreen: React.FC = () => {
   };
 
   const requestLocation = () => {
-    Alert.alert('Location Permission', 'Grant location to enable GPS tracking (mock).', [
-      { text: 'Not now', style: 'cancel' },
-      { text: 'Grant', onPress: () => setHasLocationPermission(true) },
-    ]);
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') setHasLocationPermission(true);
+    })();
   };
 
   if (showPostForm) {
@@ -278,6 +311,13 @@ export const RunScreen: React.FC = () => {
                   {formatPace(runState.currentPace)}
                 </Text>
                 <Text style={styles.metricLabel}>Current Pace</Text>
+              </View>
+              <View style={styles.metric}>
+                <Ionicons name="speedometer-outline" size={32} color={colors.primary} />
+                <Text style={styles.metricValue}>
+                  {Math.max(0, Math.round((runState.currentSpeedKmh || 0) * 10) / 10)} km/h
+                </Text>
+                <Text style={styles.metricLabel}>Speed</Text>
               </View>
             </View>
 
