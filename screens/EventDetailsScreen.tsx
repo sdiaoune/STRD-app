@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,15 +14,41 @@ import { Avatar } from '../components/Avatar';
 import { Chip } from '../components/Chip';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
 import { useStore } from '../state/store';
+import { supabase } from '../supabase/client';
 
 export const EventDetailsScreen: React.FC = () => {
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
   const route = useRoute<EventDetailsScreenRouteProp>();
   const { eventId } = route.params;
   
-  const { eventById, orgById } = useStore();
+  const { eventById, orgById, joinEvent, leaveEvent, setReminder, clearReminder, currentUser } = useStore();
   const event = eventById(eventId);
   const organization = event ? orgById(event.orgId) : null;
+
+  const [isJoined, setIsJoined] = useState(false);
+  const [isReminded, setIsReminded] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!currentUser.id || !event) return;
+      const { data: p } = await supabase
+        .from('event_participants')
+        .select('user_id')
+        .eq('event_id', event.id)
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+      if (mounted) setIsJoined(!!p);
+      const { data: r } = await supabase
+        .from('event_reminders')
+        .select('user_id')
+        .eq('event_id', event.id)
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+      if (mounted) setIsReminded(!!r);
+    })();
+    return () => { mounted = false; };
+  }, [currentUser.id, event?.id]);
 
   if (!event || !organization) {
     return (
@@ -38,14 +64,22 @@ export const EventDetailsScreen: React.FC = () => {
     navigation.navigate('BusinessProfile', { orgId: organization.id });
   };
 
-  const handleImIn = () => {
-    // No-op for mock
-    console.log('I\'m in!');
+  const handleImIn = async () => {
+    const ok = isJoined ? await leaveEvent(event.id) : await joinEvent(event.id);
+    if (ok) {
+      setIsJoined(!isJoined);
+    } else {
+      Alert.alert('Error', 'Unable to update participation. Please sign in and try again.');
+    }
   };
 
-  const handleRemindMe = () => {
-    // No-op for mock
-    console.log('Remind me!');
+  const handleRemindMe = async () => {
+    const ok = isReminded ? await clearReminder(event.id) : await setReminder(event.id);
+    if (ok) {
+      setIsReminded(!isReminded);
+    } else {
+      Alert.alert('Error', 'Unable to update reminder. Please sign in and try again.');
+    }
   };
 
   return (
@@ -118,7 +152,7 @@ export const EventDetailsScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Attendees</Text>
             <View style={styles.attendeesPlaceholder}>
               <Ionicons name="people" size={24} color={colors.muted} />
-              <Text style={styles.attendeesText}>No attendees yet</Text>
+              <Text style={styles.attendeesText}>{isJoined ? 'You are attending' : 'No attendees yet'}</Text>
             </View>
           </View>
         </View>
@@ -127,10 +161,10 @@ export const EventDetailsScreen: React.FC = () => {
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
         <TouchableOpacity style={styles.remindButton} onPress={handleRemindMe}>
-          <Text style={styles.remindButtonText}>Remind Me</Text>
+          <Text style={styles.remindButtonText}>{isReminded ? 'Reminder Set' : 'Remind Me'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.imInButton} onPress={handleImIn}>
-          <Text style={styles.imInButtonText}>I'm In</Text>
+          <Text style={styles.imInButtonText}>{isJoined ? 'Leave' : "I'm In"}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -12,6 +12,8 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import * as Location from 'expo-location';
 import { formatTime, formatDistance, formatPace } from '../utils/format';
 import { useStore } from '../state/store';
+import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import { regionForCoordinates } from '../utils/geo';
 
 export const RunScreen: React.FC = () => {
   const navigation = useNavigation<RunScreenNavigationProp>();
@@ -321,20 +323,33 @@ export const RunScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Route Preview Placeholder */}
+            {/* Live Route Map */}
             <View style={styles.routePreview}>
-              <View style={styles.routePlaceholder}>
-                <Ionicons name="map" size={48} color={colors.muted} />
-                <Text style={styles.routeText}>Route Preview</Text>
-                <View style={styles.progressBar}>
-                  <View 
-                    style={[
-                      styles.progressFill, 
-                      { width: `${Math.min((runState.distanceKm / 10) * 100, 100)}%` }
-                    ]} 
+              <MapView
+                style={{ flex: 1, borderRadius: borderRadius.lg }}
+                provider={PROVIDER_DEFAULT}
+                showsCompass={false}
+                showsUserLocation
+                initialRegion={{ latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.01, longitudeDelta: 0.01 }}
+                region={(() => {
+                  const pts = runState.path?.map(p => ({ latitude: p.latitude, longitude: p.longitude })) || [];
+                  if (pts.length >= 2) return regionForCoordinates(pts);
+                  if (runState.lastLocation) {
+                    const { latitude, longitude } = runState.lastLocation;
+                    return { latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+                  }
+                  return undefined as any;
+                })()}
+                pointerEvents="none"
+              >
+                {runState.path.length > 1 && (
+                  <Polyline
+                    coordinates={runState.path.map(p => ({ latitude: p.latitude, longitude: p.longitude }))}
+                    strokeColor={colors.primary}
+                    strokeWidth={4}
                   />
-                </View>
-              </View>
+                )}
+              </MapView>
             </View>
 
             {/* End Run Button */}

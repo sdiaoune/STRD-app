@@ -46,6 +46,7 @@ export type RunPost = {
   distanceKm: number;
   durationMin: number;
   avgPaceMinPerKm: number;
+  routePolyline?: string | null;
   routePreview?: string | null;
   caption?: string | null;
   likes: number;

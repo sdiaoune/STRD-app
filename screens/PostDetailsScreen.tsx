@@ -17,6 +17,8 @@ import { Avatar } from '../components/Avatar';
 import { LikeButton } from '../components/LikeButton';
 import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
 import { useStore } from '../state/store';
+import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import { decodePolyline, regionForCoordinates } from '../utils/geo';
 
 export const PostDetailsScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailsScreenNavigationProp>();
@@ -28,20 +30,7 @@ export const PostDetailsScreen: React.FC = () => {
   const post = postById(postId);
   const user = post ? userById(post.userId) : null;
 
-  // Mock trajectory data - in a real app this would come from GPS coordinates
-  const trajectoryPoints = [
-    { x: 0.1, y: 0.2 },
-    { x: 0.15, y: 0.25 },
-    { x: 0.25, y: 0.3 },
-    { x: 0.35, y: 0.28 },
-    { x: 0.45, y: 0.35 },
-    { x: 0.55, y: 0.32 },
-    { x: 0.65, y: 0.38 },
-    { x: 0.75, y: 0.36 },
-    { x: 0.85, y: 0.42 },
-    { x: 0.9, y: 0.4 },
-    { x: 0.95, y: 0.45 },
-  ];
+  const decodedPath = post?.routePolyline ? decodePolyline(post.routePolyline) : [];
 
   if (!post || !user) {
     return (
@@ -70,92 +59,26 @@ export const PostDetailsScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>Run Route</Text>
         <View style={styles.trajectoryCard}>
           <View style={styles.mapContainer}>
-            {/* Mock Map Background */}
             <View style={styles.mapBackground}>
-              {/* Grid lines for map effect */}
-              <View style={styles.mapGrid}>
-                {[...Array(5)].map((_, i) => (
-                  <View key={`h-${i}`} style={[styles.gridLine, styles.horizontalLine, { top: i * 40 }]} />
-                ))}
-                {[...Array(5)].map((_, i) => (
-                  <View key={`v-${i}`} style={[styles.gridLine, styles.verticalLine, { left: i * 40 }]} />
-                ))}
-              </View>
-              
-              {/* Route Path */}
-              <View style={styles.routePath}>
-                {trajectoryPoints.map((point, index) => {
-                  const x = point.x * (width - 120);
-                  const y = point.y * 160;
-                  
-                  return (
-                    <View key={index}>
-                      {/* Route line segments */}
-                      {index > 0 && (
-                        <View
-                          style={[
-                            styles.routeLine,
-                            {
-                              left: trajectoryPoints[index - 1].x * (width - 120),
-                              top: trajectoryPoints[index - 1].y * 160,
-                              width: Math.sqrt(
-                                Math.pow(x - trajectoryPoints[index - 1].x * (width - 120), 2) +
-                                Math.pow(y - trajectoryPoints[index - 1].y * 160, 2)
-                              ),
-                              transform: [{
-                                rotate: `${Math.atan2(
-                                  y - trajectoryPoints[index - 1].y * 160,
-                                  x - trajectoryPoints[index - 1].x * (width - 120)
-                                )}rad`
-                              }]
-                            }
-                          ]}
-                        />
-                      )}
-                      
-                      {/* Route points */}
-                      <View
-                        style={[
-                          styles.routePoint,
-                          { left: x - 3, top: y - 3 },
-                          index === 0 && styles.startPoint,
-                          index === trajectoryPoints.length - 1 && styles.endPoint
-                        ]}
-                      >
-                        {index === 0 && <Ionicons name="location" size={12} color={colors.primary} />}
-                        {index === trajectoryPoints.length - 1 && <Ionicons name="flag" size={12} color={colors.primary} />}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-              
-              {/* Map landmarks */}
-              <View style={[styles.landmark, { left: 60, top: 40 }]}>
-                <Ionicons name="home" size={16} color={colors.muted} />
-              </View>
-              <View style={[styles.landmark, { left: 200, top: 80 }]}>
-                <Ionicons name="cafe" size={16} color={colors.muted} />
-              </View>
-              <View style={[styles.landmark, { left: 140, top: 120 }]}>
-                <Ionicons name="leaf" size={16} color={colors.muted} />
-              </View>
-            </View>
-            
-            {/* Map legend */}
-            <View style={styles.mapLegend}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-                <Text style={styles.legendText}>Route</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <Ionicons name="location" size={12} color={colors.primary} />
-                <Text style={styles.legendText}>Start</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <Ionicons name="flag" size={12} color={colors.primary} />
-                <Text style={styles.legendText}>End</Text>
-              </View>
+              <MapView
+                style={{ width: '100%', height: '100%' }}
+                provider={PROVIDER_DEFAULT}
+                showsCompass={false}
+                scrollEnabled={false}
+                zoomEnabled={false}
+                pitchEnabled={false}
+                rotateEnabled={false}
+                initialRegion={{ latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
+                region={decodedPath.length > 1 ? regionForCoordinates(decodedPath) : undefined as any}
+              >
+                {decodedPath.length > 1 && (
+                  <Polyline
+                    coordinates={decodedPath}
+                    strokeColor={colors.primary}
+                    strokeWidth={4}
+                  />
+                )}
+              </MapView>
             </View>
           </View>
         </View>

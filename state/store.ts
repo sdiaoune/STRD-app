@@ -19,6 +19,7 @@ interface RunState {
   currentPace: number;
   currentSpeedKmh?: number;
   lastLocation?: { latitude: number; longitude: number; timestamp: number } | null;
+  path: { latitude: number; longitude: number; timestamp: number }[];
 }
 
 interface AppState {
@@ -45,6 +46,10 @@ interface AppState {
   onLocationUpdate: (lat: number, lon: number, timestampMs: number, accuracy?: number, speedMs?: number | null) => void;
   postRun: (caption: string, image?: string) => Promise<boolean>;
   filterEvents: (scope: 'forYou' | 'all') => void;
+  joinEvent: (eventId: string) => Promise<boolean>;
+  leaveEvent: (eventId: string) => Promise<boolean>;
+  setReminder: (eventId: string) => Promise<boolean>;
+  clearReminder: (eventId: string) => Promise<boolean>;
   signIn: (method: 'email' | 'google', email?: string, password?: string) => Promise<void>;
   signUp: (name: string, email: string, password?: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -54,6 +59,7 @@ interface AppState {
   
   // Helpers
   eventById: (id: string) => Event | undefined;
+  isParticipant: (eventId: string) => Promise<boolean> | boolean;
   postById: (id: string) => RunPost | undefined;
   orgById: (id: string) => Organization | undefined;
   userById: (id: string) => User | undefined;
@@ -84,7 +90,8 @@ export const useStore = create<AppState>((set, get) => ({
     distanceKm: 0,
     currentPace: 5.5,
     currentSpeedKmh: 0,
-    lastLocation: null
+    lastLocation: null,
+    path: []
   },
   isAuthenticated: false,
   authError: null,
@@ -145,7 +152,7 @@ export const useStore = create<AppState>((set, get) => ({
       handle: profile.handle,
       avatar: profile.avatar_url,
       city: profile.city,
-      interests: profile.interests,
+      interests: profile.interests ?? [],
       followingOrgs,
     }] : []);
 
@@ -188,6 +195,7 @@ export const useStore = create<AppState>((set, get) => ({
       distanceKm: p.distance_km,
       durationMin: p.duration_min,
       avgPaceMinPerKm: p.avg_pace_min_per_km,
+      routePolyline: p.route_polyline,
       routePreview: p.route_preview_url,
       caption: p.caption,
       likes: p.likes_count,
@@ -276,7 +284,9 @@ export const useStore = create<AppState>((set, get) => ({
         startTime: Date.now(),
         elapsedSeconds: 0,
         distanceKm: 0,
-        currentPace: 5.5
+        currentPace: 5.5,
+        lastLocation: null,
+        path: []
       }
     }));
   },
@@ -336,6 +346,7 @@ export const useStore = create<AppState>((set, get) => ({
         distanceKm,
         currentSpeedKmh: speedKmh,
         lastLocation: { latitude: lat, longitude: lon, timestamp: timestampMs },
+        path: [...state.runState.path, { latitude: lat, longitude: lon, timestamp: timestampMs }],
       },
     }));
   },
@@ -368,11 +379,20 @@ export const useStore = create<AppState>((set, get) => ({
   postRun: async (caption: string, image?: string) => {
     const userId = get().currentUser.id;
     if (!userId) return false;
+    const { encodePolyline } = await import('../utils/geo');
+    const path = get().runState.path.map(p => ({ latitude: p.latitude, longitude: p.longitude }));
+    const routePolyline = path.length >= 2 ? encodePolyline(path) : null;
+    // Compute average pace from distance and duration to avoid Infinity/NaN
+    const distanceKm = Math.round(get().runState.distanceKm * 100) / 100;
+    const durationMin = Math.round(get().runState.elapsedSeconds / 60);
+    const paceMinPerKmRaw = distanceKm > 0 ? (durationMin / distanceKm) : 0;
+    const avgPaceMinPerKm = isFinite(paceMinPerKmRaw) && !isNaN(paceMinPerKmRaw) ? Math.round(paceMinPerKmRaw * 10) / 10 : 0;
     const newRun = {
       user_id: userId,
-      distance_km: Math.round(get().runState.distanceKm * 100) / 100,
-      duration_min: Math.round(get().runState.elapsedSeconds / 60),
-      avg_pace_min_per_km: Math.round(get().runState.currentPace * 10) / 10,
+      distance_km: distanceKm,
+      duration_min: durationMin,
+      avg_pace_min_per_km: avgPaceMinPerKm,
+      route_polyline: routePolyline,
       route_preview_url: image || null,
       caption: caption || null,
       is_from_partner: false,
@@ -388,6 +408,7 @@ export const useStore = create<AppState>((set, get) => ({
         distanceKm: data.distance_km,
         durationMin: data.duration_min,
         avgPaceMinPerKm: data.avg_pace_min_per_km,
+        routePolyline: data.route_polyline ?? null,
         routePreview: data.route_preview_url,
         caption: data.caption,
         likes: data.likes_count,
@@ -409,6 +430,31 @@ export const useStore = create<AppState>((set, get) => ({
 
   filterEvents: (scope: 'forYou' | 'all') => {
     set({ eventFilter: scope });
+  },
+
+  joinEvent: async (eventId: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const { error } = await supabase.from('event_participants').insert({ event_id: eventId, user_id: userId });
+    return !error;
+  },
+  leaveEvent: async (eventId: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const { error } = await supabase.from('event_participants').delete().eq('event_id', eventId).eq('user_id', userId);
+    return !error;
+  },
+  setReminder: async (eventId: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const { error } = await supabase.from('event_reminders').insert({ event_id: eventId, user_id: userId });
+    return !error;
+  },
+  clearReminder: async (eventId: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const { error } = await supabase.from('event_reminders').delete().eq('event_id', eventId).eq('user_id', userId);
+    return !error;
   },
 
   signIn: async (method: 'email' | 'google', email?: string, password?: string) => {
@@ -556,5 +602,7 @@ export const useStore = create<AppState>((set, get) => ({
       
       return isFollowingOrg || hasMatchingTags;
     });
-  }
+  },
+
+  isParticipant: (_eventId: string) => true,
 }));
