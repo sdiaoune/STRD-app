@@ -22,6 +22,7 @@ export const EventDetailsScreen: React.FC = () => {
   const { eventId } = route.params;
   
   const { eventById, orgById, joinEvent, leaveEvent, setReminder, clearReminder, currentUser } = useStore();
+  const unit = useStore(state => state.unitPreference);
   const event = eventById(eventId);
   const organization = event ? orgById(event.orgId) : null;
 
@@ -126,7 +127,7 @@ export const EventDetailsScreen: React.FC = () => {
             <View style={styles.dateTimeItem}>
               <Ionicons name="navigate" size={20} color={colors.primary} />
               <Text style={styles.dateTimeText}>
-                {formatDistance(event.distanceFromUserKm)} away
+                {formatDistance(event.distanceFromUserKm, unit)} away
               </Text>
             </View>
           </View>

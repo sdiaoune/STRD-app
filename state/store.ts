@@ -37,6 +37,8 @@ interface AppState {
   runState: RunState;
   isAuthenticated: boolean;
   authError: string | null;
+  // Preferences
+  unitPreference: 'metric' | 'imperial';
   
   // Actions
   likeToggle: (postId: string) => Promise<void>;
@@ -53,6 +55,7 @@ interface AppState {
   leaveEvent: (eventId: string) => Promise<boolean>;
   setReminder: (eventId: string) => Promise<boolean>;
   clearReminder: (eventId: string) => Promise<boolean>;
+  setUnitPreference: (unit: 'metric' | 'imperial') => void;
   signIn: (method: 'email' | 'google', email?: string, password?: string) => Promise<void>;
   signUp: (name: string, email: string, password?: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -89,9 +92,13 @@ export const useStore = create<AppState>((set, get) => ({
     interests: [],
     followingOrgs: [],
   },
+  unitPreference: 'metric',
 
   setActivityType: (type: 'run' | 'walk') => {
     set((state) => ({ runState: { ...state.runState, activityType: type } }));
+  },
+  setUnitPreference: (unit: 'metric' | 'imperial') => {
+    set({ unitPreference: unit });
   },
   eventFilter: 'forYou',
   runState: {

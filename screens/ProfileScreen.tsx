@@ -19,6 +19,8 @@ import { Button } from '../components/Button';
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { currentUser, runPosts, events, postById, eventById } = useStore();
+  const unit = useStore(state => state.unitPreference);
+  const { formatDistance } = require('../utils/format');
   const updateProfile = useStore(state => state.updateProfile);
   const [editingName, setEditingName] = React.useState(false);
   const [editingBio, setEditingBio] = React.useState(false);
@@ -179,7 +181,7 @@ export const ProfileScreen: React.FC = () => {
             stats={[
               { label: 'Total Runs', value: totalRuns },
               { label: 'Weekly Streak', value: weeklyStreak },
-              { label: 'Total Distance', value: `${totalDistance.toFixed(1)} km` }
+              { label: 'Total Distance', value: `${formatDistance(totalDistance, unit)}` }
             ]}
           />
         </View>
@@ -201,7 +203,7 @@ export const ProfileScreen: React.FC = () => {
       </ScrollView>
       <View style={styles.footerActions}>
         <View style={styles.footerRow}>
-          <Button variant="outline" onPress={async () => { await signOut(); }}>Sign out</Button>
+          <Button style={{ width: '100%' }} onPress={() => (navigation as any).navigate('Settings')}>Settings</Button>
         </View>
       </View>
     </SafeAreaView>

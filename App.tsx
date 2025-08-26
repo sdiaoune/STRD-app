@@ -19,6 +19,7 @@ import { ProfileScreen } from './screens/ProfileScreen';
 import { BusinessProfileScreen } from './screens/BusinessProfileScreen';
 import { UserSearchScreen } from './screens/UserSearchScreen';
 import { RunnerProfileScreen } from './screens/RunnerProfileScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 import BlurTabBarBackground, { useBottomTabOverflow } from './components/ui/TabBarBackground.ios';
 import { HapticTab } from './components/HapticTab';
 import { SignInScreen } from './screens/SignInScreen';
@@ -150,6 +151,11 @@ function ProfileStack() {
         name="RunnerProfile" 
         component={RunnerProfileScreen}
         options={{ title: 'Runner' }}
+      />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
       />
     </Stack.Navigator>
   );

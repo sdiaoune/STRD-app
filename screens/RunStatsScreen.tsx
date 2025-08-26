@@ -25,6 +25,7 @@ export const RunStatsScreen: React.FC = () => {
   const { runId } = route.params;
   
   const { postById, userById } = useStore();
+  const unit = useStore(state => state.unitPreference);
   const run = postById(runId);
   const user = run ? userById(run.userId) : null;
 
@@ -92,7 +93,7 @@ export const RunStatsScreen: React.FC = () => {
         <View style={styles.mainStats}>
           <View style={styles.statCard}>
             <Ionicons name="speedometer" size={32} color={colors.primary} />
-            <Text style={styles.statValue}>{formatDistance(run.distanceKm)}</Text>
+            <Text style={styles.statValue}>{formatDistance(run.distanceKm, unit)}</Text>
             <Text style={styles.statLabel}>Distance</Text>
           </View>
           <View style={styles.statCard}>
@@ -102,7 +103,7 @@ export const RunStatsScreen: React.FC = () => {
           </View>
           <View style={styles.statCard}>
             <Ionicons name="flash" size={32} color={colors.primary} />
-            <Text style={styles.statValue}>{formatPace(run.avgPaceMinPerKm)}</Text>
+            <Text style={styles.statValue}>{formatPace(run.avgPaceMinPerKm, unit)}</Text>
             <Text style={styles.statLabel}>Average Pace</Text>
           </View>
         </View>

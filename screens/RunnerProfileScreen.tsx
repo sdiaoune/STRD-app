@@ -16,6 +16,8 @@ export const RunnerProfileScreen: React.FC = () => {
   const navigation = useNavigation<RunnerProfileScreenNav>();
   const { userId } = route.params as { userId: string };
   const { userById, runPosts } = useStore();
+  const unit = useStore(state => state.unitPreference);
+  const { formatDistance } = require('../utils/format');
   const followUser = useStore(s => s.followUser);
   const unfollowUser = useStore(s => s.unfollowUser);
   const currentUser = useStore(s => s.currentUser);
@@ -65,7 +67,7 @@ export const RunnerProfileScreen: React.FC = () => {
         </View>
 
         <View style={{ marginTop: spacing.md }}>
-          <StatsRow stats={[{ label: 'Total Runs', value: totalRuns }, { label: 'Weekly Streak', value: weeklyStreak }, { label: 'Total Distance', value: `${totalDistance.toFixed(1)} km` }]} />
+          <StatsRow stats={[{ label: 'Total Runs', value: totalRuns }, { label: 'Weekly Streak', value: weeklyStreak }, { label: 'Total Distance', value: `${formatDistance(totalDistance, unit)}` }]} />
         </View>
 
         <Text style={styles.section}>Recent Posts</Text>
@@ -74,7 +76,7 @@ export const RunnerProfileScreen: React.FC = () => {
         ) : (
           posts.map(p => (
             <View key={p.id} style={styles.postRow}>
-              <Text style={styles.postText}>{new Date(p.createdAtISO).toLocaleDateString()} • {p.distanceKm.toFixed(2)} km</Text>
+              <Text style={styles.postText}>{new Date(p.createdAtISO).toLocaleDateString()} • {formatDistance(p.distanceKm, unit)}</Text>
             </View>
           ))
         )}

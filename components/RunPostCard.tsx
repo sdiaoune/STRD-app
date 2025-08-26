@@ -25,6 +25,7 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
   const likeToggle = useStore(state => state.likeToggle);
   const user = userById(post.userId);
   const navigation = useNavigation<RunPostCardNavigationProp>();
+  const unit = useStore(state => state.unitPreference);
 
   const handleLike = () => {
     likeToggle(post.id);
@@ -55,7 +56,7 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
         <View style={styles.runStats}>
           <View style={styles.stat}>
             <Ionicons name="speedometer" size={20} color={colors.primary} />
-            <Text style={styles.statValue}>{formatDistance(post.distanceKm)}</Text>
+            <Text style={styles.statValue}>{formatDistance(post.distanceKm, unit)}</Text>
             <Text style={styles.statLabel}>Distance</Text>
           </View>
           <View style={styles.stat}>
@@ -65,7 +66,7 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
           </View>
           <View style={styles.stat}>
             <Ionicons name="flash" size={20} color={colors.primary} />
-            <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm)}</Text>
+            <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm, unit)}</Text>
             <Text style={styles.statLabel}>Pace</Text>
           </View>
         </View>

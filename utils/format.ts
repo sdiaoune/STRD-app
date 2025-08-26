@@ -9,7 +9,17 @@ export const formatTime = (seconds: number): string => {
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-export const formatDistance = (km: number): string => {
+export const formatDistance = (km: number, unit: 'metric' | 'imperial' = 'metric'): string => {
+  if (unit === 'imperial') {
+    // Display in miles/feet but keep input km
+    const miles = km * 0.621371;
+    if (miles <= 0) return '0 ft';
+    const feet = Math.round(km * 3280.84);
+    if (feet < 528) return `${feet} ft`; // < 0.1 mile in feet
+    const milesRounded = Math.round(miles * 10) / 10;
+    return `${milesRounded.toFixed(milesRounded % 1 === 0 ? 0 : 1)} mi`;
+  }
+  // metric
   if (km <= 0) return '0 m';
   const meters = Math.round(km * 1000);
   if (meters < 1000) return `${meters} m`;
@@ -17,13 +27,15 @@ export const formatDistance = (km: number): string => {
   return `${kmRounded.toFixed(kmRounded % 1 === 0 ? 0 : 1)} km`;
 };
 
-export const formatPace = (minPerKm: number): string => {
-  if (!isFinite(minPerKm) || minPerKm <= 0) return `— /km`;
+export const formatPace = (minPerKm: number, unit: 'metric' | 'imperial' = 'metric'): string => {
+  if (!isFinite(minPerKm) || minPerKm <= 0) return unit === 'imperial' ? `— /mi` : `— /km`;
   // Clamp unrealistic values
-  if (minPerKm > 30) return `— /km`;
-  const minutes = Math.floor(minPerKm);
-  const seconds = Math.round((minPerKm - minutes) * 60);
-  return `${minutes}:${seconds.toString().padStart(2, '0')} /km`;
+  if (minPerKm > 30) return unit === 'imperial' ? `— /mi` : `— /km`;
+  // Convert minutes per km to minutes per mile if needed
+  const value = unit === 'imperial' ? minPerKm / 0.621371 : minPerKm; // min/mi = min/km ÷ (km/mi)
+  const minutes = Math.floor(value);
+  const seconds = Math.round((value - minutes) * 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')} ${unit === 'imperial' ? '/mi' : '/km'}`;
 };
 
 export const formatDate = (dateISO: string): string => {

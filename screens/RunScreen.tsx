@@ -33,6 +33,7 @@ export const RunScreen: React.FC = () => {
   const endRun = useStore((s) => s.endRun);
   const postRun = useStore((s) => s.postRun);
   const onLocationUpdate = useStore((s) => s.onLocationUpdate);
+  const unit = useStore((s) => s.unitPreference);
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -90,7 +91,6 @@ export const RunScreen: React.FC = () => {
             Location.watchPositionAsync(
               {
                 accuracy: Location.Accuracy.BestForNavigation,
-                activityType: Location.ActivityType.Fitness,
                 timeInterval: 1000,
                 distanceInterval: 1,
               },
@@ -181,7 +181,7 @@ export const RunScreen: React.FC = () => {
                   <View style={styles.summaryStats}>
                     <View style={styles.summaryStat}>
                       <Text style={styles.summaryValue}>
-                        {formatDistance(runState.distanceKm)}
+                        {formatDistance(runState.distanceKm, unit)}
                       </Text>
                       <Text style={styles.summaryLabel}>Distance</Text>
                     </View>
@@ -262,7 +262,7 @@ export const RunScreen: React.FC = () => {
                 <Text style={styles.statusLabel}>Motion</Text>
               </View>
               <View style={styles.statusTile} accessibilityRole="text" accessibilityLabel={`Low Power ${isLowPowerMode ? 'On' : 'Off'}`}>
-                <Ionicons name={isLowPowerMode ? 'battery-dead' : 'battery-half'} size={18} color={isLowPowerMode ? colors.warning : colors.muted} />
+                <Ionicons name={isLowPowerMode ? 'battery-dead' : 'battery-half'} size={18} color={isLowPowerMode ? colors.primary : colors.muted} />
                 <Text style={styles.statusLabel}>Low Power</Text>
               </View>
             </View>
@@ -308,14 +308,14 @@ export const RunScreen: React.FC = () => {
               <View style={styles.metric}>
                 <Ionicons name="speedometer" size={32} color={colors.primary} />
                 <Text style={styles.metricValue}>
-                  {formatDistance(runState.distanceKm)}
+                  {formatDistance(runState.distanceKm, unit)}
                 </Text>
                 <Text style={styles.metricLabel}>Distance</Text>
               </View>
               <View style={styles.metric}>
                 <Ionicons name="flash" size={32} color={colors.primary} />
                 <Text style={styles.metricValue}>
-                  {formatPace(runState.currentPace)}
+                  {formatPace(runState.currentPace, unit)}
                 </Text>
                 <Text style={styles.metricLabel}>Current Pace</Text>
               </View>

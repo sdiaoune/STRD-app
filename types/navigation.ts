@@ -42,4 +42,5 @@ export type ProfileStackParamList = {
   EventDetails: { eventId: string };
   BusinessProfile: { orgId: string };
   UserSearch: undefined;
+  Settings: undefined;
 };

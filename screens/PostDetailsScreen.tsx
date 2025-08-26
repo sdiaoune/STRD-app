@@ -30,6 +30,7 @@ export const PostDetailsScreen: React.FC = () => {
   
   const [commentText, setCommentText] = useState('');
   const { postById, userById, likeToggle, addComment, deleteRunPost, currentUser } = useStore();
+  const unit = useStore(state => state.unitPreference);
   const post = postById(postId);
   const user = post ? userById(post.userId) : null;
   const decodedPath = post?.routePolyline ? decodePolyline(post.routePolyline) : [];
@@ -125,7 +126,7 @@ export const PostDetailsScreen: React.FC = () => {
         <View style={styles.runStats}>
           <View style={styles.stat}>
             <Ionicons name="speedometer" size={24} color={colors.primary} />
-            <Text style={styles.statValue}>{formatDistance(post.distanceKm)}</Text>
+            <Text style={styles.statValue}>{formatDistance(post.distanceKm, unit)}</Text>
             <Text style={styles.statLabel}>Distance</Text>
           </View>
           <View style={styles.stat}>
@@ -135,7 +136,7 @@ export const PostDetailsScreen: React.FC = () => {
           </View>
           <View style={styles.stat}>
             <Ionicons name="flash" size={24} color={colors.primary} />
-            <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm)}</Text>
+            <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm, unit)}</Text>
             <Text style={styles.statLabel}>Pace</Text>
           </View>
         </View>

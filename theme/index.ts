@@ -10,6 +10,7 @@ export const colors = {
   border: tokens.colors.border,
   // Non-breaking: expose secondary for finer contrast tuning
   secondary: tokens.colors.text.secondary,
+  warning: tokens.colors.warning,
 };
 
 export const spacing = {

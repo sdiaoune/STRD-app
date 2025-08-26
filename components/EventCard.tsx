@@ -18,6 +18,7 @@ interface Props {
 export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   const orgById = useStore((s) => s.orgById);
   const organization = orgById(event.orgId);
+  const unit = useStore(s => s.unitPreference);
 
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
@@ -34,8 +35,8 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="location" size={20} color={colors.text.muted} />
             <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}
-                  accessibilityLabel={`Distance ${formatDistance(event.distanceFromUserKm)}`}>
-              {formatDistance(event.distanceFromUserKm)}
+                  accessibilityLabel={`Distance ${formatDistance(event.distanceFromUserKm, unit)}`}>
+              {formatDistance(event.distanceFromUserKm, unit)}
             </Text>
           </View>
         </View>
