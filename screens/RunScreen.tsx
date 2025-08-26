@@ -29,6 +29,7 @@ export const RunScreen: React.FC = () => {
   const runState = useStore((s) => s.runState);
   const startRun = useStore((s) => s.startRun);
   const tickRun = useStore((s) => s.tickRun);
+  const setActivityType = useStore((s) => s.setActivityType);
   const endRun = useStore((s) => s.endRun);
   const postRun = useStore((s) => s.postRun);
   const onLocationUpdate = useStore((s) => s.onLocationUpdate);
@@ -243,7 +244,7 @@ export const RunScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Run</Text>
+        <Text style={styles.title}>STRD</Text>
       </View>
 
       <View style={styles.content}>
@@ -269,13 +270,17 @@ export const RunScreen: React.FC = () => {
             <View style={styles.idleIcon}>
               <Ionicons name="play-circle" size={80} color={colors.primary} />
             </View>
-            <Text style={styles.idleTitle}>Ready to Run?</Text>
+            <Text style={styles.idleTitle}>Ready to STRD?</Text>
             <Text style={styles.idleSubtitle}>
               Tap the button below to start tracking your run
             </Text>
             <View style={{ alignSelf: 'stretch' }}>
-              <TouchableOpacity style={[styles.startButton, !hasLocationPermission && styles.startButtonDisabled]} onPress={handleStartRun} accessibilityRole="button" hitSlop={12} disabled={!hasLocationPermission}>
+              <TouchableOpacity style={[styles.startButton, !hasLocationPermission && styles.startButtonDisabled]} onPress={() => { setActivityType('run'); handleStartRun(); }} accessibilityRole="button" hitSlop={12} disabled={!hasLocationPermission}>
                 <Text style={styles.startButtonText}>Start Run</Text>
+              </TouchableOpacity>
+              <View style={{ height: spacing.sm }} />
+              <TouchableOpacity style={[styles.startButton, !hasLocationPermission && styles.startButtonDisabled]} onPress={() => { setActivityType('walk'); handleStartRun(); }} accessibilityRole="button" hitSlop={12} disabled={!hasLocationPermission}>
+                <Text style={styles.startButtonText}>Start Walk</Text>
               </TouchableOpacity>
               {!hasLocationPermission && (
                 <TouchableOpacity style={styles.enableButton} onPress={requestLocation} accessibilityRole="button" hitSlop={12}>
@@ -462,12 +467,15 @@ const styles = StyleSheet.create({
   timerSection: {
     alignItems: 'center',
     marginBottom: spacing.xl,
+    paddingTop: spacing.lg,
   },
   timer: {
     ...typography.h1,
     color: colors.primary,
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: 'bold',
+    lineHeight: 64,
+    includeFontPadding: false,
   },
   timerLabel: {
     ...typography.caption,

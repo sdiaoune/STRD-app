@@ -36,8 +36,10 @@ export type RunStackParamList = {
 
 export type ProfileStackParamList = {
   UserProfile: undefined;
+  RunnerProfile: { userId: string };
   PostDetails: { postId: string };
   RunStats: { runId: string };
   EventDetails: { eventId: string };
   BusinessProfile: { orgId: string };
+  UserSearch: undefined;
 };

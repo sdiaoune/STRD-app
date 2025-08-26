@@ -6,6 +6,7 @@ export type User = {
   city: string | null;
   interests: string[] | null;
   followingOrgs: string[]; // derived from user_following_organizations
+  bio?: string | null;
 };
 
 export type Organization = {
@@ -46,6 +47,7 @@ export type RunPost = {
   distanceKm: number;
   durationMin: number;
   avgPaceMinPerKm: number;
+  activityType?: 'run' | 'walk';
   routePolyline?: string | null;
   routePreview?: string | null;
   caption?: string | null;

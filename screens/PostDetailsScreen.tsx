@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions, Alert, Platform, KeyboardAvoidingView } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -24,12 +25,13 @@ export const PostDetailsScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailsScreenNavigationProp>();
   const route = useRoute<PostDetailsScreenRouteProp>();
   const { postId } = route.params;
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   
   const [commentText, setCommentText] = useState('');
-  const { postById, userById, likeToggle, addComment } = useStore();
+  const { postById, userById, likeToggle, addComment, deleteRunPost, currentUser } = useStore();
   const post = postById(postId);
   const user = post ? userById(post.userId) : null;
-
   const decodedPath = post?.routePolyline ? decodePolyline(post.routePolyline) : [];
 
   if (!post || !user) {
@@ -41,6 +43,16 @@ export const PostDetailsScreen: React.FC = () => {
       </SafeAreaView>
     );
   }
+
+  const handleDelete = () => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        const ok = await deleteRunPost(post.id);
+        if (ok) navigation.goBack();
+      }}
+    ]);
+  };
 
   const handleLike = () => {
     likeToggle(post.id);
@@ -88,7 +100,8 @@ export const PostDetailsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={headerHeight + 24}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Post Header */}
         <View style={styles.postHeader}>
           <View style={styles.userInfo}>
@@ -98,7 +111,14 @@ export const PostDetailsScreen: React.FC = () => {
               <Text style={styles.userHandle}>{user.handle}</Text>
             </View>
           </View>
-          <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
+            {currentUser.id === post.userId && (
+              <TouchableOpacity onPress={handleDelete} style={{ marginLeft: spacing.md }} accessibilityRole="button">
+                <Ionicons name="trash" size={20} color={colors.muted} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Run Stats */}
@@ -200,6 +220,7 @@ export const PostDetailsScreen: React.FC = () => {
           />
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

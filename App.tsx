@@ -17,6 +17,8 @@ import { RunStatsScreen } from './screens/RunStatsScreen';
 import { RunScreen } from './screens/RunScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { BusinessProfileScreen } from './screens/BusinessProfileScreen';
+import { UserSearchScreen } from './screens/UserSearchScreen';
+import { RunnerProfileScreen } from './screens/RunnerProfileScreen';
 import BlurTabBarBackground, { useBottomTabOverflow } from './components/ui/TabBarBackground.ios';
 import { HapticTab } from './components/HapticTab';
 import { SignInScreen } from './screens/SignInScreen';
@@ -144,6 +146,34 @@ function ProfileStack() {
         component={BusinessProfileScreen}
         options={{ title: 'Organization' }}
       />
+      <Stack.Screen 
+        name="RunnerProfile" 
+        component={RunnerProfileScreen}
+        options={{ title: 'Runner' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function SearchStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.bg },
+        headerTintColor: colors.text,
+        headerTitleStyle: { color: colors.text },
+      }}
+    >
+      <Stack.Screen 
+        name="UserSearch" 
+        component={UserSearchScreen}
+        options={{ title: 'Search' }}
+      />
+      <Stack.Screen 
+        name="RunnerProfile" 
+        component={RunnerProfileScreen}
+        options={{ title: 'Runner' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -192,7 +222,9 @@ export default function App() {
                 } else if (route.name === 'Timeline') {
                   iconName = focused ? 'home' : 'home-outline';
                 } else if (route.name === 'Run') {
-                  iconName = focused ? 'play-circle' : 'play-circle-outline';
+                  iconName = focused ? 'flash' : 'flash-outline';
+                } else if (route.name === 'Search') {
+                  iconName = focused ? 'search' : 'search-outline';
                 } else if (route.name === 'Profile') {
                   iconName = focused ? 'person' : 'person-outline';
                 } else {
@@ -217,7 +249,8 @@ export default function App() {
           >
             <Tab.Screen name="Events" component={EventsStack} />
             <Tab.Screen name="Timeline" component={TimelineStack} />
-            <Tab.Screen name="Run" component={RunStack} />
+            <Tab.Screen name="Search" component={SearchStack} />
+            <Tab.Screen name="Run" component={RunStack} options={{ tabBarLabel: 'STRD' }} />
             <Tab.Screen name="Profile" component={ProfileStack} />
           </Tab.Navigator>
         ) : (

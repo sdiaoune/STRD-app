@@ -1,13 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography, motion } from '../tokens';
+import { colors, spacing, typography } from '../tokens';
 
 interface Props {
   message: string;
   type?: 'success' | 'error' | 'info' | 'warning';
   onDismiss?: () => void;
   duration?: number;
+  position?: 'top' | 'bottom';
+  size?: 'normal' | 'large';
 }
 
 export const Toast: React.FC<Props> = ({
@@ -15,8 +17,10 @@ export const Toast: React.FC<Props> = ({
   type = 'info',
   onDismiss,
   duration = 3500,
+  position = 'bottom',
+  size = 'normal',
 }) => {
-  const translateY = useRef(new Animated.Value(100)).current;
+  const translateY = useRef(new Animated.Value(position === 'top' ? -100 : 100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   const getIconName = () => {
@@ -64,7 +68,7 @@ export const Toast: React.FC<Props> = ({
     const timer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(translateY, {
-          toValue: 100,
+          toValue: position === 'top' ? -100 : 100,
           duration: 320,
           useNativeDriver: true,
         }),
@@ -88,13 +92,15 @@ export const Toast: React.FC<Props> = ({
         {
           transform: [{ translateY }],
           opacity,
+          top: position === 'top' ? spacing[8] : undefined,
+          bottom: position === 'bottom' ? spacing[8] : undefined,
         },
       ]}
       accessibilityRole="alert"
     >
-      <View style={styles.content}>
-        <Ionicons name={getIconName()} size={20} color={getIconColor()} />
-        <Text style={styles.text}>{message}</Text>
+      <View style={[styles.content, size === 'large' && styles.contentLarge]}>
+        <Ionicons name={getIconName()} size={22} color={getIconColor()} />
+        <Text style={[styles.text, size === 'large' && styles.textLarge]}>{message}</Text>
       </View>
     </Animated.View>
   );
@@ -103,18 +109,17 @@ export const Toast: React.FC<Props> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 100,
     left: spacing[4],
     right: spacing[4],
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 10,
   },
   content: {
     flexDirection: 'row',
@@ -122,10 +127,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
   },
+  contentLarge: {
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[4],
+    borderRadius: 16,
+  },
   text: {
     ...typography.body,
-    color: colors.text,
+    color: '#FFFFFF',
     marginLeft: spacing[2],
     flex: 1,
+  },
+  textLarge: {
+    fontSize: 18,
+    lineHeight: 24,
   },
 });

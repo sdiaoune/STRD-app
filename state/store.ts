@@ -20,6 +20,7 @@ interface RunState {
   currentSpeedKmh?: number;
   lastLocation?: { latitude: number; longitude: number; timestamp: number } | null;
   path: { latitude: number; longitude: number; timestamp: number }[];
+  activityType: 'run' | 'walk';
 }
 
 interface AppState {
@@ -45,6 +46,8 @@ interface AppState {
   endRun: () => RunPost;
   onLocationUpdate: (lat: number, lon: number, timestampMs: number, accuracy?: number, speedMs?: number | null) => void;
   postRun: (caption: string, image?: string) => Promise<boolean>;
+  deleteRunPost: (postId: string) => Promise<boolean>;
+  setActivityType: (type: 'run' | 'walk') => void;
   filterEvents: (scope: 'forYou' | 'all') => void;
   joinEvent: (eventId: string) => Promise<boolean>;
   leaveEvent: (eventId: string) => Promise<boolean>;
@@ -56,6 +59,10 @@ interface AppState {
   initializeAuth: () => Promise<void>;
   _loadInitialData: () => Promise<void>;
   uploadAvatar: (uri: string) => Promise<string | null>;
+  updateProfile: (fields: { name?: string | null; bio?: string | null }) => Promise<boolean>;
+  searchUsers: (query: string) => Promise<User[]>;
+  followUser: (userId: string) => Promise<boolean>;
+  unfollowUser: (userId: string) => Promise<boolean>;
   
   // Helpers
   eventById: (id: string) => Event | undefined;
@@ -82,6 +89,10 @@ export const useStore = create<AppState>((set, get) => ({
     interests: [],
     followingOrgs: [],
   },
+
+  setActivityType: (type: 'run' | 'walk') => {
+    set((state) => ({ runState: { ...state.runState, activityType: type } }));
+  },
   eventFilter: 'forYou',
   runState: {
     isRunning: false,
@@ -91,7 +102,8 @@ export const useStore = create<AppState>((set, get) => ({
     currentPace: 5.5,
     currentSpeedKmh: 0,
     lastLocation: null,
-    path: []
+    path: [],
+    activityType: 'run'
   },
   isAuthenticated: false,
   authError: null,
@@ -153,6 +165,7 @@ export const useStore = create<AppState>((set, get) => ({
       avatar: profile.avatar_url,
       city: profile.city,
       interests: profile.interests ?? [],
+      bio: (profile as any).bio ?? null,
       followingOrgs,
     }] : []);
 
@@ -210,8 +223,35 @@ export const useStore = create<AppState>((set, get) => ({
       ...eventsMapped.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO })),
     ].sort((a, b) => new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime());
 
+    // Fetch author and commenter profiles for visible posts (other than current user)
+    const authorIds = new Set<string>(runPosts.map(p => p.userId).filter(id => id && id !== currentUserId) as string[]);
+    const commenterIds = new Set<string>();
+    runPosts.forEach(p => {
+      (commentsByPostId.get(p.id) || []).forEach(c => {
+        if (c.userId && c.userId !== currentUserId) commenterIds.add(c.userId);
+      });
+    });
+    const neededIds = Array.from(new Set<string>([...authorIds, ...commenterIds]));
+    let extraUsers: User[] = [];
+    if (neededIds.length > 0) {
+      const { data: profilesNeeded } = await supabase
+        .from('profiles')
+        .select('id, name, handle, avatar_url, city, interests, bio')
+        .in('id', neededIds as any);
+      extraUsers = (profilesNeeded || []).map(p => ({
+        id: p.id,
+        name: p.name,
+        handle: p.handle,
+        avatar: p.avatar_url,
+        city: p.city,
+        interests: p.interests ?? [],
+        followingOrgs: [],
+        bio: (p as any).bio ?? null,
+      }));
+    }
+
     set({
-      users,
+      users: [...users, ...extraUsers],
       organizations,
       events: eventsMapped,
       runPosts,
@@ -384,14 +424,17 @@ export const useStore = create<AppState>((set, get) => ({
     const routePolyline = path.length >= 2 ? encodePolyline(path) : null;
     // Compute average pace from distance and duration to avoid Infinity/NaN
     const distanceKm = Math.round(get().runState.distanceKm * 100) / 100;
-    const durationMin = Math.round(get().runState.elapsedSeconds / 60);
-    const paceMinPerKmRaw = distanceKm > 0 ? (durationMin / distanceKm) : 0;
+    const elapsedSeconds = get().runState.elapsedSeconds;
+    const durationMin = elapsedSeconds > 0 ? Math.max(1, Math.round(elapsedSeconds / 60)) : 0;
+    // Compute average pace using precise seconds: (minutes) / km
+    const paceMinPerKmRaw = distanceKm > 0 ? ((elapsedSeconds / 60) / distanceKm) : 0;
     const avgPaceMinPerKm = isFinite(paceMinPerKmRaw) && !isNaN(paceMinPerKmRaw) ? Math.round(paceMinPerKmRaw * 10) / 10 : 0;
     const newRun = {
       user_id: userId,
       distance_km: distanceKm,
       duration_min: durationMin,
       avg_pace_min_per_km: avgPaceMinPerKm,
+      activity_type: get().runState.activityType,
       route_polyline: routePolyline,
       route_preview_url: image || null,
       caption: caption || null,
@@ -408,6 +451,7 @@ export const useStore = create<AppState>((set, get) => ({
         distanceKm: data.distance_km,
         durationMin: data.duration_min,
         avgPaceMinPerKm: data.avg_pace_min_per_km,
+        activityType: data.activity_type,
         routePolyline: data.route_polyline ?? null,
         routePreview: data.route_preview_url,
         caption: data.caption,
@@ -426,6 +470,20 @@ export const useStore = create<AppState>((set, get) => ({
     } catch {
       return false;
     }
+  },
+
+  deleteRunPost: async (postId: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const { data: post } = await supabase.from('run_posts').select('user_id').eq('id', postId).maybeSingle();
+    if (!post || post.user_id !== userId) return false;
+    const { error } = await supabase.from('run_posts').delete().eq('id', postId);
+    if (error) return false;
+    set((state) => ({
+      runPosts: state.runPosts.filter(p => p.id !== postId),
+      timelineItems: state.timelineItems.filter(t => !(t.type === 'run' && t.refId === postId)),
+    }));
+    return true;
   },
 
   filterEvents: (scope: 'forYou' | 'all') => {
@@ -567,6 +625,48 @@ export const useStore = create<AppState>((set, get) => ({
       users: state.users.map(u => u.id === userId ? { ...u, avatar: displayUrl } : u),
     }));
     return displayUrl;
+  },
+
+  updateProfile: async (fields: { name?: string | null; bio?: string | null }) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const updates: any = {};
+    if (fields.name !== undefined) updates.name = fields.name;
+    if (fields.bio !== undefined) updates.bio = fields.bio;
+    const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
+    if (error) return false;
+    set((state) => ({
+      currentUser: { ...state.currentUser, ...('name' in updates ? { name: updates.name } : {}), ...('bio' in updates ? { bio: updates.bio } : {}) },
+      users: state.users.map(u => u.id === userId ? { ...u, ...('name' in updates ? { name: updates.name } : {}), ...('bio' in updates ? { bio: updates.bio } : {}) } : u),
+    }));
+    return true;
+  },
+
+  searchUsers: async (query: string) => {
+    const uid = get().currentUser.id;
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, name, handle, avatar_url, city, interests')
+      .ilike('name', `%${query}%`);
+    // fetch following map
+    const { data: following } = await supabase
+      .from('user_follows')
+      .select('followee_id')
+      .eq('follower_id', uid);
+    const followingSet = new Set((following || []).map(f => f.followee_id));
+    return (data || []).map(p => ({ id: p.id, name: p.name, handle: p.handle, avatar: p.avatar_url, city: p.city, interests: p.interests ?? [], followingOrgs: [], __following: followingSet.has(p.id) } as any));
+  },
+  followUser: async (userIdToFollow: string) => {
+    const userId = get().currentUser.id;
+    if (!userId || userIdToFollow === userId) return false;
+    const { error } = await supabase.from('user_follows').insert({ follower_id: userId, followee_id: userIdToFollow });
+    return !error;
+  },
+  unfollowUser: async (userIdToUnfollow: string) => {
+    const userId = get().currentUser.id;
+    if (!userId || userIdToUnfollow === userId) return false;
+    const { error } = await supabase.from('user_follows').delete().eq('follower_id', userId).eq('followee_id', userIdToUnfollow);
+    return !error;
   },
 
   // Helper functions

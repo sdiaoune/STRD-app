@@ -1,0 +1,108 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { ProfileStackParamList } from '../types/navigation';
+import { colors, spacing, borderRadius, typography } from '../theme';
+import { useStore } from '../state/store';
+import { StatsRow } from '../components/StatsRow';
+import { Avatar } from '../components/Avatar';
+
+type RunnerProfileScreenNav = NativeStackNavigationProp<ProfileStackParamList, 'RunnerProfile'>;
+
+export const RunnerProfileScreen: React.FC = () => {
+  const route = useRoute<any>();
+  const navigation = useNavigation<RunnerProfileScreenNav>();
+  const { userId } = route.params as { userId: string };
+  const { userById, runPosts } = useStore();
+  const followUser = useStore(s => s.followUser);
+  const unfollowUser = useStore(s => s.unfollowUser);
+  const currentUser = useStore(s => s.currentUser);
+  const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+
+  const user = userById(userId);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { supabase } = await import('../supabase/client');
+      const { data } = await supabase.from('user_follows').select('followee_id').eq('follower_id', currentUser.id).eq('followee_id', userId).maybeSingle();
+      if (mounted) setIsFollowing(!!data);
+    })();
+    return () => { mounted = false; };
+  }, [userId, currentUser.id]);
+
+  const posts = runPosts.filter(p => p.userId === userId);
+  const totalRuns = posts.length;
+  const totalDistance = posts.reduce((s, p) => s + p.distanceKm, 0);
+  const weeklyStreak = Math.floor(Math.random() * 7) + 1; // placeholder
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
+        <View style={styles.header}>
+          <Avatar source={user?.avatar || undefined} size={80} label={user?.name || undefined} />
+          <Text style={styles.name}>{user?.name || 'Runner'}</Text>
+          <Text style={styles.handle}>{user?.handle || ''}</Text>
+          {userId !== currentUser.id && (
+            <TouchableOpacity
+              style={[styles.followBtn, isFollowing ? styles.following : null]}
+              onPress={async () => {
+                if (isFollowing) {
+                  const ok = await unfollowUser(userId);
+                  if (ok) setIsFollowing(false);
+                } else {
+                  const ok = await followUser(userId);
+                  if (ok) setIsFollowing(true);
+                }
+              }}
+              disabled={isFollowing === null}
+            >
+              <Text style={styles.followText}>{isFollowing ? 'Following' : 'Follow'}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={{ marginTop: spacing.md }}>
+          <StatsRow stats={[{ label: 'Total Runs', value: totalRuns }, { label: 'Weekly Streak', value: weeklyStreak }, { label: 'Total Distance', value: `${totalDistance.toFixed(1)} km` }]} />
+        </View>
+
+        <Text style={styles.section}>Recent Posts</Text>
+        {posts.length === 0 ? (
+          <Text style={styles.empty}>No visible runs.</Text>
+        ) : (
+          posts.map(p => (
+            <View key={p.id} style={styles.postRow}>
+              <Text style={styles.postText}>{new Date(p.createdAtISO).toLocaleDateString()} • {p.distanceKm.toFixed(2)} km</Text>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  header: { alignItems: 'center', marginBottom: spacing.lg },
+  name: { ...typography.h2, color: colors.text, marginTop: spacing.md },
+  handle: { ...typography.caption, color: colors.muted },
+  followBtn: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  },
+  following: { opacity: 0.9 },
+  followText: { ...typography.body, color: colors.primary, fontWeight: '600' },
+  section: { ...typography.h3, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
+  empty: { ...typography.body, color: colors.muted },
+  postRow: { paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
+  postText: { ...typography.body, color: colors.text },
+});
+
+

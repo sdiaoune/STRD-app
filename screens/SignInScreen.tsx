@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { colors, spacing, typography, borderRadius } from '../theme';
 import { Button } from '../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../state/store';
+import { Toast } from '../components/Toast';
 
 export const SignInScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -13,6 +14,13 @@ export const SignInScreen: React.FC = () => {
   const authError = useStore(state => state.authError);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showToast, setShowToast] = useState(false);
+
+  useEffect(() => {
+    if (authError) {
+      setShowToast(true);
+    }
+  }, [authError]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -53,9 +61,6 @@ export const SignInScreen: React.FC = () => {
         </View>
 
         <Pressable style={styles.googleButton} onPress={() => signIn('google')} accessibilityRole="button">
-        {!!authError && (
-          <Text style={{ color: 'red', textAlign: 'center', marginTop: spacing.md }}>{authError}</Text>
-        )}
           <Ionicons name="logo-google" size={18} color={colors.text} style={{ marginRight: spacing.sm }} />
           <Text style={styles.googleText}>Continue with Google</Text>
         </Pressable>
@@ -67,6 +72,9 @@ export const SignInScreen: React.FC = () => {
           </Pressable>
         </View>
       </ScrollView>
+      {showToast && authError && (
+        <Toast message={authError} type="warning" position="top" size="large" onDismiss={() => setShowToast(false)} />
+      )}
     </SafeAreaView>
   );
 };

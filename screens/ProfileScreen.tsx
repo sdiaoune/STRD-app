@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,6 +19,11 @@ import { Button } from '../components/Button';
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { currentUser, runPosts, events, postById, eventById } = useStore();
+  const updateProfile = useStore(state => state.updateProfile);
+  const [editingName, setEditingName] = React.useState(false);
+  const [editingBio, setEditingBio] = React.useState(false);
+  const [nameDraft, setNameDraft] = React.useState(currentUser.name || '');
+  const [bioDraft, setBioDraft] = React.useState(currentUser.bio || '');
   const signOut = useStore(state => state.signOut);
   const uploadAvatar = useStore(state => state.uploadAvatar);
   const [uploading, setUploading] = React.useState(false);
@@ -118,11 +123,54 @@ export const ProfileScreen: React.FC = () => {
               {uploading ? 'Uploading…' : 'Change photo'}
             </Text>
           </View>
-          <Text style={styles.userName}>{currentUser.name}</Text>
+          {editingName ? (
+            <View style={styles.inlineFieldRow}>
+              <TextInput
+                value={nameDraft}
+                onChangeText={setNameDraft}
+                style={styles.inlineInput}
+                placeholder="Your name"
+                placeholderTextColor={colors.muted}
+              />
+              <TouchableOpacity onPress={async () => { if (await updateProfile({ name: nameDraft.trim() || null })) setEditingName(false); }} style={styles.inlineAction}>
+                <Text style={styles.inlineActionText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setNameDraft(currentUser.name || ''); setEditingName(false); }} style={styles.inlineAction}>
+                <Text style={styles.inlineActionText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={() => setEditingName(true)}>
+              <Text style={styles.userName}>{currentUser.name || 'Set your name'}</Text>
+            </TouchableOpacity>
+          )}
           <Text style={styles.userHandle}>{currentUser.handle}</Text>
-          <Text style={styles.userBio} numberOfLines={2} ellipsizeMode="tail">
-            Passionate runner from {currentUser.city}. Always looking for new challenges and great routes!
-          </Text>
+          {editingBio ? (
+            <View style={styles.inlineFieldCol}>
+              <TextInput
+                value={bioDraft}
+                onChangeText={setBioDraft}
+                style={[styles.inlineInput, { height: 80, textAlignVertical: 'top' }]}
+                placeholder="Add a short bio"
+                placeholderTextColor={colors.muted}
+                multiline
+              />
+              <View style={{ flexDirection: 'row', marginTop: spacing.sm }}>
+                <TouchableOpacity onPress={async () => { if (await updateProfile({ bio: bioDraft.trim() || null })) setEditingBio(false); }} style={styles.inlineAction}>
+                  <Text style={styles.inlineActionText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { setBioDraft(currentUser.bio || ''); setEditingBio(false); }} style={styles.inlineAction}>
+                  <Text style={styles.inlineActionText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={() => setEditingBio(true)}>
+              <Text style={styles.userBio} numberOfLines={2} ellipsizeMode="tail">
+                {currentUser.bio || `Passionate runner from ${currentUser.city || ''}. Always looking for new challenges and great routes!`}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Stats Row */}
@@ -152,9 +200,9 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </ScrollView>
       <View style={styles.footerActions}>
-        <Button variant="outline" onPress={async () => { await signOut(); }}>
-          Sign out
-        </Button>
+        <View style={styles.footerRow}>
+          <Button variant="outline" onPress={async () => { await signOut(); }}>Sign out</Button>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -192,6 +240,40 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: spacing.lg,
   },
+  inlineFieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  inlineFieldCol: {
+    width: '100%',
+    marginTop: spacing.sm,
+    alignItems: 'center',
+  },
+  inlineInput: {
+    flex: 1,
+    minWidth: 220,
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderWidth: 1,
+    color: colors.text,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  inlineAction: {
+    marginLeft: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 10,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  inlineActionText: {
+    ...typography.caption,
+    color: colors.primary,
+  },
   statsContainer: {
     padding: spacing.md,
   },
@@ -214,5 +296,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.bg,
+  },
+  footerRow: {
+    flexDirection: 'row',
   },
 });
