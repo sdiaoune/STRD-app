@@ -13,6 +13,16 @@ export const colors = {
 };
 
 export const spacing = {
+  // Numeric aliases for backwards compatibility with code using spacing[1..8]
+  1: tokens.spacing[1],
+  2: tokens.spacing[2],
+  3: tokens.spacing[3],
+  4: tokens.spacing[4],
+  5: tokens.spacing[5],
+  6: tokens.spacing[6],
+  7: tokens.spacing[7],
+  8: tokens.spacing[8],
+  // Named scale
   xs: tokens.spacing[1],
   sm: tokens.spacing[2],
   md: tokens.spacing[4],
