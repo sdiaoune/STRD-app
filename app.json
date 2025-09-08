@@ -16,7 +16,8 @@
         "NSPhotoLibraryAddUsageDescription": "We need permission to save your profile photo.",
         "NSLocationWhenInUseUsageDescription": "We use your location to track your run distance and pace.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to track your run distance and pace."
-      }
+      },
+      "bundleIdentifier": "com.anonymous.strd-app"
     },
     "android": {
       "adaptiveIcon": {

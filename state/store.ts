@@ -145,7 +145,7 @@ export const useStore = create<AppState>((set, get) => ({
       handle: profile.handle,
       avatar: profile.avatar_url,
       city: profile.city,
-      interests: profile.interests,
+      interests: profile.interests ?? [],
       followingOrgs,
     }] : []);
 
@@ -549,9 +549,9 @@ export const useStore = create<AppState>((set, get) => ({
     // For You logic: item's orgId ∈ currentUser.followingOrgs OR tag intersects currentUser.interests
     return state.events.filter(event => {
       const org = state.orgById(event.orgId);
-      const isFollowingOrg = state.currentUser.followingOrgs.includes(event.orgId);
+      const isFollowingOrg = (state.currentUser.followingOrgs || []).includes(event.orgId);
       const hasMatchingTags = event.tags.some(tag => 
-        state.currentUser.interests.includes(tag)
+        (state.currentUser.interests || []).includes(tag)
       );
       
       return isFollowingOrg || hasMatchingTags;
