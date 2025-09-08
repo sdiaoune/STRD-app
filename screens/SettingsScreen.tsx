@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../theme';
 import { useStore } from '../state/store';
+import { borderRadius, colors, spacing, typography } from '../theme';
 
 export const SettingsScreen: React.FC = () => {
   const signOut = useStore(state => state.signOut);
