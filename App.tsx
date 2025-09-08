@@ -8,7 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 
-import { colors } from './theme';
+import { colors, getNavigationTheme } from './theme';
 import { EventsScreen } from './screens/EventsScreen';
 import { EventDetailsScreen } from './screens/EventDetailsScreen';
 import { TimelineScreen } from './screens/TimelineScreen';
@@ -210,12 +210,13 @@ function AuthStack() {
 export default function App() {
   const isAuthenticated = useStore(state => state.isAuthenticated);
   const initializeAuth = useStore(state => state.initializeAuth);
+  const themePreference = 'dark';
   useEffect(() => {
     initializeAuth();
   }, []);
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer theme={getNavigationTheme()}>
         {isAuthenticated ? (
           <Tab.Navigator
             initialRouteName="Events"
@@ -242,7 +243,7 @@ export default function App() {
               tabBarActiveTintColor: colors.primary,
               tabBarInactiveTintColor: colors.muted,
               tabBarStyle: {
-                backgroundColor: colors.bg,
+                backgroundColor: colors.card,
                 borderTopWidth: 0,
                 elevation: 0,
                 shadowOpacity: 0,

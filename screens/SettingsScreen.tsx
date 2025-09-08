@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors } from '../theme';
 import { useStore } from '../state/store';
 
 export const SettingsScreen: React.FC = () => {
   const signOut = useStore(state => state.signOut);
   const unit = useStore(state => state.unitPreference);
   const setUnit = useStore(state => state.setUnitPreference);
+  const theme = useStore(state => state.themePreference);
+  const setTheme = useStore(state => state.setThemePreference);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.section}>
@@ -18,6 +20,17 @@ export const SettingsScreen: React.FC = () => {
           </Pressable>
           <Pressable onPress={() => setUnit('imperial')} style={[styles.unitBtn, unit === 'imperial' && styles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
             <Text style={[styles.unitText, unit === 'imperial' && styles.unitTextActive]}>Imperial (mi)</Text>
+          </Pressable>
+        </View>
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Appearance</Text>
+        <View style={styles.row}>
+          <Pressable onPress={() => setTheme('dark')} style={[styles.unitBtn, theme === 'dark' && styles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
+            <Text style={[styles.unitText, theme === 'dark' && styles.unitTextActive]}>Dark</Text>
+          </Pressable>
+          <Pressable onPress={() => setTheme('light')} style={[styles.unitBtn, theme === 'light' && styles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
+            <Text style={[styles.unitText, theme === 'light' && styles.unitTextActive]}>Light</Text>
           </Pressable>
         </View>
       </View>

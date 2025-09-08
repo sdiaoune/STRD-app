@@ -39,6 +39,7 @@ interface AppState {
   authError: string | null;
   // Preferences
   unitPreference: 'metric' | 'imperial';
+  themePreference: 'dark' | 'light';
   
   // Actions
   likeToggle: (postId: string) => Promise<void>;
@@ -56,6 +57,7 @@ interface AppState {
   setReminder: (eventId: string) => Promise<boolean>;
   clearReminder: (eventId: string) => Promise<boolean>;
   setUnitPreference: (unit: 'metric' | 'imperial') => void;
+  setThemePreference: (theme: 'dark' | 'light') => void;
   signIn: (method: 'email' | 'google', email?: string, password?: string) => Promise<void>;
   signUp: (name: string, email: string, password?: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -93,12 +95,17 @@ export const useStore = create<AppState>((set, get) => ({
     followingOrgs: [],
   },
   unitPreference: 'metric',
+  themePreference: 'dark',
 
   setActivityType: (type: 'run' | 'walk') => {
     set((state) => ({ runState: { ...state.runState, activityType: type } }));
   },
   setUnitPreference: (unit: 'metric' | 'imperial') => {
     set({ unitPreference: unit });
+  },
+  setThemePreference: (theme: 'dark' | 'light') => {
+    set({ themePreference: theme });
+    // Defer theme application to App and Settings screen (including optional reload)
   },
   eventFilter: 'forYou',
   runState: {

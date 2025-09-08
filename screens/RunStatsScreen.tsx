@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { TimelineStackParamList } from '../types/navigation';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography } from '../theme';``
 import { Avatar } from '../components/Avatar';
 import { formatDistance, formatPace, formatTime, getRelativeTime } from '../utils/format';
 import { useStore } from '../state/store';

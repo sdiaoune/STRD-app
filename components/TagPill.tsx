@@ -9,24 +9,15 @@ interface TagPillProps {
 
 export const TagPill: React.FC<TagPillProps> = ({ tag, style }) => {
   return (
-    <View style={[styles.container, style]}>
-      <Text style={styles.text}>{tag}</Text>
+    <View style={[{
+      backgroundColor: colors.primary + '20',
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.primary + '40',
+    }, style]}>
+      <Text style={[typography.small, { color: colors.primary, fontWeight: '600' }]}>{tag}</Text>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.primary + '20',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.primary + '40',
-  },
-  text: {
-    ...typography.small,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-});

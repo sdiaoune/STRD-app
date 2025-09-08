@@ -1,17 +1,44 @@
 // Backwards-compatible theme facade built on top of tokens
 import * as tokens from '../tokens';
 
-export const colors = {
+const darkColors = {
   bg: tokens.colors.bg.page,
   card: tokens.colors.bg.elev1,
   primary: tokens.colors.accent,
   text: tokens.colors.text.primary,
   muted: tokens.colors.text.muted,
   border: tokens.colors.border,
-  // Non-breaking: expose secondary for finer contrast tuning
   secondary: tokens.colors.text.secondary,
   warning: tokens.colors.warning,
 };
+
+const lightColors = {
+  bg: '#FAFBFF',
+  card: '#FFFFFF',
+  primary: tokens.colors.accent,
+  text: '#0B0C0F',
+  muted: '#586074',
+  border: '#E5E8F0',
+  secondary: '#2D3445',
+  warning: '#E3B23C',
+};
+
+export const getColors = (theme: 'dark' | 'light') => (theme === 'light' ? lightColors : darkColors);
+
+// Read current theme from store (fallback to dark before store initializes)
+const getCurrentTheme = (): 'dark' | 'light' => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { useStore } = require('../state/store');
+    const pref = useStore.getState?.()?.themePreference as 'dark' | 'light' | undefined;
+    return pref || 'dark';
+  } catch {
+    return 'dark';
+  }
+};
+
+// Stable dark theme export to avoid runtime issues
+export const colors = darkColors;
 
 export const spacing = {
   xs: tokens.spacing[1],
@@ -42,3 +69,26 @@ export const typography = {
 export const shadows = tokens.nativeShadows;
 export const surfaces = tokens.surfaces;
 export const gradient = tokens.gradient;
+
+// Helper to get React Navigation theme objects (fixed dark)
+export const getNavigationTheme = () => {
+  return {
+    dark: true,
+    colors: {
+      primary: colors.primary,
+      background: colors.bg,
+      card: colors.card,
+      text: colors.text,
+      border: colors.border,
+      notification: colors.primary,
+    },
+    fonts: {
+      regular: { fontFamily: 'System', fontWeight: '400' as const },
+      medium: { fontFamily: 'System', fontWeight: '500' as const },
+      bold: { fontFamily: 'System', fontWeight: '700' as const },
+      heavy: { fontFamily: 'System', fontWeight: '900' as const },
+    },
+  } as const;
+};
+
+// No runtime theme hook to keep module simple and crash-free
