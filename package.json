@@ -8,7 +8,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "eas-build-pre-install": "echo 'Node:' $(node -v); echo 'Yarn:' $(yarn -v); yarn config set network-timeout 600000 -g || true",
+    "eas-build-install": "yarn install --frozen-lockfile --non-interactive --network-timeout 600000 --verbose || yarn install --non-interactive --network-timeout 600000"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -57,5 +59,8 @@
     "typescript": "~5.8.3"
   },
   "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": "18.x"
+  },
   "private": true
 }
