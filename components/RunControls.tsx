@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from './Button';
-import { OutlineButton } from './OutlineButton';
-import { colors, spacing, typography, motion } from '../tokens';
+import { colors, spacing, typography } from '../tokens';
 
 interface Props {
   isRunning: boolean;
@@ -53,7 +52,7 @@ export const RunControls: React.FC<Props> = ({
       pulse.start();
       return () => pulse.stop();
     }
-  }, [isRunning]);
+  }, [isRunning, pulseAnim]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -128,7 +127,7 @@ export const RunControls: React.FC<Props> = ({
           
           {!hasLocationPermission && (
             <View style={styles.errorBanner}>
-              <Ionicons name="location-off" size={20} color={colors.error} />
+              <Ionicons name="alert-circle-outline" size={20} color={colors.error} />
               <Text style={styles.errorText}>
                 Location permission required to start tracking
               </Text>
@@ -251,7 +250,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     lineHeight: 56,
     fontWeight: '800',
-    color: colors.text,
+    color: colors.text.primary,
   },
   elapsedLabel: {
     ...typography.caption,
@@ -266,7 +265,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     ...typography.title,
-    color: colors.text,
+    color: colors.text.primary,
   },
   statLabel: {
     ...typography.caption,

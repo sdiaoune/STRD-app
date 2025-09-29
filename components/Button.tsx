@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pressable, Text, PressableProps, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, Text, PressableProps, View, ViewStyle, StyleProp } from 'react-native';
 import { colors, spacing, radii, typography } from '../tokens';
 import { gradient } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,41 +23,41 @@ export const Button: React.FC<ButtonProps> = ({
   const height = Math.max(size === 'primary' ? 56 : 48, 48);
   const horizontalPadding = variant === 'icon' ? spacing[2] : spacing[4];
 
-  const getVariantStyles = () => {
+  const variantStyles = useMemo<ViewStyle>(() => {
     switch (variant) {
       case 'primary':
         return {
           borderWidth: 0,
           borderColor: 'transparent',
-        } as const;
+        };
       case 'outline':
         return {
           backgroundColor: 'transparent',
           borderWidth: 1,
           borderColor: colors.border,
-        } as const;
+        };
       case 'ghost':
         return {
           backgroundColor: 'transparent',
           borderWidth: 0,
           borderColor: 'transparent',
-        } as const;
+        };
       case 'destructive':
         return {
           backgroundColor: 'transparent',
           borderWidth: 1,
           borderColor: colors.danger,
-        } as const;
+        };
       case 'icon':
         return {
           backgroundColor: 'transparent',
           borderWidth: 0,
           borderColor: 'transparent',
-        } as const;
+        };
       default:
-        return {} as const;
+        return {} as ViewStyle;
     }
-  };
+  }, [variant]);
 
   const getTextColor = () => {
     if (disabled) return colors.text.muted;
@@ -77,19 +77,26 @@ export const Button: React.FC<ButtonProps> = ({
     }
   };
 
-  const baseContainerStyle = [
-    {
-      height,
-      paddingHorizontal: horizontalPadding,
-      borderRadius: radii.lg,
-      justifyContent: 'center',
-      alignItems: 'center',
-      opacity: disabled ? 0.48 : 1,
-      overflow: 'hidden',
-    },
-    getVariantStyles(),
-    style,
-  ];
+  const baseContainerStyle = useMemo<StyleProp<ViewStyle>>(() => {
+    const styles: StyleProp<ViewStyle>[] = [
+      {
+        height,
+        paddingHorizontal: horizontalPadding,
+        borderRadius: radii.lg,
+        justifyContent: 'center',
+        alignItems: 'center',
+        opacity: disabled ? 0.48 : 1,
+        overflow: 'hidden',
+      } as ViewStyle,
+      variantStyles,
+    ];
+
+    if (style) {
+      styles.push(style as StyleProp<ViewStyle>);
+    }
+
+    return styles;
+  }, [disabled, height, horizontalPadding, style, variantStyles]);
 
   if (variant === 'primary') {
     return (
@@ -118,7 +125,7 @@ export const Button: React.FC<ButtonProps> = ({
         />
         {/* Gradient background */}
         <LinearGradient
-          colors={gradient.primary as unknown as string[]}
+          colors={gradient.primary}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{

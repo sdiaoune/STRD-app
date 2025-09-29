@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -31,33 +31,23 @@ export const ProfileScreen: React.FC = () => {
   const [uploading, setUploading] = React.useState(false);
 
   const handleChangeAvatar = async () => {
-    const action = await new Promise<'camera' | 'library' | 'cancel'>(resolve => {
-      // Simple fallback prompt using alerts since we don't have a native action sheet here
-      // User can pick from camera or library
-      // We'll default to library if camera denied
-      resolve('library');
-    });
     try {
       setUploading(true);
-      if (action === 'camera') {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-          // fallback to library
-          const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8 });
-          if (!res.canceled) await uploadAvatar(res.assets[0].uri);
-          setUploading(false);
-          return;
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'We need access to your photos to update the profile picture.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets?.length) {
+        const ok = await uploadAvatar(result.assets[0].uri);
+        if (!ok) {
+          Alert.alert('Upload failed', 'Unable to update your photo. Please try again.');
         }
-        const res = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.8 });
-        if (!res.canceled) await uploadAvatar(res.assets[0].uri);
-      } else if (action === 'library') {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          setUploading(false);
-          return;
-        }
-        const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8 });
-        if (!res.canceled) await uploadAvatar(res.assets[0].uri);
       }
     } finally {
       setUploading(false);

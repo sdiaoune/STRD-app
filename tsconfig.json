@@ -11,5 +11,11 @@
   "include": [
     "**/*.ts",
     "**/*.tsx"
+  ],
+  "exclude": [
+    "app/**",
+    "screens/EventDetails.tsx",
+    "screens/Profile.tsx",
+    "screens/Run.tsx"
   ]
 }

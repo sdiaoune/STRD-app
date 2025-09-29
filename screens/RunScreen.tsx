@@ -14,6 +14,8 @@ import { formatTime, formatDistance, formatPace } from '../utils/format';
 import { useStore } from '../state/store';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { regionForCoordinates } from '../utils/geo';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 
 export const RunScreen: React.FC = () => {
   const navigation = useNavigation<RunScreenNavigationProp>();
@@ -33,12 +35,22 @@ export const RunScreen: React.FC = () => {
   const endRun = useStore((s) => s.endRun);
   const postRun = useStore((s) => s.postRun);
   const onLocationUpdate = useStore((s) => s.onLocationUpdate);
+  const pauseRun = useStore((s) => s.pauseRun);
+  const resumeRun = useStore((s) => s.resumeRun);
   const unit = useStore((s) => s.unitPreference);
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (runState.isRunning) {
+    Location.getForegroundPermissionsAsync()
+      .then(({ status }) => {
+        setHasLocationPermission(status === 'granted');
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (runState.isRunning && !runState.isPaused) {
       intervalRef.current = setInterval(() => {
         tickRun();
       }, 1000);
@@ -54,7 +66,7 @@ export const RunScreen: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [runState.isRunning]);
+  }, [runState.isRunning, runState.isPaused]);
 
   const locationWatchRef = useRef<Location.LocationSubscription | null>(null);
 
@@ -64,6 +76,36 @@ export const RunScreen: React.FC = () => {
       locationWatchRef.current = null;
     }
   };
+
+  useEffect(() => {
+    return () => {
+      stopLocationWatch();
+    };
+  }, []);
+
+  const startTracking = useCallback(() => {
+    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation })
+      .then((pos) => {
+        const { latitude, longitude } = pos.coords;
+        onLocationUpdate(latitude, longitude, pos.timestamp);
+      })
+      .catch(() => {});
+    Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 1000,
+        distanceInterval: 1,
+      },
+      (pos) => {
+        const { latitude, longitude, speed, accuracy } = pos.coords;
+        onLocationUpdate(latitude, longitude, pos.timestamp, accuracy ?? undefined, speed ?? null);
+      }
+    )
+      .then((sub) => {
+        locationWatchRef.current = sub;
+      })
+      .catch(() => {});
+  }, [onLocationUpdate]);
 
   const handleStartRun = async () => {
     if (!hasLocationPermission) {
@@ -83,22 +125,7 @@ export const RunScreen: React.FC = () => {
           // Defer the startRun call to the next tick to avoid render-phase updates
           setTimeout(() => {
             startRun();
-            // start high-accuracy GPS
-            Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation }).then((pos) => {
-              const { latitude, longitude } = pos.coords;
-              onLocationUpdate(latitude, longitude, pos.timestamp);
-            }).catch(() => {});
-            Location.watchPositionAsync(
-              {
-                accuracy: Location.Accuracy.BestForNavigation,
-                timeInterval: 1000,
-                distanceInterval: 1,
-              },
-              (pos) => {
-                const { latitude, longitude, speed, accuracy } = pos.coords;
-                onLocationUpdate(latitude, longitude, pos.timestamp, accuracy ?? undefined, speed ?? null);
-              }
-            ).then((sub) => { locationWatchRef.current = sub; });
+            startTracking();
           }, 0);
           return 0;
         }
@@ -115,7 +142,7 @@ export const RunScreen: React.FC = () => {
       [
         { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'End Run', 
+          text: runState.activityType === 'walk' ? 'End Walk' : 'End Run',
           style: 'destructive',
           onPress: () => {
             endRun();
@@ -150,8 +177,35 @@ export const RunScreen: React.FC = () => {
   };
 
   const handleAddPhoto = () => {
-    // Placeholder for photo picker
-    Alert.alert('Photo Picker', 'Photo picker functionality would be implemented here.');
+    (async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'Allow photo access to attach an image to your post.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets?.length) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    })();
+  };
+
+  const handleRemovePhoto = () => {
+    setSelectedImage(undefined);
+  };
+
+  const handlePause = () => {
+    pauseRun();
+    stopLocationWatch();
+  };
+
+  const handleResume = () => {
+    resumeRun();
+    startTracking();
   };
 
   const requestLocation = () => {
@@ -193,7 +247,7 @@ export const RunScreen: React.FC = () => {
                     </View>
                     <View style={styles.summaryStat}>
                       <Text style={styles.summaryValue}>
-                        {formatPace(runState.currentPace)}
+                        {formatPace(runState.currentPace, unit)}
                       </Text>
                       <Text style={styles.summaryLabel}>Pace</Text>
                     </View>
@@ -215,10 +269,20 @@ export const RunScreen: React.FC = () => {
 
                 <View style={styles.photoSection}>
                   <Text style={styles.photoLabel}>Photo (Optional)</Text>
-                  <TouchableOpacity style={styles.photoButton} onPress={handleAddPhoto}>
-                    <Ionicons name="camera" size={24} color={colors.primary} />
-                    <Text style={styles.photoButtonText}>Add Photo</Text>
-                  </TouchableOpacity>
+                  {selectedImage ? (
+                    <View style={styles.photoPreview}>
+                      <Image source={{ uri: selectedImage }} style={styles.photoPreviewImage} contentFit="cover" />
+                      <TouchableOpacity style={styles.removePhotoButton} onPress={handleRemovePhoto} accessibilityRole="button">
+                        <Ionicons name="close-circle" size={22} color={colors.error} />
+                        <Text style={styles.removePhotoText}>Remove</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity style={styles.photoButton} onPress={handleAddPhoto}>
+                      <Ionicons name="camera" size={24} color={colors.primary} />
+                      <Text style={styles.photoButtonText}>Add Photo</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 <View style={styles.postActions}>
@@ -357,10 +421,22 @@ export const RunScreen: React.FC = () => {
               </MapView>
             </View>
 
-            {/* End Run Button */}
-            <TouchableOpacity style={styles.endButton} onPress={handleEndRun} accessibilityRole="button" hitSlop={12}>
-              <Text style={styles.endButtonText}>End Run</Text>
-            </TouchableOpacity>
+            {/* Controls */}
+            <View style={styles.controlRow}>
+              <TouchableOpacity
+                style={[styles.pauseButton, runState.isPaused && styles.pauseButtonActive]}
+                onPress={runState.isPaused ? handleResume : handlePause}
+                accessibilityRole="button"
+                hitSlop={12}
+              >
+                <Ionicons name={runState.isPaused ? 'play' : 'pause'} size={22} color={colors.primary} />
+                <Text style={styles.pauseButtonText}>{runState.isPaused ? 'Resume' : 'Pause'}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.endButton} onPress={handleEndRun} accessibilityRole="button" hitSlop={12}>
+                <Text style={styles.endButtonText}>{runState.activityType === 'walk' ? 'End Walk' : 'End Run'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>
@@ -504,6 +580,31 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: spacing.xl,
   },
+  controlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.lg,
+  },
+  pauseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  },
+  pauseButtonActive: {
+    borderColor: colors.primary,
+  },
+  pauseButtonText: {
+    ...typography.body,
+    color: colors.primary,
+    marginLeft: spacing.sm,
+    fontWeight: '600',
+  },
   routePlaceholder: {
     flex: 1,
     alignItems: 'center',
@@ -555,18 +656,17 @@ const styles = StyleSheet.create({
     lineHeight: 80,
   },
   endButton: {
-    backgroundColor: colors.card,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    borderRadius: borderRadius.lg,
+    flex: 1,
+    marginLeft: spacing.md,
+    backgroundColor: colors.error,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
   },
   endButtonText: {
-    ...typography.h3,
-    color: colors.primary,
-    fontWeight: '600',
+    ...typography.body,
+    color: colors.onPrimary,
+    fontWeight: '700',
   },
   postForm: {
     flex: 1,
@@ -642,6 +742,30 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.primary,
     marginLeft: spacing.sm,
+    fontWeight: '600',
+  },
+  photoPreview: {
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  photoPreviewImage: {
+    width: '100%',
+    height: 160,
+    backgroundColor: colors.border,
+  },
+  removePhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.sm,
+    backgroundColor: colors.card,
+  },
+  removePhotoText: {
+    ...typography.caption,
+    color: colors.error,
+    marginLeft: spacing.xs,
     fontWeight: '600',
   },
   postActions: {

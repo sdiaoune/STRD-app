@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useStore } from '../state/store';
 import { Avatar } from '../components/Avatar';
@@ -14,6 +14,14 @@ export const UserSearchScreen: React.FC = () => {
   const currentUser = useStore(s => s.currentUser);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
+  const route = useRoute<any>();
+
+  useEffect(() => {
+    const initial = route.params?.initialQuery;
+    if (initial && initial !== query) {
+      setQuery(initial);
+    }
+  }, [route.params?.initialQuery]);
   useEffect(() => {
     let active = true;
     const run = async () => {

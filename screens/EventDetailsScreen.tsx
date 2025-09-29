@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -86,12 +87,15 @@ export const EventDetailsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Cover Image Placeholder */}
         <View style={styles.coverImage}>
-          <View style={styles.coverPlaceholder}>
-            <Ionicons name="image" size={48} color={colors.muted} />
-            <Text style={styles.coverText}>Event Cover</Text>
-          </View>
+          {event.coverImage ? (
+            <Image source={{ uri: event.coverImage }} style={styles.coverMedia} contentFit="cover" />
+          ) : (
+            <View style={styles.coverPlaceholder}>
+              <Ionicons name="image" size={48} color={colors.muted} />
+              <Text style={styles.coverText}>Event Cover</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.content}>
@@ -127,7 +131,7 @@ export const EventDetailsScreen: React.FC = () => {
             <View style={styles.dateTimeItem}>
               <Ionicons name="navigate" size={20} color={colors.primary} />
               <Text style={styles.dateTimeText}>
-                {formatDistance(event.distanceFromUserKm, unit)} away
+                {event.distanceFromUserKm == null ? 'Distance unavailable' : `${formatDistance(event.distanceFromUserKm, unit)} away`}
               </Text>
             </View>
           </View>
@@ -183,6 +187,10 @@ const styles = StyleSheet.create({
   coverImage: {
     height: 200,
     backgroundColor: colors.card,
+  },
+  coverMedia: {
+    width: '100%',
+    height: '100%',
   },
   coverPlaceholder: {
     flex: 1,

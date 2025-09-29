@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 
 import { colors, getNavigationTheme } from './theme';
 import { EventsScreen } from './screens/EventsScreen';
@@ -26,6 +26,10 @@ import { HapticTab } from './components/HapticTab';
 import { SignInScreen } from './screens/SignInScreen';
 import { SignUpScreen } from './screens/SignUpScreen';
 import { useStore } from './state/store';
+import { OnboardingSurveyModal } from './components/OnboardingSurveyModal';
+
+const LOCATION_PROMPT_KEY = 'strd_location_prompted';
+const SURVEY_STORAGE_KEY = 'strd_onboarding_survey';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -234,16 +238,59 @@ function AuthStack() {
 export default function App() {
   const isAuthenticated = useStore(state => state.isAuthenticated);
   const initializeAuth = useStore(state => state.initializeAuth);
-  const themePreference = 'dark';
+  const hydratePreferences = useStore(state => state.hydratePreferences);
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [hasCheckedSurvey, setHasCheckedSurvey] = useState(false);
+
   useEffect(() => {
+    hydratePreferences();
     initializeAuth();
+    (async () => {
+      try {
+        const prompted = await AsyncStorage.getItem(LOCATION_PROMPT_KEY);
+        if (!prompted) {
+          const { status } = await Location.getForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            await Location.requestForegroundPermissionsAsync();
+          }
+          await AsyncStorage.setItem(LOCATION_PROMPT_KEY, '1');
+        }
+      } catch {
+        // ignore permission errors during bootstrap
+      }
+    })();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || hasCheckedSurvey) return;
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem(SURVEY_STORAGE_KEY);
+        if (!stored) {
+          setShowSurvey(true);
+        }
+      } finally {
+        setHasCheckedSurvey(true);
+      }
+    })();
+  }, [isAuthenticated, hasCheckedSurvey]);
+
+  const handleSurveySubmit = async (answers: Record<string, string>) => {
+    await AsyncStorage.setItem(SURVEY_STORAGE_KEY, JSON.stringify({ answers, completedAt: new Date().toISOString() }));
+    setShowSurvey(false);
+  };
+
+  const handleSurveySkip = async () => {
+    await AsyncStorage.setItem(SURVEY_STORAGE_KEY, JSON.stringify({ skipped: true, completedAt: new Date().toISOString() }));
+    setShowSurvey(false);
+  };
+
   return (
     <SafeAreaProvider>
       <NavigationContainer theme={getNavigationTheme()}>
         {isAuthenticated ? (
           <Tab.Navigator
-            initialRouteName="Events"
+            initialRouteName="Run"
             screenOptions={({ route }) => ({
               tabBarIcon: ({ focused, color, size }) => {
                 let iconName: keyof typeof Ionicons.glyphMap;
@@ -292,6 +339,11 @@ export default function App() {
         )}
       </NavigationContainer>
       <StatusBar style="light" />
+      <OnboardingSurveyModal
+        visible={showSurvey}
+        onSubmit={handleSurveySubmit}
+        onSkip={handleSurveySkip}
+      />
     </SafeAreaProvider>
   );
 }

@@ -12,7 +12,11 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EAS_BUILD_NODE_VERSION": "18.20.3",
+        "EXPO_USE_YARN": "1"
+      }
     }
   },
   "submit": {

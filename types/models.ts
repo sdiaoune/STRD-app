@@ -7,6 +7,7 @@ export type User = {
   interests: string[] | null;
   followingOrgs: string[]; // derived from user_following_organizations
   bio?: string | null;
+  isSuperAdmin?: boolean;
 };
 
 export type Organization = {
@@ -31,6 +32,7 @@ export type Event = {
   tags: string[];
   description: string | null;
   distanceFromUserKm: number | null;
+  coverImage?: string | null;
 };
 
 export type Comment = {
