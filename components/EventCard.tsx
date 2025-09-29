@@ -9,6 +9,7 @@ import { formatEventDate, formatEventTime, formatDistance } from '../utils/forma
 import type { Event } from '../types/models';
 import { useStore } from '../state/store';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
+import { Image } from 'expo-image';
 
 interface Props {
   event: Event;
@@ -19,10 +20,20 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   const orgById = useStore((s) => s.orgById);
   const organization = orgById(event.orgId);
   const unit = useStore(s => s.unitPreference);
+  const distanceLabel = event.distanceFromUserKm == null ? '—' : formatDistance(event.distanceFromUserKm, unit);
 
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
       <Card onPress={onPress} style={{ marginBottom: spacing[3], position: 'relative' }}>
+        {event.coverImage && (
+          <View style={{ marginBottom: spacing[3], borderRadius: spacing[2], overflow: 'hidden' }}>
+            <Image
+              source={{ uri: event.coverImage }}
+              style={{ height: 150, width: '100%' }}
+              contentFit="cover"
+            />
+          </View>
+        )}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing[2] }}>
           <View style={{ flex: 1 }}>
             <Text accessibilityRole="header" numberOfLines={1} style={[typography.caption, { color: colors.text.primary }]}>
@@ -35,8 +46,8 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="location" size={20} color={colors.text.muted} />
             <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}
-                  accessibilityLabel={`Distance ${formatDistance(event.distanceFromUserKm, unit)}`}>
-              {formatDistance(event.distanceFromUserKm, unit)}
+                  accessibilityLabel={`Distance ${distanceLabel}`}>
+              {distanceLabel}
             </Text>
           </View>
         </View>

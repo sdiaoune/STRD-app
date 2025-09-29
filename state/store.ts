@@ -10,10 +10,13 @@ import type {
 import { supabase } from '../supabase/client';
 import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface RunState {
   isRunning: boolean;
+  isPaused: boolean;
   startTime: number | null;
+  accumulatedSeconds: number;
   elapsedSeconds: number;
   distanceKm: number;
   currentPace: number;
@@ -23,6 +26,33 @@ interface RunState {
   activityType: 'run' | 'walk';
 }
 
+const UNIT_PREFERENCE_KEY = 'strd_unit_preference';
+// Reuse avatars bucket for run media to avoid relying on missing storage buckets in staging
+const RUN_MEDIA_BUCKET = 'avatars';
+
+const uploadImageToStorage = async (bucket: string, path: string, uri: string) => {
+  const fileExt = (uri.split('.').pop() || 'jpg').toLowerCase();
+  const mime = fileExt === 'png' ? 'image/png' : 'image/jpeg';
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  const baseUrl = (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_SUPABASE_URL as string;
+  if (!token || !baseUrl) return null;
+  const uploadUrl = `${baseUrl}/storage/v1/object/${bucket}/${encodeURIComponent(path)}`;
+  const result = await FileSystem.uploadAsync(uploadUrl, uri, {
+    httpMethod: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': mime,
+      'x-upsert': 'false',
+    },
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+  });
+  if (result.status !== 200) return null;
+  const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(path);
+  if (!publicUrl?.publicUrl) return null;
+  return `${publicUrl.publicUrl}?t=${Date.now()}`;
+};
+
 interface AppState {
   // Data
   users: User[];
@@ -30,9 +60,10 @@ interface AppState {
   events: Event[];
   runPosts: RunPost[];
   timelineItems: TimelineItem[];
-  
+
   // UI State
   currentUser: User;
+  followingUserIds: string[];
   eventFilter: 'forYou' | 'all';
   runState: RunState;
   isAuthenticated: boolean;
@@ -46,6 +77,8 @@ interface AppState {
   addComment: (postId: string, text: string) => Promise<void>;
   startRun: () => void;
   tickRun: () => void;
+  pauseRun: () => void;
+  resumeRun: () => void;
   endRun: () => RunPost;
   onLocationUpdate: (lat: number, lon: number, timestampMs: number, accuracy?: number, speedMs?: number | null) => void;
   postRun: (caption: string, image?: string) => Promise<boolean>;
@@ -62,6 +95,7 @@ interface AppState {
   signUp: (name: string, email: string, password?: string) => Promise<void>;
   signOut: () => Promise<void>;
   initializeAuth: () => Promise<void>;
+  hydratePreferences: () => Promise<void>;
   _loadInitialData: () => Promise<void>;
   uploadAvatar: (uri: string) => Promise<string | null>;
   updateProfile: (fields: { name?: string | null; bio?: string | null }) => Promise<boolean>;
@@ -93,7 +127,9 @@ export const useStore = create<AppState>((set, get) => ({
     city: null,
     interests: [],
     followingOrgs: [],
+    isSuperAdmin: false,
   },
+  followingUserIds: [],
   unitPreference: 'metric',
   themePreference: 'dark',
 
@@ -102,6 +138,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
   setUnitPreference: (unit: 'metric' | 'imperial') => {
     set({ unitPreference: unit });
+    AsyncStorage.setItem(UNIT_PREFERENCE_KEY, unit).catch(() => {});
   },
   setThemePreference: (theme: 'dark' | 'light') => {
     set({ themePreference: theme });
@@ -110,7 +147,9 @@ export const useStore = create<AppState>((set, get) => ({
   eventFilter: 'forYou',
   runState: {
     isRunning: false,
+    isPaused: false,
     startTime: null,
+    accumulatedSeconds: 0,
     elapsedSeconds: 0,
     distanceKm: 0,
     currentPace: 5.5,
@@ -152,6 +191,11 @@ export const useStore = create<AppState>((set, get) => ({
       .select('*')
       .order('created_at', { ascending: false });
 
+    const { data: userFollowRows } = await supabase
+      .from('user_follows')
+      .select('followee_id')
+      .eq('follower_id', currentUserId);
+
     // posts with aggregates
     const { data: posts } = await supabase
       .from('run_posts')
@@ -172,6 +216,8 @@ export const useStore = create<AppState>((set, get) => ({
 
     const followingOrgs = (follows || []).map(f => f.org_id);
 
+    const isSuperAdmin = !!(profile && ((profile as any).role === 'super_admin' || (profile as any).is_super_admin));
+
     const users: User[] = (profile ? [{
       id: profile.id,
       name: profile.name,
@@ -181,6 +227,7 @@ export const useStore = create<AppState>((set, get) => ({
       interests: profile.interests ?? [],
       bio: (profile as any).bio ?? null,
       followingOrgs,
+      isSuperAdmin,
     }] : []);
 
     const organizations: Organization[] = (orgs || []).map(o => ({
@@ -204,8 +251,16 @@ export const useStore = create<AppState>((set, get) => ({
       },
       tags: e.tags || [],
       description: e.description,
-      distanceFromUserKm: e.distance_from_user_km ?? 0,
+      distanceFromUserKm: e.distance_from_user_km ?? null,
+      coverImage: e.cover_image_url ?? e.cover_image ?? null,
     }));
+
+    const followingUsers = (userFollowRows || []).map((row: any) => row.followee_id as string);
+
+    const eventsWithinRadius = eventsMapped.filter(event => {
+      if (event.distanceFromUserKm == null) return true;
+      return event.distanceFromUserKm <= 16.0934; // 10 miles in km
+    });
 
     const likesByPostId = new Set((likes || []).map(l => `${l.post_id}`));
     const commentsByPostId = new Map<string, Comment[]>();
@@ -234,7 +289,7 @@ export const useStore = create<AppState>((set, get) => ({
     // Timeline: latest posts + events
     const timelineItems: TimelineItem[] = [
       ...runPosts.map(p => ({ type: 'run' as const, refId: p.id, createdAtISO: p.createdAtISO })),
-      ...eventsMapped.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO })),
+      ...eventsWithinRadius.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO })),
     ].sort((a, b) => new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime());
 
     // Fetch author and commenter profiles for visible posts (other than current user)
@@ -264,13 +319,16 @@ export const useStore = create<AppState>((set, get) => ({
       }));
     }
 
+    const hydratedCurrentUser = users[0] ?? { ...get().currentUser, isSuperAdmin };
+
     set({
       users: [...users, ...extraUsers],
       organizations,
-      events: eventsMapped,
+      events: eventsWithinRadius,
       runPosts,
       timelineItems,
-      currentUser: users[0] || get().currentUser,
+      currentUser: hydratedCurrentUser,
+      followingUserIds: followingUsers,
     });
   },
 
@@ -293,14 +351,18 @@ export const useStore = create<AppState>((set, get) => ({
 
     if (willLike) {
       await supabase.from('run_post_likes').insert({ post_id: postId, user_id: userId });
-      await supabase.rpc('increment_likes_count', { post_id_input: postId }).catch(async () => {
+      try {
+        await supabase.rpc('increment_likes_count', { post_id_input: postId });
+      } catch {
         await supabase.from('run_posts').update({ likes_count: (target.likes || 0) + 1 }).eq('id', postId);
-      });
+      }
     } else {
       await supabase.from('run_post_likes').delete().eq('post_id', postId).eq('user_id', userId);
-      await supabase.rpc('decrement_likes_count', { post_id_input: postId }).catch(async () => {
+      try {
+        await supabase.rpc('decrement_likes_count', { post_id_input: postId });
+      } catch {
         await supabase.from('run_posts').update({ likes_count: (target.likes || 0) - 1 }).eq('id', postId);
-      });
+      }
     }
   },
 
@@ -335,10 +397,13 @@ export const useStore = create<AppState>((set, get) => ({
       runState: {
         ...state.runState,
         isRunning: true,
+        isPaused: false,
         startTime: Date.now(),
+        accumulatedSeconds: 0,
         elapsedSeconds: 0,
         distanceKm: 0,
         currentPace: 5.5,
+        currentSpeedKmh: 0,
         lastLocation: null,
         path: []
       }
@@ -347,11 +412,11 @@ export const useStore = create<AppState>((set, get) => ({
 
   tickRun: () => {
     const state = get();
-    if (!state.runState.isRunning || !state.runState.startTime) return;
+    if (!state.runState.isRunning || state.runState.isPaused || !state.runState.startTime) return;
 
     const now = Date.now();
     const elapsedMs = now - state.runState.startTime;
-    const elapsedSeconds = Math.floor(elapsedMs / 1000);
+    const elapsedSeconds = state.runState.accumulatedSeconds + Math.floor(elapsedMs / 1000);
     const newDistance = state.runState.distanceKm; // distance now advanced via GPS
     const speed = state.runState.currentSpeedKmh || 0;
     const pace = speed > 0.1 ? 60 / speed : Infinity; // Infinity to render as — /km
@@ -366,9 +431,39 @@ export const useStore = create<AppState>((set, get) => ({
     }));
   },
 
+  pauseRun: () => {
+    set((state) => {
+      if (!state.runState.isRunning || state.runState.isPaused) return {} as Partial<AppState>;
+      const now = Date.now();
+      const accumulated = state.runState.startTime
+        ? state.runState.accumulatedSeconds + Math.floor((now - state.runState.startTime) / 1000)
+        : state.runState.accumulatedSeconds;
+      return {
+        runState: {
+          ...state.runState,
+          isPaused: true,
+          startTime: null,
+          accumulatedSeconds: accumulated,
+          elapsedSeconds: accumulated,
+        }
+      };
+    });
+  },
+
+  resumeRun: () => {
+    set((state) => ({
+      runState: {
+        ...state.runState,
+        isRunning: true,
+        isPaused: false,
+        startTime: Date.now(),
+      }
+    }));
+  },
+
   onLocationUpdate: (lat: number, lon: number, timestampMs: number, accuracy?: number, speedMs?: number | null) => {
     const state = get();
-    if (!state.runState.isRunning) return;
+    if (!state.runState.isRunning || state.runState.isPaused) return;
     const toRad = (v: number) => (v * Math.PI) / 180;
     const last = state.runState.lastLocation;
     let distanceKm = state.runState.distanceKm;
@@ -408,12 +503,14 @@ export const useStore = create<AppState>((set, get) => ({
   endRun: () => {
     const state = get();
     const { distanceKm, elapsedSeconds, currentPace } = state.runState;
-    
+
     set((state) => ({
       runState: {
         ...state.runState,
         isRunning: false,
-        startTime: null
+        isPaused: false,
+        startTime: null,
+        accumulatedSeconds: 0,
       }
     }));
 
@@ -443,6 +540,21 @@ export const useStore = create<AppState>((set, get) => ({
     // Compute average pace using precise seconds: (minutes) / km
     const paceMinPerKmRaw = distanceKm > 0 ? ((elapsedSeconds / 60) / distanceKm) : 0;
     const avgPaceMinPerKm = isFinite(paceMinPerKmRaw) && !isNaN(paceMinPerKmRaw) ? Math.round(paceMinPerKmRaw * 10) / 10 : 0;
+    let mediaUrl: string | null = null;
+    if (image) {
+      if (/^https?:/i.test(image)) {
+        mediaUrl = image;
+      } else {
+        const fileExt = (image.split('.').pop() || 'jpg').toLowerCase();
+        const path = `${userId}/runs/${Date.now()}.${fileExt}`;
+        mediaUrl = await uploadImageToStorage(RUN_MEDIA_BUCKET, path, image);
+      }
+    }
+
+    if (image && !mediaUrl) {
+      return false;
+    }
+
     const newRun = {
       user_id: userId,
       distance_km: distanceKm,
@@ -450,7 +562,7 @@ export const useStore = create<AppState>((set, get) => ({
       avg_pace_min_per_km: avgPaceMinPerKm,
       activity_type: get().runState.activityType,
       route_polyline: routePolyline,
-      route_preview_url: image || null,
+      route_preview_url: mediaUrl,
       caption: caption || null,
       is_from_partner: false,
       likes_count: 0,
@@ -576,7 +688,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [] });
+    set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [], followingUserIds: [] });
   },
 
   initializeAuth: async () => {
@@ -601,9 +713,20 @@ export const useStore = create<AppState>((set, get) => ({
         }
         await get()._loadInitialData();
       } else {
-        set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [] });
+        set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [], followingUserIds: [] });
       }
     });
+  },
+
+  hydratePreferences: async () => {
+    try {
+      const unit = await AsyncStorage.getItem(UNIT_PREFERENCE_KEY);
+      if (unit === 'metric' || unit === 'imperial') {
+        set({ unitPreference: unit });
+      }
+    } catch {
+      // ignore hydration errors
+    }
   },
 
   uploadAvatar: async (uri: string) => {
@@ -611,28 +734,11 @@ export const useStore = create<AppState>((set, get) => ({
     if (!userId) return null;
     const fileExt = (uri.split('.').pop() || 'jpg').toLowerCase();
     const path = `${userId}/${Date.now()}.${fileExt}`;
-    const mime = fileExt === 'png' ? 'image/png' : 'image/jpeg';
-    // Direct binary upload to Storage via FileSystem to avoid zero-byte blobs on iOS
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    const baseUrl = (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_SUPABASE_URL as string;
-    if (!token || !baseUrl) return null;
-    const uploadUrl = `${baseUrl}/storage/v1/object/avatars/${encodeURIComponent(path)}`;
-    const result = await FileSystem.uploadAsync(uploadUrl, uri, {
-      httpMethod: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': mime,
-        'x-upsert': 'false',
-      },
-      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-    });
-    if (result.status !== 200) return null;
-    const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(path);
-    const url = publicUrl.publicUrl;
-    const displayUrl = `${url}?t=${Date.now()}`;
+    const displayUrl = await uploadImageToStorage('avatars', path, uri);
+    if (!displayUrl) return null;
+    const cleanUrl = displayUrl.split('?')[0];
     // Update profile
-    await supabase.from('profiles').update({ avatar_url: url }).eq('id', userId);
+    await supabase.from('profiles').update({ avatar_url: cleanUrl }).eq('id', userId);
     // Update local state
     set((state) => ({
       currentUser: { ...state.currentUser, avatar: displayUrl },
@@ -673,14 +779,25 @@ export const useStore = create<AppState>((set, get) => ({
   followUser: async (userIdToFollow: string) => {
     const userId = get().currentUser.id;
     if (!userId || userIdToFollow === userId) return false;
+    if (get().followingUserIds.includes(userIdToFollow)) return true;
     const { error } = await supabase.from('user_follows').insert({ follower_id: userId, followee_id: userIdToFollow });
-    return !error;
+    if (error && error.code !== '23505') return false;
+    set((state) => ({
+      followingUserIds: state.followingUserIds.includes(userIdToFollow)
+        ? state.followingUserIds
+        : [...state.followingUserIds, userIdToFollow],
+    }));
+    return true;
   },
   unfollowUser: async (userIdToUnfollow: string) => {
     const userId = get().currentUser.id;
     if (!userId || userIdToUnfollow === userId) return false;
     const { error } = await supabase.from('user_follows').delete().eq('follower_id', userId).eq('followee_id', userIdToUnfollow);
-    return !error;
+    if (error) return false;
+    set((state) => ({
+      followingUserIds: state.followingUserIds.filter(id => id !== userIdToUnfollow),
+    }));
+    return true;
   },
 
   // Helper functions
@@ -702,20 +819,31 @@ export const useStore = create<AppState>((set, get) => ({
 
   getFilteredEvents: () => {
     const state = get();
+    const sortForSuperAdmin = (list: Event[]) => {
+      if (!state.currentUser?.isSuperAdmin) return list;
+      return [...list].sort((a, b) => {
+        const aPartner = state.orgById(a.orgId)?.type === 'partner' ? 1 : 0;
+        const bPartner = state.orgById(b.orgId)?.type === 'partner' ? 1 : 0;
+        if (aPartner !== bPartner) return bPartner - aPartner;
+        return 0;
+      });
+    };
+
     if (state.eventFilter === 'all') {
-      return state.events;
+      return sortForSuperAdmin(state.events);
     }
 
     // For You logic: item's orgId ∈ currentUser.followingOrgs OR tag intersects currentUser.interests
-    return state.events.filter(event => {
-      const org = state.orgById(event.orgId);
+    const personalized = state.events.filter(event => {
       const isFollowingOrg = state.currentUser.followingOrgs.includes(event.orgId);
-      const hasMatchingTags = event.tags.some(tag => 
-        state.currentUser.interests.includes(tag)
+      const hasMatchingTags = event.tags.some(tag =>
+        (state.currentUser.interests || []).includes(tag)
       );
-      
+
       return isFollowingOrg || hasMatchingTags;
     });
+
+    return sortForSuperAdmin(personalized);
   },
 
   isParticipant: (_eventId: string) => true,
