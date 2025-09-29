@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import LikesSheet from './LikesSheet';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -21,6 +22,7 @@ interface RunPostCardProps {
 }
 
 export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }) => {
+  const [showLikes, setShowLikes] = useState(false);
   const userById = useStore(state => state.userById);
   const likeToggle = useStore(state => state.likeToggle);
   const user = userById(post.userId);
@@ -91,6 +93,10 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
             likeCount={post.likes}
             onPress={handleLike}
           />
+          <TouchableOpacity style={styles.commentButton} onPress={() => setShowLikes(true)}>
+            <Ionicons name="people" size={20} color={colors.muted} />
+            <Text style={styles.commentCount}>{post.likes}</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.commentButton}>
             <Ionicons name="chatbubble-outline" size={20} color={colors.muted} />
             <Text style={styles.commentCount}>{post.comments.length}</Text>
@@ -101,6 +107,10 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
+      {showLikes && (
+        // @ts-ignore - web-only overlay component; on native you may ignore
+        <LikesSheet postId={post.id} onClose={() => setShowLikes(false)} />
+      )}
     </Animated.View>
   );
 };

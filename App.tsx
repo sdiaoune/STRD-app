@@ -20,6 +20,7 @@ import { BusinessProfileScreen } from './screens/BusinessProfileScreen';
 import { UserSearchScreen } from './screens/UserSearchScreen';
 import { RunnerProfileScreen } from './screens/RunnerProfileScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { NotificationsScreen } from './screens/NotificationsScreen';
 import BlurTabBarBackground, { useBottomTabOverflow } from './components/ui/TabBarBackground.ios';
 import { HapticTab } from './components/HapticTab';
 import { SignInScreen } from './screens/SignInScreen';
@@ -46,12 +47,12 @@ function EventsStack() {
       <Stack.Screen 
         name="EventDetails" 
         component={EventDetailsScreen}
-        options={{ title: 'Event Details' }}
+        options={{ title: 'Event Details', headerBackTitle: 'Events' }}
       />
       <Stack.Screen 
         name="BusinessProfile" 
         component={BusinessProfileScreen}
-        options={{ title: 'Organization' }}
+        options={{ title: 'Organization', headerBackTitle: 'Events' }}
       />
     </Stack.Navigator>
   );
@@ -74,22 +75,27 @@ function TimelineStack() {
       <Stack.Screen 
         name="PostDetails" 
         component={PostDetailsScreen}
-        options={{ title: 'Post Details' }}
+        options={{ title: 'Post Details', headerBackTitle: 'Timeline' }}
       />
       <Stack.Screen 
         name="RunStats" 
         component={RunStatsScreen}
-        options={{ title: 'Run Statistics' }}
+        options={{ title: 'Run Statistics', headerBackTitle: 'Timeline' }}
       />
       <Stack.Screen 
         name="EventDetails" 
         component={EventDetailsScreen}
-        options={{ title: 'Event Details' }}
+        options={{ title: 'Event Details', headerBackTitle: 'Timeline' }}
       />
       <Stack.Screen 
         name="BusinessProfile" 
         component={BusinessProfileScreen}
-        options={{ title: 'Organization' }}
+        options={{ title: 'Organization', headerBackTitle: 'Timeline' }}
+      />
+      <Stack.Screen 
+        name="Notifications" 
+        component={NotificationsScreen}
+        options={{ title: 'Notifications' }}
       />
     </Stack.Navigator>
   );
@@ -130,32 +136,50 @@ function ProfileStack() {
       <Stack.Screen 
         name="PostDetails" 
         component={PostDetailsScreen}
-        options={{ title: 'Post Details' }}
+        options={{ title: 'Post Details', headerBackTitle: 'Profile' }}
       />
       <Stack.Screen 
         name="RunStats" 
         component={RunStatsScreen}
-        options={{ title: 'Run Statistics' }}
+        options={{ title: 'Run Statistics', headerBackTitle: 'Profile' }}
       />
       <Stack.Screen 
         name="EventDetails" 
         component={EventDetailsScreen}
-        options={{ title: 'Event Details' }}
+        options={{ title: 'Event Details', headerBackTitle: 'Profile' }}
       />
       <Stack.Screen 
         name="BusinessProfile" 
         component={BusinessProfileScreen}
-        options={{ title: 'Organization' }}
+        options={{ title: 'Organization', headerBackTitle: 'Profile' }}
       />
       <Stack.Screen 
         name="RunnerProfile" 
         component={RunnerProfileScreen}
-        options={{ title: 'Runner' }}
+        options={{ title: 'Runner', headerBackTitle: 'Profile' }}
       />
       <Stack.Screen 
         name="Settings" 
         component={SettingsScreen}
-        options={{ title: 'Settings' }}
+        options={{ title: 'Settings', headerBackTitle: 'Profile' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function NotificationsStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.bg },
+        headerTintColor: colors.text,
+        headerTitleStyle: { color: colors.text },
+      }}
+    >
+      <Stack.Screen 
+        name="NotificationsHome" 
+        component={NotificationsScreen}
+        options={{ title: 'Notifications' }}
       />
     </Stack.Navigator>
   );
@@ -178,7 +202,7 @@ function SearchStack() {
       <Stack.Screen 
         name="RunnerProfile" 
         component={RunnerProfileScreen}
-        options={{ title: 'Runner' }}
+        options={{ title: 'Runner', headerBackTitle: 'Search' }}
       />
     </Stack.Navigator>
   );
@@ -230,6 +254,8 @@ export default function App() {
                   iconName = focused ? 'home' : 'home-outline';
                 } else if (route.name === 'Run') {
                   iconName = focused ? 'flash' : 'flash-outline';
+                } else if (route.name === 'Notifications') {
+                  iconName = focused ? 'notifications' : 'notifications-outline';
                 } else if (route.name === 'Search') {
                   iconName = focused ? 'search' : 'search-outline';
                 } else if (route.name === 'Profile') {
@@ -258,6 +284,7 @@ export default function App() {
             <Tab.Screen name="Timeline" component={TimelineStack} />
             <Tab.Screen name="Search" component={SearchStack} />
             <Tab.Screen name="Run" component={RunStack} options={{ tabBarLabel: 'STRD' }} />
+            <Tab.Screen name="Notifications" component={NotificationsStack} />
             <Tab.Screen name="Profile" component={ProfileStack} />
           </Tab.Navigator>
         ) : (
