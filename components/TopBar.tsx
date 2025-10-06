@@ -27,7 +27,7 @@ export const TopBar: React.FC<Props> = ({ title, left }) => {
           <Avatar source={currentUser.avatar ?? undefined} size={36} label={currentUser.name ?? undefined} />
         </TouchableOpacity>
       </View>
-      <Text style={[typography.h1 as any, { color: colors.text, textAlign: 'center' }]}>{title}</Text>
+      <Text style={[typography.h1 as any, { color: colors.text.primary, textAlign: 'center' }]}>{title}</Text>
     </View>
   );
 };

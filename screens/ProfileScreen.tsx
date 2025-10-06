@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
   },
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   userBio: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: spacing.lg,
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderWidth: 1,
-    color: colors.text,
+    color: colors.text.primary,
     borderRadius: 12,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   changePhoto: {

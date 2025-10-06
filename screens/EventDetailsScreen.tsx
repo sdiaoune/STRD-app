@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   orgName: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   partnerBadge: {
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h1,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.lg,
   },
   dateTimeSection: {
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   dateTimeText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     marginLeft: spacing.sm,
   },
   tagsSection: {
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   tags: {
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   description: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     lineHeight: 24,
   },
   attendeesSection: {
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   remindButtonText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     fontWeight: '600',
   },
   imInButton: {

@@ -33,7 +33,7 @@ export const SegmentedControl: React.FC<Props> = ({ segments, value, onChange })
       style={{
         height: 44,
         borderRadius: radii.md,
-        backgroundColor: colors.bg.elev2,
+        backgroundColor: colors.background.higher,
         padding: spacing[1],
         flexDirection: 'row',
         alignItems: 'center',

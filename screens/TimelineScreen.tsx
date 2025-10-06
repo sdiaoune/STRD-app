@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: colors.text,
+    color: colors.text.primary,
     paddingVertical: spacing.xs,
   },
   profileButton: {

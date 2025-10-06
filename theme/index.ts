@@ -1,57 +1,119 @@
 // Backwards-compatible theme facade with dynamic light/dark support
 import * as tokens from '../tokens';
 
-const darkColors = {
-  bg: tokens.colors.bg.page,
-  card: tokens.colors.bg.elev1,
-  primary: tokens.colors.accent,
-  text: tokens.colors.text.primary,
-  muted: tokens.colors.text.muted,
-  border: tokens.colors.border,
-  secondary: tokens.colors.text.secondary,
-  warning: tokens.colors.warning,
-  error: tokens.colors.danger,
-  onPrimary: tokens.colors.accentOn,
+export type ThemeName = tokens.ThemeName;
+
+type Palette = (typeof tokens.themePalettes)[ThemeName];
+
+type SemanticColors = {
+  bg: string;
+  bgElevated: string;
+  bgSecondary: string;
+  background: {
+    default: string;
+    elevated: string;
+    higher: string;
+  };
+  card: string;
+  primary: string;
+  accent: string;
+  accentOn: string;
+  text: {
+    primary: string;
+    secondary: string;
+    muted: string;
+  };
+  muted: string;
+  secondary: string;
+  border: string;
+  warning: string;
+  error: string;
+  danger: string;
+  success: string;
+  info: string;
+  surface: string;
+  surfaceAlt: string;
+  textMuted: string;
+  onPrimary: string;
 };
 
-const lightColors = {
-  bg: '#FFFFFF',
-  card: '#FFFFFF',
-  primary: tokens.colors.accent,
-  text: '#0B0C0F',
-  muted: '#586074',
-  border: '#E5E8F0',
-  secondary: '#2D3445',
-  warning: '#E3B23C',
-  error: '#E25050',
-  onPrimary: '#0B0C0F',
+const buildSemanticColors = (palette: Palette): SemanticColors => ({
+  bg: palette.bg.page,
+  bgElevated: palette.bg.elev1,
+  bgSecondary: palette.bg.elev2,
+  background: {
+    default: palette.bg.page,
+    elevated: palette.bg.elev1,
+    higher: palette.bg.elev2,
+  },
+  card: palette.card,
+  primary: palette.accent,
+  accent: palette.accent,
+  accentOn: palette.accentOn,
+  text: {
+    primary: palette.text.primary,
+    secondary: palette.text.secondary,
+    muted: palette.text.muted,
+  },
+  muted: palette.text.muted,
+  secondary: palette.text.secondary,
+  border: palette.border,
+  warning: palette.warning,
+  error: palette.danger,
+  danger: palette.danger,
+  success: palette.success,
+  info: palette.info,
+  surface: palette.surface,
+  surfaceAlt: palette.surfaceAlt,
+  textMuted: palette.text.muted,
+  onPrimary: palette.accentOn,
+});
+
+const colorCache: Record<ThemeName, SemanticColors> = {
+  dark: buildSemanticColors(tokens.themePalettes.dark),
+  light: buildSemanticColors(tokens.themePalettes.light),
 };
 
-export const getColors = (theme: 'dark' | 'light') => (theme === 'light' ? lightColors : darkColors);
+export type ThemeColors = SemanticColors;
+
+export const getColors = (theme: ThemeName): SemanticColors => colorCache[theme];
 
 // Read current theme from store (fallback to dark before store initializes)
-const getCurrentTheme = (): 'dark' | 'light' => {
+const getCurrentTheme = (): ThemeName => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { useStore } = require('../state/store');
-    const pref = useStore.getState?.()?.themePreference as 'dark' | 'light' | undefined;
+    const pref = useStore.getState?.()?.themePreference as ThemeName | undefined;
     return pref || 'dark';
   } catch {
     return 'dark';
   }
 };
 
+export const getCurrentThemeName = (): ThemeName => getCurrentTheme();
+
 // Colors object that switches in bulk for our top-level usages while keeping nested shapes stable
 export const colors = {
   get bg() { return getColors(getCurrentTheme()).bg; },
+  get bgElevated() { return getColors(getCurrentTheme()).bgElevated; },
+  get bgSecondary() { return getColors(getCurrentTheme()).bgSecondary; },
+  get background() { return getColors(getCurrentTheme()).background; },
   get card() { return getColors(getCurrentTheme()).card; },
   get primary() { return getColors(getCurrentTheme()).primary; },
+  get accent() { return getColors(getCurrentTheme()).accent; },
+  get accentOn() { return getColors(getCurrentTheme()).accentOn; },
   get text() { return getColors(getCurrentTheme()).text; },
   get muted() { return getColors(getCurrentTheme()).muted; },
   get border() { return getColors(getCurrentTheme()).border; },
   get secondary() { return getColors(getCurrentTheme()).secondary; },
   get warning() { return getColors(getCurrentTheme()).warning; },
   get error() { return getColors(getCurrentTheme()).error; },
+  get danger() { return getColors(getCurrentTheme()).danger; },
+  get success() { return getColors(getCurrentTheme()).success; },
+  get info() { return getColors(getCurrentTheme()).info; },
+  get surface() { return getColors(getCurrentTheme()).surface; },
+  get surfaceAlt() { return getColors(getCurrentTheme()).surfaceAlt; },
+  get textMuted() { return getColors(getCurrentTheme()).textMuted; },
   get onPrimary() { return getColors(getCurrentTheme()).onPrimary; },
 };
 
@@ -95,7 +157,7 @@ export const getNavigationTheme = () => {
       primary: palette.primary,
       background: palette.bg,
       card: palette.card,
-      text: palette.text,
+      text: palette.text.primary,
       border: palette.border,
       notification: palette.primary,
     },

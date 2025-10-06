@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
     textAlign: 'center',

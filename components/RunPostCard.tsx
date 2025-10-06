@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     fontWeight: '600',
   },
   userHandle: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginTop: spacing.xs,
     marginBottom: spacing.xs,
   },
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   caption: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.md,
     lineHeight: 24,
   },

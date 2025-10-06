@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   userHandle: {
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   },
   caption: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
     lineHeight: 24,
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   },
   commentsTitle: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   comment: {
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   commentUserName: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     fontWeight: '600',
   },
   commentTime: {
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   },
   commentText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     lineHeight: 20,
   },
   addCommentSection: {
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    color: colors.text,
+    color: colors.text.primary,
     maxHeight: 100,
   },
   sendButton: {
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   trajectoryCard: {

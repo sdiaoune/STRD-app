@@ -3,19 +3,13 @@ import { View, Pressable, Text, Platform } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, getCurrentThemeName } from '../theme';
 
 export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();
 
-  const isLight = (() => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { useStore } = require('../state/store');
-      const pref = useStore.getState?.()?.themePreference;
-      return pref === 'light';
-    } catch { return false; }
-  })();
+  const themeName = getCurrentThemeName();
+  const isLight = themeName === 'light';
 
   return (
     <View
@@ -35,7 +29,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
         intensity={isLight ? 0 : 80}
         style={{
           paddingVertical: spacing.sm,
-          backgroundColor: isLight ? '#FFFFFFEE' : undefined,
+          backgroundColor: `${colors.card}${isLight ? 'F2' : 'CC'}`,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md }}>
@@ -52,7 +46,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
               navigation.emit({ type: 'tabLongPress', target: route.key });
             };
 
-            const color = isFocused ? colors.primary : (isLight ? '#7A899C' : colors.muted);
+            const color = isFocused ? colors.primary : colors.text.muted;
             const size = 24;
             const icon = options.tabBarIcon?.({ focused: isFocused, color, size });
             const labelRaw = route.name === 'Run' ? 'STRD' : route.name;
@@ -73,7 +67,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
                     style={{
                       ...(typography.caption as any),
                       marginTop: spacing.xs,
-                      color: isFocused ? colors.primary : (isLight ? '#7A899C' : colors.muted),
+                      color: isFocused ? colors.primary : colors.text.muted,
                       fontWeight: isFocused ? '700' : '600',
                     }}
                     numberOfLines={1}

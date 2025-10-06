@@ -19,7 +19,7 @@ export const HostRow: React.FC<Props> = ({ name, avatarUrl, avatar, isPartner, s
     <View style={[{ flexDirection: 'row', alignItems: 'center' }, style]}>
       <Avatar size={44} source={source} label={name} />
       <View style={{ marginLeft: spacing[3], flex: 1 }}>
-        <Text style={[typography.title, { color: colors.text }]}>
+        <Text style={[typography.title, { color: colors.text.primary }]}>
           {name}
         </Text>
       </View>

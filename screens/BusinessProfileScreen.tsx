@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   orgName: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
     textAlign: 'center',
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   orgDescription: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: spacing.lg,
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   errorContainer: {

@@ -19,7 +19,7 @@ export const Profile: React.FC = () => {
         <View className="items-center px-6 pt-6">
           <Avatar source={currentUser.avatar} size={80} />
           <TouchableOpacity className="absolute right-6 top-6" accessibilityRole="button">
-            <Ionicons name="create-outline" size={24} color={colors.text} />
+            <Ionicons name="create-outline" size={24} color={colors.text.primary} />
           </TouchableOpacity>
           <Text className="text-text mt-4" style={typography.h2}>{currentUser.name}</Text>
           <Text className="text-textMuted" style={typography.body}>{currentUser.handle}</Text>

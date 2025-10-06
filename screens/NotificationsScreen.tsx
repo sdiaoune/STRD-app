@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   title: {},
   markRead: { ...typography.caption, color: colors.primary },
   row: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
-  rowTitle: { ...typography.body, color: colors.text },
+  rowTitle: { ...typography.body, color: colors.text.primary },
   rowMeta: { ...typography.caption, color: colors.muted },
   sep: { height: 1, backgroundColor: colors.border },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },

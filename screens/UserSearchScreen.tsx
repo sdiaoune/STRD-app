@@ -94,12 +94,12 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    color: colors.text,
+    color: colors.text.primary,
   },
   userRow: {
     flexDirection: 'row', alignItems: 'center', padding: spacing.md,
   },
-  name: { ...typography.body, color: colors.text },
+  name: { ...typography.body, color: colors.text.primary },
   handle: { ...typography.caption, color: colors.muted },
   followBtn: {
     paddingHorizontal: spacing.md,

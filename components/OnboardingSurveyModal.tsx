@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   },
   choiceChipText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
   },
   choiceChipTextSelected: {
     color: colors.primary,
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   locationButtonText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
   },
   locationButtonTextSelected: {
     color: colors.primary,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    color: colors.text,
+    color: colors.text.primary,
   },
   actions: {
     flexDirection: 'row',
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
   },
   submitButton: {
     flex: 1,

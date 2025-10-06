@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   idleTitle: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
   },
   enableButtonText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     fontWeight: '600',
   },
   runningState: {
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   summaryStats: {
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
   },
   captionLabel: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.sm,
     fontWeight: '600',
   },
@@ -711,7 +711,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    color: colors.text,
+    color: colors.text.primary,
     minHeight: 100,
     textAlignVertical: 'top',
   },
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   },
   photoLabel: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.sm,
     fontWeight: '600',
   },
@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     fontWeight: '600',
   },
   postButton: {

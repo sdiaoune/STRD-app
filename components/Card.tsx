@@ -26,7 +26,7 @@ export const Card: React.FC<Props> = ({
       onPress={onPress}
       style={[
         {
-          backgroundColor: colors.bg.elev1,
+          backgroundColor: colors.card,
           padding: spacing[4],
           borderRadius: radii.lg,
           borderWidth: 1,

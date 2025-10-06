@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   },
   value: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   label: {

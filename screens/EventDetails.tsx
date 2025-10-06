@@ -20,9 +20,9 @@ export const EventDetails: React.FC = () => {
   if (!event || !organization) return null;
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: 120 }}>
-        <View className="w-full aspect-video rounded-lg bg-surfaceAlt items-center justify-center mb-4 overflow-hidden">
+        <View style={{ width: '100%', aspectRatio: 16/9, borderRadius: 12, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', marginBottom: spacing[4], overflow: 'hidden' }}>
           {event.coverImage ? (
             <Image source={{ uri: event.coverImage }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
           ) : (
@@ -32,33 +32,33 @@ export const EventDetails: React.FC = () => {
 
         <HostRow name={organization.name} avatar={organization.logo} isPartner={organization.type === 'partner'} />
 
-        <Text className="text-text mt-4" style={typography.h2}>
+        <Text style={[typography.h2, { color: colors.text.primary, marginTop: spacing[4] }]}>
           {event.title}
         </Text>
 
         <View className="mt-4 space-y-2">
           <View className="flex-row items-center">
-            <Ionicons name="calendar" size={20} color={colors.textMuted} />
-            <Text className="ml-2 text-textMuted" style={typography.caption}>
+            <Ionicons name="calendar" size={20} color={colors.text.muted} />
+            <Text style={[typography.caption, { color: colors.text.muted, marginLeft: spacing[2] }]}>
               {formatEventDate(event.dateISO)} • {formatEventTime(event.dateISO)}
             </Text>
           </View>
           <View className="flex-row items-center">
-            <Ionicons name="location-outline" size={20} color={colors.textMuted} />
-            <Text className="ml-2 text-textMuted" style={typography.caption}>
+            <Ionicons name="location-outline" size={20} color={colors.text.muted} />
+            <Text style={[typography.caption, { color: colors.text.muted, marginLeft: spacing[2] }]}>
               {event.location.name}
             </Text>
           </View>
           <View className="flex-row items-center">
-            <Ionicons name="navigate" size={20} color={colors.textMuted} />
-            <Text className="ml-2 text-textMuted" style={typography.caption}>
+            <Ionicons name="navigate" size={20} color={colors.text.muted} />
+            <Text style={[typography.caption, { color: colors.text.muted, marginLeft: spacing[2] }]}>
               {event.distanceFromUserKm == null ? 'Distance unavailable' : `${formatDistance(event.distanceFromUserKm)} away`}
             </Text>
           </View>
         </View>
 
         <View className="mt-6">
-          <Text className="text-text mb-2" style={typography.h3}>Tags</Text>
+          <Text style={[typography.h3, { color: colors.text.primary, marginBottom: spacing[2] }]}>Tags</Text>
           <View className="flex-row flex-wrap">
             {event.tags.map((t) => (
               <Chip key={t} label={t} style={{ marginRight: spacing[1], marginBottom: spacing[1] }} />
@@ -67,15 +67,15 @@ export const EventDetails: React.FC = () => {
         </View>
 
         <View className="mt-6">
-          <Text className="text-text mb-2" style={typography.h3}>Description</Text>
-          <Text className="text-text" style={typography.body}>
+          <Text style={[typography.h3, { color: colors.text.primary, marginBottom: spacing[2] }]}>Description</Text>
+          <Text style={[typography.body, { color: colors.text.primary }]}>
             {event.description}
           </Text>
         </View>
 
-        <View className="mt-6 items-center py-6 border border-dashed border-border rounded-lg">
-          <Ionicons name="people" size={24} color={colors.textMuted} />
-          <Text className="text-textMuted mt-2" style={typography.body}>
+        <View style={{ marginTop: spacing[6], alignItems: 'center', paddingVertical: spacing[6], borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, borderRadius: 12 }}>
+          <Ionicons name="people" size={24} color={colors.text.muted} />
+          <Text style={[typography.body, { color: colors.text.muted, marginTop: spacing[2] }]}>
             Be the first to join. Invite friends →
           </Text>
         </View>
