@@ -38,7 +38,7 @@ export const EventsScreen: React.FC = () => {
 
       <View style={styles.segmentedContainer}>
         <SegmentedControl
-          segments={['For You', 'All']}
+          segments={['All', 'For You']}
           value={eventFilter === 'forYou' ? 'For You' : 'All'}
           onChange={(value) => {
             const scope = value === 'For You' ? 'forYou' : 'all';

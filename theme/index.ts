@@ -10,6 +10,8 @@ const darkColors = {
   border: tokens.colors.border,
   secondary: tokens.colors.text.secondary,
   warning: tokens.colors.warning,
+  error: tokens.colors.danger,
+  onPrimary: tokens.colors.accentOn,
 };
 
 const lightColors = {
@@ -21,6 +23,8 @@ const lightColors = {
   border: '#E5E8F0',
   secondary: '#2D3445',
   warning: '#E3B23C',
+  error: '#E25050',
+  onPrimary: '#0B0C0F',
 };
 
 export const getColors = (theme: 'dark' | 'light') => (theme === 'light' ? lightColors : darkColors);

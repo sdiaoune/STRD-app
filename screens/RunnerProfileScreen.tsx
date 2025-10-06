@@ -21,11 +21,15 @@ export const RunnerProfileScreen: React.FC = () => {
   const followUser = useStore(s => s.followUser);
   const unfollowUser = useStore(s => s.unfollowUser);
   const currentUser = useStore(s => s.currentUser);
-  const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+  const followingUserIds = useStore(s => s.followingUserIds);
+  const [isFollowing, setIsFollowing] = useState<boolean | null>(
+    followingUserIds.includes(userId) ? true : null
+  );
 
   const user = userById(userId);
 
   useEffect(() => {
+    if (isFollowing !== null) return;
     let mounted = true;
     (async () => {
       const { supabase } = await import('../supabase/client');
@@ -33,7 +37,7 @@ export const RunnerProfileScreen: React.FC = () => {
       if (mounted) setIsFollowing(!!data);
     })();
     return () => { mounted = false; };
-  }, [userId, currentUser.id]);
+  }, [userId, currentUser.id, isFollowing]);
 
   const posts = runPosts.filter(p => p.userId === userId);
   const totalRuns = posts.length;

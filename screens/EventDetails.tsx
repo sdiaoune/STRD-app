@@ -3,6 +3,7 @@ import { ScrollView, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useStore } from '../state/store';
 import { Chip } from '../components/Chip';
 import { HostRow } from '../components/HostRow';
@@ -21,8 +22,12 @@ export const EventDetails: React.FC = () => {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <ScrollView contentContainerStyle={{ padding: spacing[4], paddingBottom: 120 }}>
-        <View className="w-full aspect-video rounded-lg bg-surfaceAlt items-center justify-center mb-4">
-          <Ionicons name="image" size={48} color={colors.textMuted} />
+        <View className="w-full aspect-video rounded-lg bg-surfaceAlt items-center justify-center mb-4 overflow-hidden">
+          {event.coverImage ? (
+            <Image source={{ uri: event.coverImage }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+          ) : (
+            <Ionicons name="image" size={48} color={colors.textMuted} />
+          )}
         </View>
 
         <HostRow name={organization.name} avatar={organization.logo} isPartner={organization.type === 'partner'} />
@@ -47,7 +52,7 @@ export const EventDetails: React.FC = () => {
           <View className="flex-row items-center">
             <Ionicons name="navigate" size={20} color={colors.textMuted} />
             <Text className="ml-2 text-textMuted" style={typography.caption}>
-              {formatDistance(event.distanceFromUserKm)} away
+              {event.distanceFromUserKm == null ? 'Distance unavailable' : `${formatDistance(event.distanceFromUserKm)} away`}
             </Text>
           </View>
         </View>
