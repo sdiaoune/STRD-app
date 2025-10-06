@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Button } from './Button';
 import { OutlineButton } from './OutlineButton';
-import { colors, spacing } from '../tokens';
+import { colors, spacing } from '../theme';
 
 interface Props {
   primaryText: string;

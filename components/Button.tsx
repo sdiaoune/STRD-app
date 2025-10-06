@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, Text, PressableProps, View, ViewStyle, StyleProp } from 'react-native';
-import { colors, spacing, radii, typography } from '../tokens';
+import { colors, spacing, typography, borderRadius as radii } from '../theme';
 import { gradient } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 

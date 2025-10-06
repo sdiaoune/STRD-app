@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, ViewProps } from 'react-native';
-import { colors } from '../tokens';
+import { colors } from '../theme';
 
 interface Props extends ViewProps {
   label: string;

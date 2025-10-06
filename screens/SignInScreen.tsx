@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, borderRadius } from '../theme';
@@ -19,6 +19,8 @@ export const SignInScreen: React.FC = () => {
   useEffect(() => {
     if (authError) {
       setShowToast(true);
+      // Also show a system alert so the error is clearly visible
+      Alert.alert('Sign-in failed', authError, [{ text: 'OK' }], { cancelable: true });
     }
   }, [authError]);
 

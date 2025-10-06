@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
-import { colors, motion } from '../tokens';
+import { colors } from '../theme';
 import { surfaces } from '../theme';
 
 interface Props {

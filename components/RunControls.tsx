@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from './Button';
-import { colors, spacing, typography } from '../tokens';
+import { colors, spacing, typography } from '../theme';
 
 interface Props {
   isRunning: boolean;

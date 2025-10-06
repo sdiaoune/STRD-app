@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, LayoutChangeEvent, Animated } from 'react-native';
-import { spacing, typography, colors, radii } from '../tokens';
+import { spacing, typography, colors, borderRadius as radii } from '../theme';
 
 interface Props {
   segments: string[];

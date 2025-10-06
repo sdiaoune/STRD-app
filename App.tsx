@@ -241,6 +241,7 @@ export default function App() {
   const isAuthenticated = useStore(state => state.isAuthenticated);
   const initializeAuth = useStore(state => state.initializeAuth);
   const hydratePreferences = useStore(state => state.hydratePreferences);
+  const themePreference = useStore(state => state.themePreference);
   const reloadInitialData = useStore(state => state._loadInitialData);
   const [showSurvey, setShowSurvey] = useState(false);
   const [hasCheckedSurvey, setHasCheckedSurvey] = useState(false);
@@ -353,7 +354,7 @@ export default function App() {
           <AuthStack />
         )}
       </NavigationContainer>
-      <StatusBar style="light" />
+      <StatusBar style={themePreference === 'light' ? 'dark' : 'light'} />
       <OnboardingSurveyModal
         visible={showSurvey}
         onSubmit={handleSurveySubmit}

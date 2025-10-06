@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { EventCard } from '../components/EventCard';
 import { useStore } from '../state/store';
-import { typography, spacing } from '../tokens';
+import { typography, spacing } from '../theme';
 
 export const Events: React.FC = () => {
   const { currentUser, eventFilter, filterEvents, getFilteredEvents } = useStore();

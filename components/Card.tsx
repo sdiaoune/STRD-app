@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, View, ViewProps, Platform } from 'react-native';
-import { radii, spacing, colors } from '../tokens';
+import { borderRadius as radii, spacing, colors } from '../theme';
 import { shadows as themeShadows, surfaces } from '../theme';
 
 interface Props extends ViewProps {

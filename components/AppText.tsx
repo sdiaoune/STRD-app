@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TextProps } from 'react-native';
-import { typography, colors } from '../tokens';
+import { typography, colors } from '../theme';
 
 type Variant = 'display' | 'h1' | 'h2' | 'body' | 'caption';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radii } from '../tokens';
+import { colors, spacing, borderRadius as radii } from '../theme';
 
 type TabItem = {
   key: string;

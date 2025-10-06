@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, ViewProps } from 'react-native';
-import { typography, colors, spacing, radii } from '../tokens';
+import { typography, spacing, colors, borderRadius as radii } from '../theme';
 
 interface Props extends ViewProps {
   label: string;

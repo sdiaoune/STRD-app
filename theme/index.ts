@@ -1,4 +1,4 @@
-// Backwards-compatible theme facade built on top of tokens
+// Backwards-compatible theme facade with dynamic light/dark support
 import * as tokens from '../tokens';
 
 const darkColors = {
@@ -15,7 +15,7 @@ const darkColors = {
 };
 
 const lightColors = {
-  bg: '#FAFBFF',
+  bg: '#FFFFFF',
   card: '#FFFFFF',
   primary: tokens.colors.accent,
   text: '#0B0C0F',
@@ -41,8 +41,19 @@ const getCurrentTheme = (): 'dark' | 'light' => {
   }
 };
 
-// Stable dark theme export to avoid runtime issues
-export const colors = darkColors;
+// Colors object that switches in bulk for our top-level usages while keeping nested shapes stable
+export const colors = {
+  get bg() { return getColors(getCurrentTheme()).bg; },
+  get card() { return getColors(getCurrentTheme()).card; },
+  get primary() { return getColors(getCurrentTheme()).primary; },
+  get text() { return getColors(getCurrentTheme()).text; },
+  get muted() { return getColors(getCurrentTheme()).muted; },
+  get border() { return getColors(getCurrentTheme()).border; },
+  get secondary() { return getColors(getCurrentTheme()).secondary; },
+  get warning() { return getColors(getCurrentTheme()).warning; },
+  get error() { return getColors(getCurrentTheme()).error; },
+  get onPrimary() { return getColors(getCurrentTheme()).onPrimary; },
+};
 
 export const spacing = {
   xs: tokens.spacing[1],
@@ -74,17 +85,19 @@ export const shadows = tokens.nativeShadows;
 export const surfaces = tokens.surfaces;
 export const gradient = tokens.gradient;
 
-// Helper to get React Navigation theme objects (fixed dark)
+// Helper to get React Navigation theme objects (dynamic)
 export const getNavigationTheme = () => {
+  const theme = getCurrentTheme();
+  const palette = getColors(theme);
   return {
-    dark: true,
+    dark: theme === 'dark',
     colors: {
-      primary: colors.primary,
-      background: colors.bg,
-      card: colors.card,
-      text: colors.text,
-      border: colors.border,
-      notification: colors.primary,
+      primary: palette.primary,
+      background: palette.bg,
+      card: palette.card,
+      text: palette.text,
+      border: palette.border,
+      notification: palette.primary,
     },
     fonts: {
       regular: { fontFamily: 'System', fontWeight: '400' as const },

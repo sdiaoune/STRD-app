@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useStore } from '../state/store';
 import { Avatar } from '../components/Avatar';
 import { RunPostCard } from '../components/RunPostCard';
-import { typography, spacing, colors } from '../tokens';
+import { typography, spacing, colors } from '../theme';
 
 export const Profile: React.FC = () => {
   const { currentUser, runPosts } = useStore();

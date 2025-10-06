@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabOverflow } from '../components/ui/TabBarBackground.ios';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -21,6 +22,8 @@ export const EventDetailsScreen: React.FC = () => {
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
   const route = useRoute<EventDetailsScreenRouteProp>();
   const { eventId } = route.params;
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabOverflow?.() ?? 0;
   
   const { eventById, orgById, joinEvent, leaveEvent, setReminder, clearReminder, currentUser } = useStore();
   const unit = useStore(state => state.unitPreference);
@@ -164,7 +167,7 @@ export const EventDetailsScreen: React.FC = () => {
       </ScrollView>
 
       {/* Action Buttons */}
-      <View style={styles.actionButtons}>
+      <View style={[styles.actionButtons, { paddingBottom: insets.bottom + spacing.sm, marginBottom: tabBarHeight + spacing.md }]}>
         <TouchableOpacity style={styles.remindButton} onPress={handleRemindMe}>
           <Text style={styles.remindButtonText}>{isReminded ? 'Reminder Set' : 'Remind Me'}</Text>
         </TouchableOpacity>

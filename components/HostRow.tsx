@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { Avatar } from './Avatar';
 import { Badge } from './Badge';
-import { spacing, typography } from '../tokens';
+import { spacing, typography } from '../theme';
 import { colors } from '../theme';
 
 interface Props {

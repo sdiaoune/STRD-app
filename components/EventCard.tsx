@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { Chip } from './Chip';
 import { Badge } from './Badge';
-import { spacing, typography, colors } from '../tokens';
+import { spacing, typography, colors } from '../theme';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
 import type { Event } from '../types/models';
 import { useStore } from '../state/store';

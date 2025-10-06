@@ -27,6 +27,7 @@ interface RunState {
 }
 
 const UNIT_PREFERENCE_KEY = 'strd_unit_preference';
+const THEME_PREFERENCE_KEY = 'strd_theme_preference';
 // Reuse avatars bucket for run media to avoid relying on missing storage buckets in staging
 const RUN_MEDIA_BUCKET = 'avatars';
 
@@ -142,7 +143,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
   setThemePreference: (theme: 'dark' | 'light') => {
     set({ themePreference: theme });
-    // Defer theme application to App and Settings screen (including optional reload)
+    AsyncStorage.setItem(THEME_PREFERENCE_KEY, theme).catch(() => {});
   },
   eventFilter: 'forYou',
   runState: {
@@ -647,7 +648,7 @@ export const useStore = create<AppState>((set, get) => ({
       if (method === 'email') {
         if (!email || !password) throw new Error('Missing credentials');
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) throw new Error(error.message || 'Invalid email or password');
         set({ isAuthenticated: true });
         const userId = data.user?.id || '';
         set((state) => ({ currentUser: { ...state.currentUser, id: userId } }));
@@ -661,7 +662,7 @@ export const useStore = create<AppState>((set, get) => ({
         await get()._loadInitialData();
       } else if (method === 'google') {
         const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-        if (error) throw error;
+        if (error) throw new Error(error.message || 'Google sign-in failed');
       }
     } catch (e: any) {
       set({ authError: e?.message || 'Sign-in failed' });
@@ -723,6 +724,10 @@ export const useStore = create<AppState>((set, get) => ({
       const unit = await AsyncStorage.getItem(UNIT_PREFERENCE_KEY);
       if (unit === 'metric' || unit === 'imperial') {
         set({ unitPreference: unit });
+      }
+      const theme = await AsyncStorage.getItem(THEME_PREFERENCE_KEY);
+      if (theme === 'dark' || theme === 'light') {
+        set({ themePreference: theme });
       }
     } catch {
       // ignore hydration errors

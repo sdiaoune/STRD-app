@@ -8,6 +8,15 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();
 
+  const isLight = (() => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { useStore } = require('../state/store');
+      const pref = useStore.getState?.()?.themePreference;
+      return pref === 'light';
+    } catch { return false; }
+  })();
+
   return (
     <View
       style={{
@@ -21,7 +30,14 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
         pointerEvents: 'box-none',
       }}
     >
-      <BlurView tint="dark" intensity={80} style={{ paddingVertical: spacing.sm }}>
+      <BlurView
+        tint={isLight ? 'light' : 'dark'}
+        intensity={isLight ? 0 : 80}
+        style={{
+          paddingVertical: spacing.sm,
+          backgroundColor: isLight ? '#FFFFFFEE' : undefined,
+        }}
+      >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md }}>
           {state.routes.filter(r => r.name !== 'Profile').map((route, index) => {
             const isFocused = state.index === index;
@@ -36,7 +52,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
               navigation.emit({ type: 'tabLongPress', target: route.key });
             };
 
-            const color = isFocused ? colors.primary : colors.muted;
+            const color = isFocused ? colors.primary : (isLight ? '#7A899C' : colors.muted);
             const size = 24;
             const icon = options.tabBarIcon?.({ focused: isFocused, color, size });
             const labelRaw = route.name === 'Run' ? 'STRD' : route.name;
@@ -57,7 +73,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
                     style={{
                       ...(typography.caption as any),
                       marginTop: spacing.xs,
-                      color: isFocused ? colors.primary : colors.muted,
+                      color: isFocused ? colors.primary : (isLight ? '#7A899C' : colors.muted),
                       fontWeight: isFocused ? '700' : '600',
                     }}
                     numberOfLines={1}

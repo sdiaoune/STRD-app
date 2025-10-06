@@ -8,7 +8,7 @@ import { useStore } from '../state/store';
 import { Chip } from '../components/Chip';
 import { HostRow } from '../components/HostRow';
 import { StickyBottomCTA } from '../components/StickyBottomCTA';
-import { typography, spacing, colors } from '../tokens';
+import { typography, spacing, colors } from '../theme';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
 
 export const EventDetails: React.FC = () => {

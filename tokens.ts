@@ -1,25 +1,13 @@
-// Design tokens for STRD (dark theme)
-export const colors = {
-  // Backgrounds
-  bg: {
-    page: '#0D0F12',
-    elev1: '#121419',
-    elev2: '#161922',
-  },
-  // Text
-  text: {
-    primary: '#E8EAED',
-    secondary: '#B0B7C1',
-    muted: '#7D8590',
-  },
-  // Accent & semantic
+// Design tokens for STRD (static dark base). Theme switching happens in theme/index.ts
+const darkColors = {
+  bg: { page: '#0D0F12', elev1: '#121419', elev2: '#161922' },
+  text: { primary: '#E8EAED', secondary: '#B0B7C1', muted: '#7D8590' },
   accent: '#F5C84C',
   accentOn: '#0B0C0F',
   border: '#242833',
   success: '#51D675',
   danger: '#FF6B6B',
-
-  // Legacy aliases (to minimize churn while refactoring)
+  // Legacy aliases
   primary: '#F5C84C',
   onPrimary: '#0B0C0F',
   surface: '#121419',
@@ -29,7 +17,45 @@ export const colors = {
   error: '#FF6B6B',
   warning: '#F5C84C',
   info: '#51D675',
+} as const;
+
+const lightColors = {
+  bg: { page: '#FFFFFF', elev1: '#FFFFFF', elev2: '#F7F9FC' },
+  text: { primary: '#0B0C0F', secondary: '#2D3445', muted: '#586074' },
+  accent: '#F5C84C',
+  accentOn: '#0B0C0F',
+  border: '#E5E8F0',
+  success: '#2DBE63',
+  danger: '#E25050',
+  // Legacy aliases
+  primary: '#F5C84C',
+  onPrimary: '#0B0C0F',
+  surface: '#FFFFFF',
+  surfaceAlt: '#FFFFFF',
+  card: '#FFFFFF',
+  textMuted: '#586074',
+  error: '#E25050',
+  warning: '#E3B23C',
+  info: '#2DBE63',
+} as const;
+
+const getCurrentTheme = (): 'dark' | 'light' => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { useStore } = require('./state/store');
+    const pref = useStore.getState?.()?.themePreference as 'dark' | 'light' | undefined;
+    return pref || 'dark';
+  } catch {
+    return 'dark';
+  }
 };
+
+export const colors = new Proxy({} as any, {
+  get(_target, prop: string) {
+    const palette = getCurrentTheme() === 'light' ? lightColors : darkColors;
+    return (palette as any)[prop];
+  },
+});
 
 export const spacing = {
   1: 4,

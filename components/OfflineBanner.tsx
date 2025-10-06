@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { colors, spacing, typography } from '../tokens';
+import { colors, spacing, typography } from '../theme';
 
 export const OfflineBanner: React.FC = () => {
   return (
