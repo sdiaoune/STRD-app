@@ -17,6 +17,8 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
         bottom: Math.max(insets.bottom, spacing.md),
         borderRadius: borderRadius.xl ?? 24,
         overflow: 'hidden',
+        // never block touches to content behind the bar
+        pointerEvents: 'box-none',
       }}
     >
       <BlurView tint="dark" intensity={80} style={{ paddingVertical: spacing.sm }}>

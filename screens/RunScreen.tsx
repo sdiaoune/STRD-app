@@ -17,6 +17,7 @@ import { regionForCoordinates } from '../utils/geo';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import TopBar from '../components/TopBar';
+import { useBottomTabOverflow } from '../components/ui/TabBarBackground.ios';
 
 export const RunScreen: React.FC = () => {
   const navigation = useNavigation<RunScreenNavigationProp>();
@@ -39,6 +40,7 @@ export const RunScreen: React.FC = () => {
   const pauseRun = useStore((s) => s.pauseRun);
   const resumeRun = useStore((s) => s.resumeRun);
   const unit = useStore((s) => s.unitPreference);
+  const tabBarHeight = useBottomTabOverflow?.() ?? 0;
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -298,6 +300,8 @@ export const RunScreen: React.FC = () => {
                     <Text style={styles.postButtonText}>Post</Text>
                   </TouchableOpacity>
                 </View>
+                {/* Spacer to avoid overlap with floating tab bar */}
+                <View style={{ height: (useBottomTabOverflow?.() ?? 0) + spacing.lg }} />
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -436,6 +440,7 @@ export const RunScreen: React.FC = () => {
                 <Text style={styles.endButtonText}>{runState.activityType === 'walk' ? 'End Walk' : 'End Run'}</Text>
               </TouchableOpacity>
             </View>
+            <View style={{ height: tabBarHeight + spacing.lg }} />
           </View>
         )}
       </View>

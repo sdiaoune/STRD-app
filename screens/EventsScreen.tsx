@@ -13,6 +13,7 @@ import { EventCard } from '../components/EventCard';
 import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
 import TopBar from '../components/TopBar';
+import * as Location from 'expo-location';
 
 export const EventsScreen: React.FC = () => {
   const navigation = useNavigation<EventsScreenNavigationProp>();
@@ -27,13 +28,30 @@ export const EventsScreen: React.FC = () => {
 
   const events = getFilteredEvents();
 
+  const [locationLabel, setLocationLabel] = React.useState<string>(currentUser?.city || '');
+
+  React.useEffect(() => {
+    if (!locationLabel) {
+      (async () => {
+        try {
+          const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced } as any);
+          const list = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+          const city = (list && list[0] && (list[0].city || list[0].district || list[0].subregion)) || '';
+          if (city) setLocationLabel(city);
+        } catch {
+          // silently ignore if permission not granted or reverse geocode fails
+        }
+      })();
+    }
+  }, [locationLabel]);
+
   const handleEventPress = (eventId: string) => {
     navigation.navigate('EventDetails', { eventId });
   };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <TopBar title={`STRD — ${currentUser.city}`} />
+      <TopBar title={locationLabel || 'Events'} />
 
       <View style={styles.segmentedContainer}>
         <SegmentedControl

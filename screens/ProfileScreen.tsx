@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ProfileStackParamList, AppNavigationParamList } from '../types/navigation';
@@ -18,6 +18,7 @@ import { Button } from '../components/Button';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
   const { currentUser, runPosts, events, postById, eventById } = useStore();
   const unit = useStore(state => state.unitPreference);
   const { formatDistance } = require('../utils/format');
@@ -106,7 +107,7 @@ export const ProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: spacing.lg + insets.bottom + spacing.md }} showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={{ alignItems: 'center' }}>
@@ -190,12 +191,11 @@ export const ProfileScreen: React.FC = () => {
             />
           )}
         </View>
-      </ScrollView>
-      <View style={styles.footerActions}>
-        <View style={styles.footerRow}>
+
+        <View style={{ padding: spacing.md }}>
           <Button style={{ width: '100%' }} onPress={() => (navigation as any).navigate('Settings')}>Settings</Button>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -283,13 +283,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     textDecorationLine: 'underline',
   },
-  footerActions: {
-    padding: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.bg,
-  },
-  footerRow: {
-    flexDirection: 'row',
-  },
+  footerActions: {},
+  footerRow: {},
 });

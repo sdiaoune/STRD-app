@@ -101,7 +101,7 @@ export const TimelineScreen: React.FC = () => {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.lg + insets.bottom + spacing.md }]}
         showsVerticalScrollIndicator={false}
       >
         {timelineItems.length > 0 ? (
