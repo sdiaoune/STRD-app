@@ -290,7 +290,7 @@ export default function App() {
       <NavigationContainer theme={getNavigationTheme()}>
         {isAuthenticated ? (
           <Tab.Navigator
-            initialRouteName="Run"
+            initialRouteName="Timeline"
             screenOptions={({ route }) => ({
               tabBarIcon: ({ focused, color, size }) => {
                 let iconName: keyof typeof Ionicons.glyphMap;
@@ -327,12 +327,16 @@ export default function App() {
               headerShown: false,
             })}
           >
-            <Tab.Screen name="Events" component={EventsStack} />
             <Tab.Screen name="Timeline" component={TimelineStack} />
+            <Tab.Screen name="Events" component={EventsStack} />
             <Tab.Screen name="Search" component={SearchStack} />
             <Tab.Screen name="Run" component={RunStack} options={{ tabBarLabel: 'STRD' }} />
             <Tab.Screen name="Notifications" component={NotificationsStack} />
-            <Tab.Screen name="Profile" component={ProfileStack} />
+            <Tab.Screen
+              name="Profile"
+              component={ProfileStack}
+              options={{ tabBarButton: () => null }}
+            />
           </Tab.Navigator>
         ) : (
           <AuthStack />
