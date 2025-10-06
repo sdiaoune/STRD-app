@@ -100,7 +100,11 @@ export const Toast: React.FC<Props> = ({
     >
       <View style={[styles.content, size === 'large' && styles.contentLarge]}>
         <Ionicons name={getIconName()} size={22} color={getIconColor()} />
-        <Text style={[styles.text, size === 'large' && styles.textLarge]}>{message}</Text>
+        <Text
+          style={[styles.text, size === 'large' && styles.textLarge, { color: colors.text.primary }]}
+        >
+          {message}
+        </Text>
       </View>
     </Animated.View>
   );
@@ -134,7 +138,6 @@ const styles = StyleSheet.create({
   },
   text: {
     ...typography.body,
-    color: '#FFFFFF',
     marginLeft: spacing[2],
     flex: 1,
   },

@@ -1,4 +1,6 @@
 // Design tokens for STRD (static dark base). Theme switching happens in theme/index.ts
+export type ThemeName = 'dark' | 'light';
+
 const darkColors = {
   bg: { page: '#0D0F12', elev1: '#121419', elev2: '#161922' },
   text: { primary: '#E8EAED', secondary: '#B0B7C1', muted: '#7D8590' },
@@ -39,11 +41,16 @@ const lightColors = {
   info: '#2DBE63',
 } as const;
 
-const getCurrentTheme = (): 'dark' | 'light' => {
+export const themePalettes: Record<ThemeName, typeof darkColors> = {
+  dark: darkColors,
+  light: lightColors,
+};
+
+const getCurrentTheme = (): ThemeName => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { useStore } = require('./state/store');
-    const pref = useStore.getState?.()?.themePreference as 'dark' | 'light' | undefined;
+    const pref = useStore.getState?.()?.themePreference as ThemeName | undefined;
     return pref || 'dark';
   } catch {
     return 'dark';
@@ -52,7 +59,7 @@ const getCurrentTheme = (): 'dark' | 'light' => {
 
 export const colors = new Proxy({} as any, {
   get(_target, prop: string) {
-    const palette = getCurrentTheme() === 'light' ? lightColors : darkColors;
+    const palette = themePalettes[getCurrentTheme()];
     return (palette as any)[prop];
   },
 });

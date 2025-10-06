@@ -63,7 +63,7 @@ export const SignInScreen: React.FC = () => {
         </View>
 
         <Pressable style={styles.googleButton} onPress={() => signIn('google')} accessibilityRole="button">
-          <Ionicons name="logo-google" size={18} color={colors.text} style={{ marginRight: spacing.sm }} />
+          <Ionicons name="logo-google" size={18} color={colors.text.primary} style={{ marginRight: spacing.sm }} />
           <Text style={styles.googleText}>Continue with Google</Text>
         </Pressable>
 
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h1,
-    color: colors.text,
+    color: colors.text.primary,
   },
   subtitle: {
     ...typography.body,
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   },
   input: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   googleText: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     fontWeight: '600',
   },
   footerRow: {
