@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import { supabase } from './supabase/client';
 
 import { colors, getNavigationTheme } from './theme';
 import { EventsScreen } from './screens/EventsScreen';
@@ -22,6 +23,7 @@ import { RunnerProfileScreen } from './screens/RunnerProfileScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { NotificationsScreen } from './screens/NotificationsScreen';
 import BlurTabBarBackground, { useBottomTabOverflow } from './components/ui/TabBarBackground.ios';
+import CustomTabBar from './components/CustomTabBar';
 import { HapticTab } from './components/HapticTab';
 import { SignInScreen } from './screens/SignInScreen';
 import { SignUpScreen } from './screens/SignUpScreen';
@@ -183,7 +185,7 @@ function NotificationsStack() {
       <Stack.Screen 
         name="NotificationsHome" 
         component={NotificationsScreen}
-        options={{ title: 'Notifications' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -201,7 +203,7 @@ function SearchStack() {
       <Stack.Screen 
         name="UserSearch" 
         component={UserSearchScreen}
-        options={{ title: 'Search' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen 
         name="RunnerProfile" 
@@ -239,6 +241,7 @@ export default function App() {
   const isAuthenticated = useStore(state => state.isAuthenticated);
   const initializeAuth = useStore(state => state.initializeAuth);
   const hydratePreferences = useStore(state => state.hydratePreferences);
+  const reloadInitialData = useStore(state => state._loadInitialData);
   const [showSurvey, setShowSurvey] = useState(false);
   const [hasCheckedSurvey, setHasCheckedSurvey] = useState(false);
 
@@ -255,6 +258,14 @@ export default function App() {
           }
           await AsyncStorage.setItem(LOCATION_PROMPT_KEY, '1');
         }
+        // Try to get location and update event distances in DB
+        try {
+          const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced } as any);
+          const { latitude, longitude } = pos.coords;
+          await supabase.rpc('update_event_distances_km', { lat: latitude, lon: longitude });
+          // Refresh data if signed in (will no-op if not)
+          await reloadInitialData();
+        } catch {}
       } catch {
         // ignore permission errors during bootstrap
       }
@@ -262,7 +273,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated || hasCheckedSurvey) return;
+    if (hasCheckedSurvey) return;
     (async () => {
       try {
         const stored = await AsyncStorage.getItem(SURVEY_STORAGE_KEY);
@@ -273,7 +284,7 @@ export default function App() {
         setHasCheckedSurvey(true);
       }
     })();
-  }, [isAuthenticated, hasCheckedSurvey]);
+  }, [hasCheckedSurvey]);
 
   const handleSurveySubmit = async (answers: Record<string, string>) => {
     await AsyncStorage.setItem(SURVEY_STORAGE_KEY, JSON.stringify({ answers, completedAt: new Date().toISOString() }));
@@ -290,7 +301,7 @@ export default function App() {
       <NavigationContainer theme={getNavigationTheme()}>
         {isAuthenticated ? (
           <Tab.Navigator
-            initialRouteName="Timeline"
+            initialRouteName="Run"
             screenOptions={({ route }) => ({
               tabBarIcon: ({ focused, color, size }) => {
                 let iconName: keyof typeof Ionicons.glyphMap;
@@ -321,21 +332,21 @@ export default function App() {
                 elevation: 0,
                 shadowOpacity: 0,
               },
-              tabBarBackground: () => <BlurTabBarBackground />,
-              tabBarButton: (props) => <HapticTab {...props} />,
               tabBarLabelStyle: { fontWeight: '600' },
               headerShown: false,
             })}
+            tabBar={(props) => <CustomTabBar {...props} />}
           >
             <Tab.Screen name="Timeline" component={TimelineStack} />
             <Tab.Screen name="Events" component={EventsStack} />
             <Tab.Screen name="Search" component={SearchStack} />
             <Tab.Screen name="Run" component={RunStack} options={{ tabBarLabel: 'STRD' }} />
             <Tab.Screen name="Notifications" component={NotificationsStack} />
+            {/* Hidden Profile route for avatar navigation across the app */}
             <Tab.Screen
               name="Profile"
               component={ProfileStack}
-              options={{ tabBarButton: () => null }}
+              options={{ tabBarButton: () => null, headerShown: false }}
             />
           </Tab.Navigator>
         ) : (

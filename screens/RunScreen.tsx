@@ -16,6 +16,7 @@ import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { regionForCoordinates } from '../utils/geo';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
+import TopBar from '../components/TopBar';
 
 export const RunScreen: React.FC = () => {
   const navigation = useNavigation<RunScreenNavigationProp>();
@@ -307,9 +308,7 @@ export const RunScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>STRD</Text>
-      </View>
+      <TopBar title="STRD" />
 
       <View style={styles.content}>
         {!runState.isRunning ? (
@@ -449,17 +448,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-  header: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.text,
-    textAlign: 'center',
-  },
+  header: {},
+  title: {},
   content: {
     flex: 1,
     padding: spacing.md,

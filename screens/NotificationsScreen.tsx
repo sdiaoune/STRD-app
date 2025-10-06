@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { supabase } from '../supabase/client';
 import { useNavigation } from '@react-navigation/native';
+import TopBar from '../components/TopBar';
 
 type Notif = {
   id: string;
@@ -57,8 +58,8 @@ export const NotificationsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Notifications</Text>
+      <TopBar title="Notifications" />
+      <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: 0, alignItems: 'flex-end' }}>
         <TouchableOpacity onPress={markAllRead} accessibilityRole="button" hitSlop={12}>
           <Text style={styles.markRead}>Mark all read</Text>
         </TouchableOpacity>
@@ -88,8 +89,8 @@ export const NotificationsScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
-  title: { ...typography.h2, color: colors.text },
+  header: {},
+  title: {},
   markRead: { ...typography.caption, color: colors.primary },
   row: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
   rowTitle: { ...typography.body, color: colors.text },

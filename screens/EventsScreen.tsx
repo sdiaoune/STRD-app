@@ -12,6 +12,7 @@ import { SegmentedControl } from '../components/SegmentedControl';
 import { EventCard } from '../components/EventCard';
 import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
+import TopBar from '../components/TopBar';
 
 export const EventsScreen: React.FC = () => {
   const navigation = useNavigation<EventsScreenNavigationProp>();
@@ -32,9 +33,7 @@ export const EventsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>STRD — {currentUser.city}</Text>
-      </View>
+      <TopBar title={`STRD — ${currentUser.city}`} />
 
       <View style={styles.segmentedContainer}>
         <SegmentedControl
@@ -81,17 +80,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-  header: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.text,
-    textAlign: 'center',
-  },
+  header: {},
+  title: {},
   segmentedContainer: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,

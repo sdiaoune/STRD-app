@@ -1,8 +1,9 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../state/store';
 import { borderRadius, colors, spacing, typography } from '../theme';
+import { supabase } from '../supabase/client';
 
 export const SettingsScreen: React.FC = () => {
   const signOut = useStore(state => state.signOut);
@@ -10,6 +11,9 @@ export const SettingsScreen: React.FC = () => {
   const setUnit = useStore(state => state.setUnitPreference);
   const theme = useStore(state => state.themePreference);
   const setTheme = useStore(state => state.setThemePreference);
+  const currentUser = useStore(state => state.currentUser);
+  const [eventIdDraft, setEventIdDraft] = React.useState('');
+  const [coverUrlDraft, setCoverUrlDraft] = React.useState('');
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.section}>
@@ -32,6 +36,60 @@ export const SettingsScreen: React.FC = () => {
           <Pressable onPress={() => setTheme('light')} style={[styles.unitBtn, theme === 'light' && styles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
             <Text style={[styles.unitText, theme === 'light' && styles.unitTextActive]}>Light</Text>
           </Pressable>
+        </View>
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Admin tools</Text>
+        <View style={{ marginBottom: spacing.sm }}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={async () => {
+              try {
+                if (!currentUser?.id) return;
+                await supabase.from('profiles').update({ is_super_admin: true }).eq('id', currentUser.id);
+                Alert.alert('Success', 'You are now a super-admin.');
+              } catch {
+                Alert.alert('Error', 'Failed to update admin flag.');
+              }
+            }}
+          >
+            <Text style={styles.actionBtnText}>Promote me to Super Admin</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ gap: spacing.sm }}>
+          <Text style={styles.smallLabel}>Event ID</Text>
+          <TextInput
+            value={eventIdDraft}
+            onChangeText={setEventIdDraft}
+            placeholder="uuid"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            autoCapitalize="none"
+          />
+          <Text style={styles.smallLabel}>Cover Image URL</Text>
+          <TextInput
+            value={coverUrlDraft}
+            onChangeText={setCoverUrlDraft}
+            placeholder="https://..."
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            autoCapitalize="none"
+          />
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={async () => {
+              if (!eventIdDraft || !coverUrlDraft) return;
+              try {
+                const { error } = await supabase.from('events').update({ cover_image_url: coverUrlDraft }).eq('id', eventIdDraft);
+                if (error) throw error;
+                Alert.alert('Success', 'Event cover image updated.');
+              } catch {
+                Alert.alert('Error', 'Failed to update cover image.');
+              }
+            }}
+          >
+            <Text style={styles.actionBtnText}>Update Event Cover</Text>
+          </TouchableOpacity>
         </View>
       </View>
       <View style={styles.section}>
@@ -65,6 +123,16 @@ const styles = StyleSheet.create({
   },
   unitText: { ...typography.body, color: colors.text },
   unitTextActive: { color: colors.primary, fontWeight: '600' },
+  input: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.text,
+  },
+  smallLabel: { ...typography.caption, color: colors.muted },
   signOutBtn: {
     backgroundColor: colors.card,
     borderWidth: 1,
@@ -75,6 +143,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signOutText: { ...typography.body, color: colors.primary, fontWeight: '600' },
+  actionBtn: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  actionBtnText: { ...typography.body, color: colors.primary, fontWeight: '600' },
 });
 
 

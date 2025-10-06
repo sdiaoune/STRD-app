@@ -14,6 +14,7 @@ import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '../components/Avatar';
+import TopBar from '../components/TopBar';
 
 export const TimelineScreen: React.FC = () => {
   const navigation = useNavigation<TimelineScreenNavigationProp>();
@@ -73,8 +74,9 @@ export const TimelineScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
+      <TopBar
+        title="Timeline"
+        left={
           <View style={styles.searchContainer}>
             <Ionicons name="search" size={18} color={colors.muted} style={{ marginRight: spacing.sm }} />
             <TextInput
@@ -94,12 +96,8 @@ export const TimelineScreen: React.FC = () => {
               </TouchableOpacity>
             )}
           </View>
-          <TouchableOpacity onPress={handleProfilePress} style={styles.profileButton} accessibilityRole="button" hitSlop={8}>
-            <Avatar source={currentUser.avatar ?? undefined} size={36} label={currentUser.name ?? undefined} />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.title}>Timeline</Text>
-      </View>
+        }
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -125,23 +123,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-  header: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.text,
-    textAlign: 'center',
-  },
+  header: {},
+  headerTop: {},
+  title: {},
   searchContainer: {
     flex: 1,
     flexDirection: 'row',

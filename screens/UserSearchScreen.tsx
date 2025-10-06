@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useStore } from '../state/store';
+import TopBar from '../components/TopBar';
 import { Avatar } from '../components/Avatar';
 
 export const UserSearchScreen: React.FC = () => {
@@ -35,7 +36,8 @@ export const UserSearchScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.searchRow}>
+      <TopBar title="Search" />
+      <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: 0 }}>
         <TextInput
           placeholder="Search runners"
           placeholderTextColor={colors.muted}
