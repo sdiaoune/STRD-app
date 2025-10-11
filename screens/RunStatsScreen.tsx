@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   userHandle: {
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     ...typography.h2,
-    color: colors.text,
+    color: colors.text.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    color: colors.text,
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   statsGrid: {
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   caption: {
     ...typography.body,
-    color: colors.text,
+    color: colors.text.primary,
     lineHeight: 24,
     backgroundColor: colors.card,
     padding: spacing.md,

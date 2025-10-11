@@ -1,12 +1,14 @@
 import React from 'react';
 import { Text, TextProps } from 'react-native';
-import { typography, colors } from '../theme';
+import { typography, colors, type ThemeColors } from '../theme';
 
 type Variant = 'display' | 'h1' | 'h2' | 'body' | 'caption';
 
+type TextTone = keyof ThemeColors['text'];
+
 export interface AppTextProps extends TextProps {
   variant?: Variant;
-  color?: keyof typeof colors.text | 'accent';
+  color?: TextTone | 'accent';
   weight?: '400' | '500' | '600' | '700';
 }
 

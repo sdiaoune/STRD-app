@@ -105,7 +105,7 @@ export const SettingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, padding: spacing.md },
   section: { marginTop: spacing.lg },
-  sectionTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.md },
+  sectionTitle: { ...typography.h3, color: colors.text.primary, marginBottom: spacing.md },
   row: { flexDirection: 'row' },
   unitBtn: {
     flex: 1,
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   unitBtnActive: {
     borderColor: colors.primary,
   },
-  unitText: { ...typography.body, color: colors.text },
+  unitText: { ...typography.body, color: colors.text.primary },
   unitTextActive: { color: colors.primary, fontWeight: '600' },
   input: {
     backgroundColor: colors.card,
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    color: colors.text,
+    color: colors.text.primary,
   },
   smallLabel: { ...typography.caption, color: colors.muted },
   signOutBtn: {

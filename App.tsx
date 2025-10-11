@@ -41,8 +41,8 @@ function EventsStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text,
-        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text.primary,
+        headerTitleStyle: { color: colors.text.primary },
       }}
     >
       <Stack.Screen 
@@ -69,8 +69,8 @@ function TimelineStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text,
-        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text.primary,
+        headerTitleStyle: { color: colors.text.primary },
       }}
     >
       <Stack.Screen 
@@ -112,8 +112,8 @@ function RunStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text,
-        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text.primary,
+        headerTitleStyle: { color: colors.text.primary },
       }}
     >
       <Stack.Screen 
@@ -130,8 +130,8 @@ function ProfileStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text,
-        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text.primary,
+        headerTitleStyle: { color: colors.text.primary },
       }}
     >
       <Stack.Screen 
@@ -178,8 +178,8 @@ function NotificationsStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text,
-        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text.primary,
+        headerTitleStyle: { color: colors.text.primary },
       }}
     >
       <Stack.Screen 
@@ -196,8 +196,8 @@ function SearchStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text,
-        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text.primary,
+        headerTitleStyle: { color: colors.text.primary },
       }}
     >
       <Stack.Screen 
@@ -219,8 +219,8 @@ function AuthStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text,
-        headerTitleStyle: { color: colors.text },
+        headerTintColor: colors.text.primary,
+        headerTitleStyle: { color: colors.text.primary },
       }}
     >
       <Stack.Screen 

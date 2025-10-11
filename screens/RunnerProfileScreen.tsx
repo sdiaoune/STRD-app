@@ -92,7 +92,7 @@ export const RunnerProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { alignItems: 'center', marginBottom: spacing.lg },
-  name: { ...typography.h2, color: colors.text, marginTop: spacing.md },
+  name: { ...typography.h2, color: colors.text.primary, marginTop: spacing.md },
   handle: { ...typography.caption, color: colors.muted },
   followBtn: {
     marginTop: spacing.md,
@@ -105,10 +105,10 @@ const styles = StyleSheet.create({
   },
   following: { opacity: 0.9 },
   followText: { ...typography.body, color: colors.primary, fontWeight: '600' },
-  section: { ...typography.h3, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
+  section: { ...typography.h3, color: colors.text.primary, marginTop: spacing.lg, marginBottom: spacing.sm },
   empty: { ...typography.body, color: colors.muted },
   postRow: { paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
-  postText: { ...typography.body, color: colors.text },
+  postText: { ...typography.body, color: colors.text.primary },
 });
 
 

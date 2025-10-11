@@ -34,7 +34,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       ) : (
         <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
           {!!initials && (
-            <Text style={{ color: colors.text, fontWeight: '700' }} accessibilityLabel={`Avatar ${initials}`}>
+            <Text style={{ color: colors.text.primary, fontWeight: '700' }} accessibilityLabel={`Avatar ${initials}`}>
               {initials}
             </Text>
           )}

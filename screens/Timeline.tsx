@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h1,
-    color: colors.text,
+    color: colors.text.primary,
     textAlign: 'center',
   },
   scrollView: {
