@@ -1,6 +1,7 @@
 import React from 'react';
-import { Text, View, ViewProps } from 'react-native';
-import { colors } from '../theme';
+import { Text, View, type ViewProps } from 'react-native';
+
+import { colors, spacing, typography } from '../theme';
 
 interface Props extends ViewProps {
   label: string;
@@ -11,17 +12,16 @@ export const Chip: React.FC<Props> = ({ label, style, ...rest }) => {
     <View
       style={[
         {
-          minHeight: 28,
-          paddingHorizontal: 12,
-          paddingVertical: 6,
+          minHeight: 32,
+          paddingHorizontal: spacing[3],
+          paddingVertical: spacing[1],
           borderRadius: 999,
           borderWidth: 1,
-          borderColor: colors.accent + '33',
-          backgroundColor: colors.accent + '1A',
+          borderColor: colors.accent,
+          backgroundColor: colors.overlay,
           justifyContent: 'center',
           alignItems: 'center',
           alignSelf: 'flex-start',
-          maxWidth: '70%',
         },
         style,
       ]}
@@ -30,9 +30,13 @@ export const Chip: React.FC<Props> = ({ label, style, ...rest }) => {
       <Text
         numberOfLines={1}
         ellipsizeMode="tail"
-        style={[
-          { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.accent },
-        ]}
+        style={{
+          fontSize: typography.caption.fontSize,
+          lineHeight: typography.caption.lineHeight,
+          fontWeight: '600',
+          color: colors.accent,
+        }}
+        maxFontSizeMultiplier={1.2}
       >
         {label}
       </Text>

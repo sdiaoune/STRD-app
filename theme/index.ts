@@ -6,68 +6,80 @@ export type ThemeName = tokens.ThemeName;
 type Palette = (typeof tokens.themePalettes)[ThemeName];
 
 type SemanticColors = {
-  bg: string;
-  bgElevated: string;
-  bgSecondary: string;
-  background: {
-    default: string;
-    elevated: string;
-    higher: string;
-  };
+  background: string;
+  surface: string;
+  elevatedSurface: string;
+  overlay: string;
   card: string;
   primary: string;
+  secondary: string;
   accent: string;
-  accentOn: string;
+  onPrimary: string;
   text: {
     primary: string;
     secondary: string;
+    tertiary: string;
     muted: string;
   };
   muted: string;
-  secondary: string;
   border: string;
-  warning: string;
-  error: string;
-  danger: string;
+  outline: string;
+  focus: string;
+  disabled: string;
   success: string;
+  warning: string;
+  danger: string;
   info: string;
-  surface: string;
-  surfaceAlt: string;
-  textMuted: string;
-  onPrimary: string;
+  scrim: string;
+  legacyBackground: {
+    default: string;
+    elevated: string;
+    higher: string;
+    page: string;
+    elev1: string;
+    elev2: string;
+  };
 };
 
-const buildSemanticColors = (palette: Palette): SemanticColors => ({
-  bg: palette.bg.page,
-  bgElevated: palette.bg.elev1,
-  bgSecondary: palette.bg.elev2,
-  background: {
-    default: palette.bg.page,
-    elevated: palette.bg.elev1,
-    higher: palette.bg.elev2,
-  },
-  card: palette.card,
-  primary: palette.accent,
-  accent: palette.accent,
-  accentOn: palette.accentOn,
-  text: {
-    primary: palette.text.primary,
-    secondary: palette.text.secondary,
-    muted: palette.text.muted,
-  },
-  muted: palette.text.muted,
-  secondary: palette.text.secondary,
-  border: palette.border,
-  warning: palette.warning,
-  error: palette.danger,
-  danger: palette.danger,
-  success: palette.success,
-  info: palette.info,
-  surface: palette.surface,
-  surfaceAlt: palette.surfaceAlt,
-  textMuted: palette.text.muted,
-  onPrimary: palette.accentOn,
-});
+const buildSemanticColors = (palette: Palette): SemanticColors => {
+  const scheme = palette.semantic;
+
+  return {
+    background: scheme.background,
+    surface: scheme.surface,
+    elevatedSurface: scheme.elevatedSurface,
+    overlay: scheme.overlay,
+    card: scheme.surface,
+    primary: scheme.primary,
+    secondary: scheme.secondary,
+    accent: scheme.accent,
+    onPrimary: palette.accentOn,
+    text: {
+      primary: scheme.textPrimary,
+      secondary: scheme.textSecondary,
+      tertiary: scheme.textTertiary,
+      muted: scheme.textTertiary,
+    },
+    muted: scheme.muted,
+    border: scheme.border,
+    outline: scheme.outline,
+    focus: scheme.focus,
+    disabled: scheme.disabled,
+    success: scheme.success,
+    warning: scheme.warning,
+    danger: scheme.danger,
+    info: scheme.info,
+    scrim: scheme.overlay,
+    legacyBackground: {
+      default: palette.bg.page,
+      elevated: palette.bg.elev1,
+      higher: palette.bg.elev2,
+      page: palette.bg.page,
+      elev1: palette.bg.elev1,
+      elev2: palette.bg.elev2,
+    },
+  };
+};
 
 const colorCache: Record<ThemeName, SemanticColors> = {
   dark: buildSemanticColors(tokens.themePalettes.dark),
@@ -94,27 +106,35 @@ export const getCurrentThemeName = (): ThemeName => getCurrentTheme();
 
 // Colors object that switches in bulk for our top-level usages while keeping nested shapes stable
 export const colors = {
-  get bg() { return getColors(getCurrentTheme()).bg; },
-  get bgElevated() { return getColors(getCurrentTheme()).bgElevated; },
-  get bgSecondary() { return getColors(getCurrentTheme()).bgSecondary; },
   get background() { return getColors(getCurrentTheme()).background; },
+  get surface() { return getColors(getCurrentTheme()).surface; },
+  get elevatedSurface() { return getColors(getCurrentTheme()).elevatedSurface; },
+  get overlay() { return getColors(getCurrentTheme()).overlay; },
   get card() { return getColors(getCurrentTheme()).card; },
   get primary() { return getColors(getCurrentTheme()).primary; },
+  get secondary() { return getColors(getCurrentTheme()).secondary; },
   get accent() { return getColors(getCurrentTheme()).accent; },
-  get accentOn() { return getColors(getCurrentTheme()).accentOn; },
+  get onPrimary() { return getColors(getCurrentTheme()).onPrimary; },
   get text() { return getColors(getCurrentTheme()).text; },
   get muted() { return getColors(getCurrentTheme()).muted; },
   get border() { return getColors(getCurrentTheme()).border; },
-  get secondary() { return getColors(getCurrentTheme()).secondary; },
+  get outline() { return getColors(getCurrentTheme()).outline; },
+  get focus() { return getColors(getCurrentTheme()).focus; },
+  get disabled() { return getColors(getCurrentTheme()).disabled; },
   get warning() { return getColors(getCurrentTheme()).warning; },
-  get error() { return getColors(getCurrentTheme()).error; },
   get danger() { return getColors(getCurrentTheme()).danger; },
   get success() { return getColors(getCurrentTheme()).success; },
   get info() { return getColors(getCurrentTheme()).info; },
-  get surface() { return getColors(getCurrentTheme()).surface; },
-  get surfaceAlt() { return getColors(getCurrentTheme()).surfaceAlt; },
-  get textMuted() { return getColors(getCurrentTheme()).textMuted; },
-  get onPrimary() { return getColors(getCurrentTheme()).onPrimary; },
+  get scrim() { return getColors(getCurrentTheme()).scrim; },
+  // Legacy getters retained
+  get bg() { return getColors(getCurrentTheme()).legacyBackground.page; },
+  get bgElevated() { return getColors(getCurrentTheme()).legacyBackground.elevated; },
+  get bgSecondary() { return getColors(getCurrentTheme()).legacyBackground.higher; },
+  get backgroundLayers() { return getColors(getCurrentTheme()).legacyBackground; },
+  get surfaceAlt() { return getColors(getCurrentTheme()).elevatedSurface; },
+  get textMuted() { return getColors(getCurrentTheme()).text.muted; },
+  get accentOn() { return getColors(getCurrentTheme()).onPrimary; },
+  get error() { return getColors(getCurrentTheme()).danger; },
 };
 
 export const spacing = {
@@ -135,8 +155,8 @@ export const borderRadius = {
 
 export const typography = {
   h1: tokens.typography.display,
-  h2: tokens.typography.h1,
-  h3: tokens.typography.h2,
+  h2: tokens.typography.headline,
+  h3: tokens.typography.title,
   body: tokens.typography.body,
   caption: tokens.typography.caption,
   small: { fontSize: 12, fontWeight: '400' as const },
@@ -146,6 +166,8 @@ export const typography = {
 export const shadows = tokens.nativeShadows;
 export const surfaces = tokens.surfaces;
 export const gradient = tokens.gradient;
+export const opacity = tokens.opacity;
+export const elevation = tokens.elevation;
 
 // Helper to get React Navigation theme objects (dynamic)
 export const getNavigationTheme = () => {
@@ -155,7 +177,7 @@ export const getNavigationTheme = () => {
     dark: theme === 'dark',
     colors: {
       primary: palette.primary,
-      background: palette.bg,
+      background: palette.background,
       card: palette.card,
       text: palette.text.primary,
       border: palette.border,

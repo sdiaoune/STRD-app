@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
-import { colors } from '../theme';
+
 import { surfaces } from '../theme';
+import { motion } from '../tokens';
 
 interface Props {
   width?: number | string;
@@ -13,7 +14,7 @@ interface Props {
 export const Skeleton: React.FC<Props> = ({
   width = '100%',
   height = 20,
-  borderRadius = 4,
+  borderRadius = 8,
   style,
 }) => {
   const shimmerValue = useRef(new Animated.Value(0)).current;
@@ -29,11 +30,11 @@ export const Skeleton: React.FC<Props> = ({
     shimmerAnimation.start();
 
     return () => shimmerAnimation.stop();
-  }, []);
+  }, [shimmerValue]);
 
-  const opacity = shimmerValue.interpolate({
+  const shimmerOpacity = shimmerValue.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0.16, 0.28, 0.16],
+    outputRange: [0.18, 0.32, 0.18],
   });
 
   return (
@@ -44,8 +45,7 @@ export const Skeleton: React.FC<Props> = ({
           width,
           height,
           borderRadius,
-          opacity,
-          backgroundColor: surfaces.surface2,
+          opacity: shimmerOpacity,
         },
         style,
       ]}
@@ -55,11 +55,10 @@ export const Skeleton: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: colors.border,
+    backgroundColor: surfaces.subtle,
   },
 });
 
-// Predefined skeleton layouts
 export const EventCardSkeleton: React.FC = () => (
   <View style={{ marginBottom: 12 }}>
     <Skeleton height={16} width="60%" style={{ marginBottom: 8 }} />
