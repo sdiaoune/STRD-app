@@ -46,14 +46,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   title: {
-    fontSize: typography.headline.fontSize,
-    fontWeight: typography.headline.fontWeight,
-    lineHeight: typography.headline.lineHeight,
+    fontSize: typography.h2.fontSize,
+    fontWeight: typography.h2.fontWeight,
+    lineHeight: typography.h2.lineHeight,
   },
   subtitle: {
-    fontSize: typography.title.fontSize,
-    fontWeight: typography.title.fontWeight,
-    lineHeight: typography.title.lineHeight,
+    fontSize: typography.h3.fontSize,
+    fontWeight: typography.h3.fontWeight,
+    lineHeight: typography.h3.lineHeight,
   },
   link: {
     lineHeight: typography.body.lineHeight,

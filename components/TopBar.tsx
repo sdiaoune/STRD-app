@@ -46,9 +46,9 @@ export const TopBar: React.FC<Props> = ({ title, left }) => {
       </View>
       <Text
         style={{
-          fontSize: typography.headline.fontSize,
-          lineHeight: typography.headline.lineHeight,
-          fontWeight: typography.headline.fontWeight,
+          fontSize: typography.h2.fontSize,
+          lineHeight: typography.h2.lineHeight,
+          fontWeight: typography.h2.fontWeight,
           color: colors.text.primary,
           textAlign: 'center',
         }}

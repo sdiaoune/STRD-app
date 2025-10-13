@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../theme';
+import { colors, spacing, typography, getCurrentThemeName } from '../theme';
 
 interface LikeButtonProps {
   isLiked: boolean;
@@ -16,9 +16,10 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   onPress, 
   style 
 }) => {
+  const themed = React.useMemo(() => stylesFactory(), [getCurrentThemeName()]);
   return (
     <TouchableOpacity 
-      style={[styles.container, style]} 
+      style={[themed.container, style]} 
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -27,14 +28,14 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
         size={20} 
         color={isLiked ? colors.primary : colors.muted} 
       />
-      <Text style={[styles.count, { color: isLiked ? colors.primary : colors.muted }]}>
+      <Text style={[themed.count, { color: isLiked ? colors.primary : colors.muted }]}>
         {likeCount}
       </Text>
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = () => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',

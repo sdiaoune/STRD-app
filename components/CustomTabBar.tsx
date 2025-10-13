@@ -4,11 +4,12 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { colors, spacing, borderRadius, typography, getCurrentThemeName } from '../theme';
+import { useStore } from '../state/store';
 
 export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();
-
-  const themeName = getCurrentThemeName();
+  // subscribe to themePreference so the bar re-renders on toggle
+  const themeName = useStore(s => s.themePreference) || getCurrentThemeName();
   const isLight = themeName === 'light';
 
   return (

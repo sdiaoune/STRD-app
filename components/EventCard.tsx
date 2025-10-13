@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card } from './Card';
-import { Chip } from './Chip';
+// We mirror RunPostCard visual language instead of reusing Card
+import { TagPill } from './TagPill';
 import { Badge } from './Badge';
-import { spacing, typography, colors } from '../theme';
+import { spacing, typography, colors, borderRadius } from '../theme';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
 import type { Event } from '../types/models';
 import { useStore } from '../state/store';
@@ -24,71 +24,137 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
 
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
-      <Card onPress={onPress} style={{ marginBottom: spacing[3], position: 'relative' }}>
+      <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text accessibilityRole="header" numberOfLines={1} style={styles.orgName}>
+              {organization?.name}
+            </Text>
+            {organization?.type === 'partner' && (
+              <Badge label="Partner" style={{ marginLeft: spacing[2] }} />
+            )}
+          </View>
+          <View style={styles.distanceChip}>
+            <Ionicons name="location" size={16} color={colors.text.muted} />
+            <Text style={styles.distanceText}>{distanceLabel}</Text>
+          </View>
+        </View>
+
         {event.coverImage && (
-          <View style={{ marginBottom: spacing[3], borderRadius: spacing[2], overflow: 'hidden' }}>
+          <View style={styles.coverWrap}>
             <Image
               source={{ uri: event.coverImage }}
-              style={{ height: 150, width: '100%' }}
+              style={styles.coverImage}
               contentFit="cover"
             />
           </View>
         )}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing[2] }}>
-          <View style={{ flex: 1 }}>
-            <Text accessibilityRole="header" numberOfLines={1} style={[typography.caption, { color: colors.text.primary }]}>
-              {organization?.name}
-            </Text>
-            {organization?.type === 'partner' && (
-              <Badge label="Partner" style={{ marginTop: spacing[1], alignSelf: 'flex-start' }} />
-            )}
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="location" size={20} color={colors.text.muted} />
-            <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}
-                  accessibilityLabel={`Distance ${distanceLabel}`}>
-              {distanceLabel}
-            </Text>
-          </View>
-        </View>
-
-        <View style={{ marginBottom: spacing[2] }}>
-          <Text numberOfLines={2} style={[typography.h2, { color: colors.text.primary }]}> 
+        <View style={{ marginBottom: spacing.md }}>
+          <Text numberOfLines={2} style={styles.title}> 
             {event.title}
           </Text>
         </View>
 
-        <View style={{ marginBottom: spacing[2] }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing[1] }}>
-            <Ionicons name="calendar" size={20} color={colors.text.muted} />
-            <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}>
+        <View style={{ marginBottom: spacing.md }}>
+          <View style={styles.metaRow}>
+            <Ionicons name="calendar" size={18} color={colors.text.muted} />
+            <Text style={styles.metaText}>
               {formatEventDate(event.dateISO)} • {formatEventTime(event.dateISO)}
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="location-outline" size={20} color={colors.text.muted} />
-            <Text numberOfLines={1} style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}
-                  accessibilityLabel={`Location ${event.location.name}`}>
+          <View style={styles.metaRow}>
+            <Ionicons name="location-outline" size={18} color={colors.text.muted} />
+            <Text numberOfLines={1} style={styles.metaText} accessibilityLabel={`Location ${event.location.name}`}>
               {event.location.name}
             </Text>
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        <View style={styles.tagsRow}>
           {event.tags.slice(0, 3).map((tag) => (
-            <Chip 
-              key={tag} 
-              label={tag} 
-              style={{ marginRight: spacing[1], marginBottom: spacing[1] }} 
-            />
+            <TagPill key={tag} tag={tag} style={styles.tag} />
           ))}
           {event.tags.length > 3 && (
-            <Chip label={`+${event.tags.length - 3}`} />
+            <TagPill tag={`+${event.tags.length - 3}`} style={styles.tag} />
           )}
         </View>
 
-        {/* Distance badge anchored above now present */}
-      </Card>
+      </TouchableOpacity>
     </Animated.View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+    paddingRight: spacing.sm,
+  },
+  orgName: {
+    ...typography.caption,
+    color: colors.text.primary,
+  },
+  distanceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  distanceText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginLeft: spacing[1],
+  },
+  coverWrap: {
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+  coverImage: {
+    height: 150,
+    width: '100%',
+  },
+  title: {
+    ...typography.h2,
+    color: colors.text.primary,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  metaText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginLeft: spacing[2],
+    flexShrink: 1,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  tag: {
+    marginRight: spacing[1],
+    marginBottom: spacing[1],
+  },
+});

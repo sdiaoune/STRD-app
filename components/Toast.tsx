@@ -128,8 +128,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   textLarge: {
-    fontSize: typography.title.fontSize,
-    lineHeight: typography.title.lineHeight,
+    fontSize: typography.h3.fontSize,
+    lineHeight: typography.h3.lineHeight,
   },
 });
 

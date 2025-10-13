@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '../theme';
+import { colors, spacing, typography, getCurrentThemeName } from '../theme';
 
 interface StatItem {
   label: string;
@@ -13,43 +13,47 @@ interface StatsRowProps {
 }
 
 export const StatsRow: React.FC<StatsRowProps> = ({ stats, style }) => {
+  const themedStyles = React.useMemo(() => createStyles(), [getCurrentThemeName()]);
   return (
-    <View style={[styles.container, style]}>
+    <View style={[themedStyles.container, style]}>
       {stats.map((stat, index) => (
-        <View key={stat.label} style={[styles.statItem, index < stats.length - 1 && styles.statDivider]}>
-          <Text style={styles.value}>{stat.value}</Text>
-          <Text style={styles.label}>{stat.label}</Text>
+        <View key={stat.label} style={[themedStyles.statItem, index < stats.length - 1 && themedStyles.statDivider]}>
+          <Text style={themedStyles.value}>{stat.value}</Text>
+          <Text style={themedStyles.label}>{stat.label}</Text>
         </View>
       ))}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
-  },
-  value: {
-    ...typography.h3,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  label: {
-    ...typography.caption,
-    color: colors.muted,
-    textAlign: 'center',
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    statItem: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    statDivider: {
+      borderRightWidth: 1,
+      borderRightColor: colors.border,
+    },
+    value: {
+      ...typography.h3,
+      color: colors.text.primary,
+      marginBottom: spacing.xs,
+    },
+    label: {
+      ...typography.caption,
+      color: colors.muted,
+      textAlign: 'center',
+    },
+  });
+
+const styles = createStyles();

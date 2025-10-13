@@ -6,7 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TimelineStackParamList, AppNavigationParamList } from '../types/navigation';
 
 type TimelineScreenNavigationProp = NativeStackNavigationProp<TimelineStackParamList & AppNavigationParamList, 'TimelineList'>;
-import { colors, spacing, typography } from '../theme';
+import { colors, spacing, typography, getCurrentThemeName } from '../theme';
 // Removed tab bar height hook to avoid cross-screen state updates during render
 import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
@@ -22,6 +22,8 @@ export const TimelineScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const tabBarHeight = insets.bottom;
   const [searchQuery, setSearchQuery] = React.useState('');
+  const themeName = useStore(s => s.themePreference);
+  const themedStyles = React.useMemo(() => createStyles(), [themeName, getCurrentThemeName()]);
 
   const handlePostPress = (postId: string) => {
     navigation.navigate('PostDetails', { postId });
@@ -73,14 +75,14 @@ export const TimelineScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={themedStyles.container} edges={["top"]}>
       <TopBar
         title="Timeline"
         left={
-          <View style={styles.searchContainer}>
+          <View style={themedStyles.searchContainer}>
             <Ionicons name="search" size={18} color={colors.muted} style={{ marginRight: spacing.sm }} />
             <TextInput
-              style={styles.searchInput}
+              style={themedStyles.searchInput}
               placeholder="Search STRD"
               placeholderTextColor={colors.muted}
               value={searchQuery}
@@ -100,8 +102,8 @@ export const TimelineScreen: React.FC = () => {
       />
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.lg + insets.bottom + spacing.md }]}
+        style={themedStyles.scrollView}
+        contentContainerStyle={[themedStyles.scrollContent, { paddingBottom: spacing.lg + insets.bottom + spacing.md }]}
         showsVerticalScrollIndicator={false}
       >
         {timelineItems.length > 0 ? (
@@ -118,40 +120,43 @@ export const TimelineScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  header: {},
-  headerTop: {},
-  title: {},
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: spacing.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginRight: spacing.md,
-  },
-  searchInput: {
-    flex: 1,
-    color: colors.text.primary,
-    paddingVertical: spacing.xs,
-  },
-  profileButton: {
-    borderRadius: spacing.lg,
-    overflow: 'hidden',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.lg,
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    header: {},
+    headerTop: {},
+    title: {},
+    searchContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: spacing.lg,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginRight: spacing.md,
+    },
+    searchInput: {
+      flex: 1,
+      color: colors.text.primary,
+      paddingVertical: spacing.xs,
+    },
+    profileButton: {
+      borderRadius: spacing.lg,
+      overflow: 'hidden',
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.lg,
+    },
+  });
+
+const styles = createStyles();

@@ -3,7 +3,7 @@ import LikesSheet from './LikesSheet';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, getCurrentThemeName } from '../theme';
 import { Avatar } from './Avatar';
 import { LikeButton } from './LikeButton';
 import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
@@ -37,73 +37,74 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
     navigation.navigate('RunStats', { runId: post.id });
   };
 
+  const themedStyles = React.useMemo(() => stylesFactory(), [getCurrentThemeName()]);
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
       <TouchableOpacity 
-        style={[styles.container, style]} 
+        style={[themedStyles.container, style]} 
         onPress={onPress}
         activeOpacity={0.7}
       >
-        <View style={styles.header}>
-          <View style={styles.userInfo}>
+        <View style={themedStyles.header}>
+          <View style={themedStyles.userInfo}>
             <Avatar source={user?.avatar || ''} size={40} />
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user?.name}</Text>
-              <Text style={styles.userHandle}>{user?.handle}</Text>
+            <View style={themedStyles.userDetails}>
+              <Text style={themedStyles.userName}>{user?.name}</Text>
+              <Text style={themedStyles.userHandle}>{user?.handle}</Text>
             </View>
           </View>
-          <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
+          <Text style={themedStyles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
         </View>
 
-        <View style={styles.runStats}>
-          <View style={styles.stat}>
+        <View style={themedStyles.runStats}>
+          <View style={themedStyles.stat}>
             <Ionicons name="speedometer" size={20} color={colors.primary} />
-            <Text style={styles.statValue}>{formatDistance(post.distanceKm, unit)}</Text>
-            <Text style={styles.statLabel}>Distance</Text>
+            <Text style={themedStyles.statValue}>{formatDistance(post.distanceKm, unit)}</Text>
+            <Text style={themedStyles.statLabel}>Distance</Text>
           </View>
-          <View style={styles.stat}>
+          <View style={themedStyles.stat}>
             <Ionicons name="time" size={20} color={colors.primary} />
-            <Text style={styles.statValue}>{post.durationMin}m</Text>
-            <Text style={styles.statLabel}>Duration</Text>
+            <Text style={themedStyles.statValue}>{post.durationMin}m</Text>
+            <Text style={themedStyles.statLabel}>Duration</Text>
           </View>
-          <View style={styles.stat}>
+          <View style={themedStyles.stat}>
             <Ionicons name="flash" size={20} color={colors.primary} />
-            <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm, unit)}</Text>
-            <Text style={styles.statLabel}>Pace</Text>
+            <Text style={themedStyles.statValue}>{formatPace(post.avgPaceMinPerKm, unit)}</Text>
+            <Text style={themedStyles.statLabel}>Pace</Text>
           </View>
         </View>
 
         {post.routePreview && (
-          <View style={styles.routePreview}>
+          <View style={themedStyles.routePreview}>
             <Image 
               source={{ uri: post.routePreview }} 
-              style={styles.routeImage}
+              style={themedStyles.routeImage}
               resizeMode="cover"
             />
           </View>
         )}
 
         {post.caption && (
-          <Text style={styles.caption}>{post.caption}</Text>
+          <Text style={themedStyles.caption}>{post.caption}</Text>
         )}
 
-        <View style={styles.actions}>
+        <View style={themedStyles.actions}>
           <LikeButton
             isLiked={!!post.likedByCurrentUser}
             likeCount={post.likes}
             onPress={handleLike}
           />
-          <TouchableOpacity style={styles.commentButton} onPress={() => setShowLikes(true)}>
+          <TouchableOpacity style={themedStyles.commentButton} onPress={() => setShowLikes(true)}>
             <Ionicons name="people" size={20} color={colors.muted} />
-            <Text style={styles.commentCount}>{post.likes}</Text>
+            <Text style={themedStyles.commentCount}>{post.likes}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.commentButton}>
+          <TouchableOpacity style={themedStyles.commentButton}>
             <Ionicons name="chatbubble-outline" size={20} color={colors.muted} />
-            <Text style={styles.commentCount}>{post.comments.length}</Text>
+            <Text style={themedStyles.commentCount}>{post.comments.length}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statsButton} onPress={handleViewStats}>
+          <TouchableOpacity style={themedStyles.statsButton} onPress={handleViewStats}>
             <Ionicons name="analytics" size={20} color={colors.primary} />
-            <Text style={styles.statsButtonText}>Stats</Text>
+            <Text style={themedStyles.statsButtonText}>Stats</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -115,7 +116,7 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = () => StyleSheet.create({
   container: {
     backgroundColor: colors.card,
     borderRadius: borderRadius.lg,

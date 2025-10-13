@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, spacing, typography } from '../theme';
+import { colors, spacing, typography, getCurrentThemeName } from '../theme';
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -17,18 +17,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   message,
   style,
 }) => {
+  const themed = React.useMemo(() => stylesFactory(), [getCurrentThemeName()]);
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.iconWrapper}>
+    <View style={[themed.container, style]}>
+      <View style={themed.iconWrapper}>
         <Ionicons name={icon} size={36} color={colors.primary} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+      <Text style={themed.title}>{title}</Text>
+      <Text style={themed.message}>{message}</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = () => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -42,9 +43,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.overlay,
   },
   title: {
-    fontSize: typography.headline.fontSize,
-    lineHeight: typography.headline.lineHeight,
-    fontWeight: typography.headline.fontWeight,
+    fontSize: typography.h2.fontSize,
+    lineHeight: typography.h2.lineHeight,
+    fontWeight: typography.h2.fontWeight,
     color: colors.text.primary,
     textAlign: 'center',
   },

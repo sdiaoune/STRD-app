@@ -30,7 +30,7 @@ const baseColorTokens = {
     elevatedSurface: '#17223A',
     overlay: 'rgba(15, 23, 42, 0.72)',
     primary: '#5B7CFF',
-    onPrimary: '#0B1120',
+    onPrimary: '#FFFFFF',
     secondary: '#94A3B8',
     accent: '#2DD4BF',
     success: '#22C55E',
