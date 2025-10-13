@@ -17,7 +17,10 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { Avatar } from '../components/Avatar';
 import { LikeButton } from '../components/LikeButton';
-import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
+import { getRelativeTime } from '../utils/format';
+import { formatDistance as fmtDistance, formatDuration as fmtDuration, formatPace as fmtPace } from '../utils/formatters';
+import Stat from '../components/ui/Stat';
+import MapCard from '../components/ui/MapCard';
 import { useStore } from '../state/store';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { decodePolyline, regionForCoordinates } from '../utils/geo';
@@ -72,31 +75,23 @@ export const PostDetailsScreen: React.FC = () => {
     return (
       <View style={styles.trajectoryContainer}>
         <Text style={styles.sectionTitle}>Run Route</Text>
-        <View style={styles.trajectoryCard}>
-          <View style={styles.mapContainer}>
-            <View style={styles.mapBackground}>
-              <MapView
-                style={{ width: '100%', height: '100%' }}
-                provider={PROVIDER_DEFAULT}
-                showsCompass={false}
-                scrollEnabled={false}
-                zoomEnabled={false}
-                pitchEnabled={false}
-                rotateEnabled={false}
-                initialRegion={{ latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
-                region={decodedPath.length > 1 ? regionForCoordinates(decodedPath) : undefined as any}
-              >
-                {decodedPath.length > 1 && (
-                  <Polyline
-                    coordinates={decodedPath}
-                    strokeColor={colors.primary}
-                    strokeWidth={4}
-                  />
-                )}
-              </MapView>
-            </View>
-          </View>
-        </View>
+        <MapCard>
+          <MapView
+            style={{ width: '100%', height: '100%' }}
+            provider={PROVIDER_DEFAULT}
+            showsCompass={false}
+            scrollEnabled={false}
+            zoomEnabled={false}
+            pitchEnabled={false}
+            rotateEnabled={false}
+            initialRegion={{ latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
+            region={decodedPath.length > 1 ? regionForCoordinates(decodedPath) : undefined as any}
+          >
+            {decodedPath.length > 1 && (
+              <Polyline coordinates={decodedPath} strokeColor={colors.primary} strokeWidth={4} />
+            )}
+          </MapView>
+        </MapCard>
       </View>
     );
   };
@@ -126,21 +121,9 @@ export const PostDetailsScreen: React.FC = () => {
 
         {/* Run Stats */}
         <View style={styles.runStats}>
-          <View style={styles.stat}>
-            <Ionicons name="speedometer" size={24} color={colors.primary} />
-            <Text style={styles.statValue}>{formatDistance(post.distanceKm, unit)}</Text>
-            <Text style={styles.statLabel}>Distance</Text>
-          </View>
-          <View style={styles.stat}>
-            <Ionicons name="time" size={24} color={colors.primary} />
-            <Text style={styles.statValue}>{post.durationMin}m</Text>
-            <Text style={styles.statLabel}>Duration</Text>
-          </View>
-          <View style={styles.stat}>
-            <Ionicons name="flash" size={24} color={colors.primary} />
-            <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm, unit)}</Text>
-            <Text style={styles.statLabel}>Pace</Text>
-          </View>
+          <Stat icon="speedometer" value={fmtDistance(post.distanceKm * 1000)} label="Distance" />
+          <Stat icon="time" value={fmtDuration(post.durationMin * 60)} label="Duration" />
+          <Stat icon="flash" value={fmtPace(Math.round(post.avgPaceMinPerKm * 60))} label="Pace" />
         </View>
 
         {/* Run Route Map */}

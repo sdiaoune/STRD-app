@@ -2,12 +2,14 @@ import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { colors, spacing, typography } from '../theme';
 import { AppText } from '../components/AppText';
-import { Button } from '../components/Button';
+import UIButton from '../components/ui/Button';
 import { Chip } from '../components/Chip';
 import { Badge } from '../components/Badge';
 import { Card } from '../components/Card';
-import { SegmentedControl } from '../components/SegmentedControl';
-import { StatsRow } from '../components/StatsRow';
+import SegmentedControl from '../components/ui/SegmentedControl';
+import Stat from '../components/ui/Stat';
+import EmptyState from '../components/ui/EmptyState';
+import MapCard from '../components/ui/MapCard';
 import { Skeleton, EventCardSkeleton, ProfileStatsSkeleton } from '../components/Skeleton';
 
 export const ComponentGallery: React.FC = () => {
@@ -23,9 +25,13 @@ export const ComponentGallery: React.FC = () => {
 
       <View style={{ height: spacing.md }} />
 
-      <Button>Primary Button</Button>
+      <UIButton title="Primary Button" />
       <View style={{ height: spacing.sm }} />
-      <Button variant="outline">Outline Button</Button>
+      <UIButton title="Secondary Button" variant="secondary" />
+      <View style={{ height: spacing.sm }} />
+      <UIButton title="Tertiary Button" variant="tertiary" />
+      <View style={{ height: spacing.sm }} />
+      <UIButton title="Destructive" variant="destructive" />
 
       <View style={{ height: spacing.md }} />
       <View style={{ flexDirection: 'row' }}>
@@ -44,7 +50,15 @@ export const ComponentGallery: React.FC = () => {
       <SegmentedControl segments={[ 'For You', 'All' ]} value={seg} onChange={setSeg} />
 
       <View style={{ height: spacing.md }} />
-      <StatsRow stats={[{ label: 'Runs', value: 12 }, { label: 'Streak', value: 5 }, { label: 'Distance', value: '42.3 km' }]} />
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+        <Stat icon="walk" value="12" label="Runs" />
+        <Stat icon="flame" value="4-week" label="Streak" />
+        <Stat icon="map" value="0.34 km" label="Total" />
+      </View>
+      <EmptyState icon="image" title="Empty State" body="Use for empty lists and idle states." />
+
+      <View style={{ height: spacing.md }} />
+      <MapCard />
 
       <View style={{ height: spacing.md }} />
       <EventCardSkeleton />

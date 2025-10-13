@@ -9,8 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { supabase } from './supabase/client';
 
-import { ThemeProvider, useTheme } from './src/design/useTheme';
-import { weights } from './src/design/typography';
+import { ThemeProvider as LegacyThemeProvider, useTheme as useLegacyDesignTheme } from './src/design/useTheme';
+import { ThemeProvider as TokensThemeProvider, useTheme as useTokensTheme, getNavigationTheme as getTokensNavigationTheme } from './theme';
 import { EventsScreen } from './screens/EventsScreen';
 import { EventDetailsScreen } from './screens/EventDetailsScreen';
 import { TimelineScreen } from './screens/TimelineScreen';
@@ -38,7 +38,7 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function EventsStack() {
-  const theme = useTheme();
+  const theme = useTokensTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -67,7 +67,7 @@ function EventsStack() {
 }
 
 function TimelineStack() {
-  const theme = useTheme();
+  const theme = useTokensTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -111,7 +111,7 @@ function TimelineStack() {
 }
 
 function RunStack() {
-  const theme = useTheme();
+  const theme = useTokensTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -130,7 +130,7 @@ function RunStack() {
 }
 
 function ProfileStack() {
-  const theme = useTheme();
+  const theme = useTokensTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -179,7 +179,7 @@ function ProfileStack() {
 }
 
 function NotificationsStack() {
-  const theme = useTheme();
+  const theme = useTokensTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -198,7 +198,7 @@ function NotificationsStack() {
 }
 
 function SearchStack() {
-  const theme = useTheme();
+  const theme = useTokensTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -222,7 +222,7 @@ function SearchStack() {
 }
 
 function AuthStack() {
-  const theme = useTheme();
+  const theme = useTokensTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -246,9 +246,10 @@ function AuthStack() {
 }
 
 function AppContainer() {
-  const theme = useTheme();
-  const themeName = theme.name;
-  const setThemeMode = theme.setMode;
+  const legacyTheme = useLegacyDesignTheme();
+  const theme = useTokensTheme();
+  const themeName = theme.mode;
+  const setThemeMode = legacyTheme.setMode;
   const isAuthenticated = useStore(state => state.isAuthenticated);
   const initializeAuth = useStore(state => state.initializeAuth);
   const hydratePreferences = useStore(state => state.hydratePreferences);
@@ -318,26 +319,7 @@ function AppContainer() {
     setShowSurvey(false);
   };
 
-  const navigationTheme = useMemo(
-    () => ({
-      dark: theme.name === 'dark',
-      colors: {
-        primary: theme.colors.primary,
-        background: theme.colors.bg,
-        card: theme.colors.bgElevated,
-        text: theme.colors.text,
-        border: theme.colors.border,
-        notification: theme.colors.primary,
-      },
-      fonts: {
-        regular: { fontFamily: 'System', fontWeight: weights.regular },
-        medium: { fontFamily: 'System', fontWeight: weights.semiBold },
-        bold: { fontFamily: 'System', fontWeight: weights.bold },
-        heavy: { fontFamily: 'System', fontWeight: weights.bold },
-      },
-    }),
-    [theme],
-  );
+  const navigationTheme = useMemo(() => getTokensNavigationTheme(theme.mode), [theme.mode]);
 
   return (
     <SafeAreaProvider>
@@ -368,7 +350,7 @@ function AppContainer() {
                 return <Ionicons name={iconName} size={size} color={color} />;
               },
               tabBarActiveTintColor: theme.colors.primary,
-              tabBarInactiveTintColor: theme.colors.textMuted,
+              tabBarInactiveTintColor: theme.colors.text.muted,
               tabBarStyle: {
                 backgroundColor: theme.colors.bgElevated,
                 borderTopWidth: 0,
@@ -396,7 +378,7 @@ function AppContainer() {
           <AuthStack />
         )}
       </NavigationContainer>
-      <StatusBar style={theme.name === 'light' ? 'dark' : 'light'} />
+      <StatusBar style={theme.mode === 'light' ? 'dark' : 'light'} />
       <OnboardingSurveyModal
         visible={showSurvey}
         onSubmit={handleSurveySubmit}
@@ -408,8 +390,10 @@ function AppContainer() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppContainer />
-    </ThemeProvider>
+    <TokensThemeProvider>
+      <LegacyThemeProvider>
+        <AppContainer />
+      </LegacyThemeProvider>
+    </TokensThemeProvider>
   );
 }

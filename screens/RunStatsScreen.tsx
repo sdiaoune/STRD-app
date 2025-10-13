@@ -9,6 +9,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../components/Avatar';
 import { useStore } from '../state/store';
 import { borderRadius, colors, spacing, typography } from '../theme';
+import Stat from '../components/ui/Stat';
+import MapCard from '../components/ui/MapCard';
+import { formatDistance as fmtDistance, formatDuration as fmtDuration, formatPace as fmtPace } from '../utils/formatters';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import type { TimelineStackParamList } from '../types/navigation';
 import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
@@ -45,11 +48,9 @@ export const RunStatsScreen: React.FC = () => {
 
   const renderTrajectory = () => {
     return (
-      <View style={styles.trajectoryContainer}>
-        <Text style={styles.sectionTitle}>Run Route</Text>
-        <View style={styles.trajectoryCard}>
-          <View style={styles.mapContainer}>
-            <View style={styles.mapBackground}>
+          <View style={styles.trajectoryContainer}>
+            <Text style={styles.sectionTitle}>Run Route</Text>
+            <MapCard>
               <MapView
                 style={{ width: '100%', height: '100%' }}
                 provider={PROVIDER_DEFAULT}
@@ -62,17 +63,11 @@ export const RunStatsScreen: React.FC = () => {
                 region={coords.length > 1 ? regionForCoordinates(coords) : undefined as any}
               >
                 {coords.length > 1 && (
-                  <Polyline
-                    coordinates={coords}
-                    strokeColor={colors.primary}
-                    strokeWidth={4}
-                  />
+                  <Polyline coordinates={coords} strokeColor={colors.primary} strokeWidth={4} />
                 )}
               </MapView>
-            </View>
+            </MapCard>
           </View>
-        </View>
-      </View>
     );
   };
 
@@ -93,21 +88,9 @@ export const RunStatsScreen: React.FC = () => {
 
         {/* Main Stats */}
         <View style={styles.mainStats}>
-          <View style={styles.statCard}>
-            <Ionicons name="speedometer" size={32} color={colors.primary} />
-            <Text style={styles.statValue}>{formatDistance(run.distanceKm, unit)}</Text>
-            <Text style={styles.statLabel}>Distance</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="time" size={32} color={colors.primary} />
-            <Text style={styles.statValue}>{run.durationMin}m</Text>
-            <Text style={styles.statLabel}>Duration</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="flash" size={32} color={colors.primary} />
-            <Text style={styles.statValue}>{formatPace(run.avgPaceMinPerKm, unit)}</Text>
-            <Text style={styles.statLabel}>Average Pace</Text>
-          </View>
+          <Stat icon="speedometer" value={fmtDistance(run.distanceKm * 1000)} label="Distance" />
+          <Stat icon="time" value={fmtDuration(run.durationMin * 60)} label="Duration" />
+          <Stat icon="flash" value={fmtPace(Math.round(run.avgPaceMinPerKm * 60))} label="Average Pace" />
         </View>
 
         {/* Detailed Stats */}

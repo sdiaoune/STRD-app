@@ -25,14 +25,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
         pointerEvents: 'box-none',
       }}
     >
-      <BlurView
-        tint={isLight ? 'light' : 'dark'}
-        intensity={isLight ? 0 : 80}
-        style={{
-          paddingVertical: spacing.sm,
-          backgroundColor: `${colors.card}${isLight ? 'F2' : 'CC'}`,
-        }}
-      >
+      <BlurView tint={isLight ? 'light' : 'dark'} intensity={isLight ? 0 : 80} style={{ paddingVertical: spacing.sm, backgroundColor: colors.surface }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md }}>
           {state.routes.filter(r => r.name !== 'Profile').map((route, index) => {
             const isFocused = state.index === index;
@@ -48,7 +41,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
             };
 
             const color = isFocused ? colors.primary : colors.text.secondary;
-            const size = 24;
+            const size = 22;
             const icon = options.tabBarIcon?.({ focused: isFocused, color, size });
             const labelRaw = route.name === 'Run' ? 'STRD' : route.name;
 

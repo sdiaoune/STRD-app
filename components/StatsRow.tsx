@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography, getCurrentThemeName } from '../theme';
+import { View, StyleSheet } from 'react-native';
+import { colors, spacing, getCurrentThemeName } from '../theme';
+import Stat from './ui/Stat';
 
 interface StatItem {
   label: string;
@@ -16,11 +17,8 @@ export const StatsRow: React.FC<StatsRowProps> = ({ stats, style }) => {
   const themedStyles = React.useMemo(() => createStyles(), [getCurrentThemeName()]);
   return (
     <View style={[themedStyles.container, style]}>
-      {stats.map((stat, index) => (
-        <View key={stat.label} style={[themedStyles.statItem, index < stats.length - 1 && themedStyles.statDivider]}>
-          <Text style={themedStyles.value}>{stat.value}</Text>
-          <Text style={themedStyles.label}>{stat.label}</Text>
-        </View>
+      {stats.map((stat) => (
+        <Stat key={stat.label} value={String(stat.value)} label={stat.label} />
       ))}
     </View>
   );
@@ -36,24 +34,7 @@ const createStyles = () =>
       borderWidth: 1,
       borderColor: colors.border,
     },
-    statItem: {
-      flex: 1,
-      alignItems: 'center',
-    },
-    statDivider: {
-      borderRightWidth: 1,
-      borderRightColor: colors.border,
-    },
-    value: {
-      ...typography.h3,
-      color: colors.text.primary,
-      marginBottom: spacing.xs,
-    },
-    label: {
-      ...typography.caption,
-      color: colors.muted,
-      textAlign: 'center',
-    },
+    statItem: {},
   });
 
 const styles = createStyles();

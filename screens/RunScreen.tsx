@@ -11,7 +11,8 @@ import * as Haptics from 'expo-haptics';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import * as Location from 'expo-location';
-import { formatTime, formatDistance, formatPace } from '../utils/format';
+import { formatTime } from '../utils/format';
+import { formatDistance as fmtDistance, formatPace as fmtPace, formatDuration as fmtDuration } from '../utils/formatters';
 import { useStore } from '../state/store';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { regionForCoordinates } from '../utils/geo';
@@ -392,10 +393,8 @@ export const RunScreen: React.FC = () => {
             <View style={styles.idleIcon}>
               <Ionicons name="play-circle" size={80} color={colors.primary} />
             </View>
-            <Text style={styles.idleTitle}>Ready to STRD?</Text>
-            <Text style={styles.idleSubtitle}>
-              Tap the button below to start tracking your run
-            </Text>
+            <Text style={styles.idleTitle}>Ready to run?</Text>
+            <Text style={styles.idleSubtitle}>We’ll track distance, route, and pace. Low Power reduces GPS checks.</Text>
             <View style={{ alignSelf: 'stretch' }}>
               <TouchableOpacity style={[styles.startButton, !hasLocationPermission && styles.startButtonDisabled]} onPress={() => { setActivityType('run'); handleStartRun(); }} accessibilityRole="button" hitSlop={12} disabled={!hasLocationPermission}>
                 <Text style={styles.startButtonText}>Start Run</Text>
@@ -429,16 +428,12 @@ export const RunScreen: React.FC = () => {
             <View style={styles.metricsSection}>
               <View style={styles.metric}>
                 <Ionicons name="speedometer" size={32} color={colors.primary} />
-                <Text style={styles.metricValue}>
-                  {formatDistance(runState.distanceKm, unit)}
-                </Text>
+                <Text style={styles.metricValue}>{fmtDistance(runState.distanceKm * 1000)}</Text>
                 <Text style={styles.metricLabel}>Distance</Text>
               </View>
               <View style={styles.metric}>
                 <Ionicons name="flash" size={32} color={colors.primary} />
-                <Text style={styles.metricValue}>
-                  {formatPace(runState.currentPace, unit)}
-                </Text>
+                <Text style={styles.metricValue}>{runState.currentPace > 0 ? fmtPace(Math.round(runState.currentPace * 60)) : '–'}</Text>
                 <Text style={styles.metricLabel}>Current Pace</Text>
               </View>
               <View style={styles.metric}>
@@ -538,7 +533,9 @@ const createStyles = () => StyleSheet.create({
     borderColor: colors.border,
   },
   statusLabel: {
-    ...typography.caption,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '600',
     color: colors.text.secondary,
     marginLeft: spacing.xs,
   },
@@ -687,7 +684,7 @@ const createStyles = () => StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.9)',
+    backgroundColor: colors.scrim,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,

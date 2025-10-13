@@ -10,7 +10,7 @@ import { colors, spacing, typography, getCurrentThemeName } from '../theme';
 // Removed tab bar height hook to avoid cross-screen state updates during render
 import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
-import { EmptyState } from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import { useStore } from '../state/store';
 import TopBar from '../components/TopBar';
 
@@ -71,11 +71,7 @@ export const TimelineScreen: React.FC = () => {
         {timelineItems.length > 0 ? (
           timelineItems.map((item) => renderTimelineItem(item))
         ) : (
-          <EmptyState
-            icon="home-outline"
-            title="No posts yet"
-            message="Start running or check out events to see activity here"
-          />
+          <EmptyState icon="home-outline" title="No posts yet" body="Start running or check out events to see activity here" />
         )}
       </ScrollView>
     </SafeAreaView>

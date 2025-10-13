@@ -9,9 +9,9 @@ type EventsScreenNavigationProp = NativeStackNavigationProp<EventsStackParamList
 import { colors, spacing, typography } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 // Removed tab bar height hook to avoid cross-screen state updates during render
-import { SegmentedControl } from '../components/SegmentedControl';
+import SegmentedControl from '../components/ui/SegmentedControl';
 import { EventCard } from '../components/EventCard';
-import { EmptyState } from '../components/EmptyState';
+import EmptyState from '../components/ui/EmptyState';
 import { useStore } from '../state/store';
 import TopBar from '../components/TopBar';
 import * as Location from 'expo-location';
@@ -82,11 +82,11 @@ export const EventsScreen: React.FC = () => {
         ) : (
           <EmptyState
             icon="calendar-outline"
-            title="No events found"
-            message={
-              eventFilter === 'forYou' 
-                ? "Follow organizations or update your interests to see personalized events"
-                : "No events are currently available"
+            title="No events yet"
+            body={
+              eventFilter === 'forYou'
+                ? 'Set your interests or follow local clubs to see Charlotte runs.'
+                : 'No events are currently available'
             }
           />
         )}

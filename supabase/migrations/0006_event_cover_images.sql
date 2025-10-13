@@ -11,3 +11,4 @@ create index if not exists idx_events_cover_image on public.events (cover_image_
 -- Comment for documentation
 comment on column public.events.cover_image_url is 'URL to the event cover/hero image displayed in event cards';
 
+

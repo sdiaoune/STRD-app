@@ -6,7 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { Avatar } from './Avatar';
 import { LikeButton } from './LikeButton';
-import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
+import { getRelativeTime } from '../utils/format';
+import { formatDistance as fmtDistance, formatDuration as fmtDuration, formatPace as fmtPace } from '../utils/formatters';
 import { useStore } from '../state/store';
 import type { RunPost } from '../types/models';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -60,17 +61,17 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
         <View style={styles.runStats}>
           <View style={styles.stat}>
             <Ionicons name="speedometer" size={20} color={colors.primary} />
-            <Text style={styles.statValue}>{formatDistance(post.distanceKm, unit)}</Text>
+            <Text style={styles.statValue}>{fmtDistance(post.distanceKm * 1000)}</Text>
             <Text style={styles.statLabel}>Distance</Text>
           </View>
           <View style={styles.stat}>
             <Ionicons name="time" size={20} color={colors.primary} />
-            <Text style={styles.statValue}>{post.durationMin}m</Text>
+            <Text style={styles.statValue}>{fmtDuration(post.durationMin * 60)}</Text>
             <Text style={styles.statLabel}>Duration</Text>
           </View>
           <View style={styles.stat}>
             <Ionicons name="flash" size={20} color={colors.primary} />
-            <Text style={styles.statValue}>{formatPace(post.avgPaceMinPerKm, unit)}</Text>
+            <Text style={styles.statValue}>{fmtPace(Math.round(post.avgPaceMinPerKm * 60))}</Text>
             <Text style={styles.statLabel}>Pace</Text>
           </View>
         </View>

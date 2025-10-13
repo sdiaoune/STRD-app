@@ -16,13 +16,14 @@ import { EventCard } from '../components/EventCard';
 import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
 import { Button } from '../components/Button';
+import Stat from '../components/ui/Stat';
+import { formatDistance as fmtDistance } from '../utils/formatters';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const { currentUser, runPosts, events, postById, eventById } = useStore();
   const unit = useStore(state => state.unitPreference);
-  const { formatDistance } = require('../utils/format');
   const updateProfile = useStore(state => state.updateProfile);
   const [editingName, setEditingName] = React.useState(false);
   const [editingBio, setEditingBio] = React.useState(false);
@@ -169,14 +170,10 @@ export const ProfileScreen: React.FC = () => {
         </View>
 
         {/* Stats Row */}
-        <View style={styles.statsContainer}>
-          <StatsRow
-            stats={[
-              { label: 'Total Runs', value: totalRuns },
-              { label: 'Weekly Streak', value: weeklyStreak },
-              { label: 'Total Distance', value: `${formatDistance(totalDistance, unit)}` }
-            ]}
-          />
+        <View style={[styles.statsContainer, { flexDirection: 'row', justifyContent: 'space-around' }]}>
+          <Stat icon="walk" value={String(totalRuns)} label="Runs" />
+          <Stat icon="flame" value={`${weeklyStreak}-week`} label="Streak" />
+          <Stat icon="map" value={fmtDistance(totalDistance * 1000)} label="Total" />
         </View>
 
         {/* Recent Posts */}

@@ -1,13 +1,13 @@
 import React from 'react';
 import type { GestureResponderEvent } from 'react-native';
 
-import ButtonPrimitive from '@/src/design/components/Button';
+import UIButton from './ui/Button';
 import type { ThemeMode } from '@/src/design/useTheme';
 
 type LegacyVariant = 'primary' | 'outline' | 'ghost' | 'destructive' | 'icon';
 type LegacySize = 'primary' | 'secondary';
 
-type PrimitiveProps = React.ComponentProps<typeof ButtonPrimitive>;
+type PrimitiveProps = React.ComponentProps<typeof UIButton>;
 
 export interface ButtonProps
   extends Omit<PrimitiveProps, 'variant' | 'size' | 'tone' | 'title' | 'leadingIcon' | 'trailingIcon'> {
@@ -26,15 +26,9 @@ const Button: React.FC<ButtonProps> = ({
   ...rest
 }) => {
   const mappedVariant: PrimitiveProps['variant'] =
-    variant === 'outline' ? 'outline' : variant === 'ghost' || variant === 'icon' ? 'ghost' : 'solid';
-  const mappedTone: PrimitiveProps['tone'] = variant === 'destructive' ? 'danger' : 'default';
-  const mappedSize: PrimitiveProps['size'] = size === 'secondary' || variant === 'icon' ? 'sm' : 'md';
+    variant === 'outline' ? 'secondary' : variant === 'ghost' || variant === 'icon' ? 'tertiary' : variant === 'destructive' ? 'destructive' : 'primary';
 
-  return (
-    <ButtonPrimitive variant={mappedVariant} size={mappedSize} tone={mappedTone} {...rest}>
-      {children}
-    </ButtonPrimitive>
-  );
+  return <UIButton variant={mappedVariant} title={String(children)} {...(rest as any)} />;
 };
 
 export { Button };
