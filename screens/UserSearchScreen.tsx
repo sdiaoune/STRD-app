@@ -45,6 +45,7 @@ export const UserSearchScreen: React.FC = () => {
         searchValue={query}
         onChangeSearch={setQuery}
         onClearSearch={() => setQuery('')}
+        editableSearch={true}
       />
       <FlatList
         data={results}

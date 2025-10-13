@@ -19,7 +19,6 @@ export const TimelineScreen: React.FC = () => {
   const { timelineItems, postById, eventById } = useStore();
   const insets = useSafeAreaInsets();
   const tabBarHeight = insets.bottom;
-  const [searchQuery, setSearchQuery] = React.useState('');
   const themeName = useStore(s => s.themePreference);
   const themedStyles = React.useMemo(() => createStyles(), [themeName, getCurrentThemeName()]);
 
@@ -58,24 +57,10 @@ export const TimelineScreen: React.FC = () => {
     return null;
   };
 
-  const handleSearchSubmit = () => {
-    const query = searchQuery.trim();
-    const parentNav = navigation.getParent<NavigationProp<Record<string, object | undefined>>>();
-    if (query.length > 0) {
-      parentNav?.navigate('Search', { screen: 'UserSearch', params: { initialQuery: query } });
-    } else {
-      parentNav?.navigate('Search');
-    }
-  };
-
   return (
     <SafeAreaView style={themedStyles.container} edges={["top"]}>
       <TopBar
         title="Timeline"
-        searchValue={searchQuery}
-        onChangeSearch={setSearchQuery}
-        onSubmitSearch={handleSearchSubmit}
-        onClearSearch={() => setSearchQuery('')}
       />
 
       <ScrollView

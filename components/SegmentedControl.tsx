@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, LayoutChangeEvent, Animated } from 'react-native';
+import { View, Pressable, LayoutChangeEvent, Animated } from 'react-native';
 import { spacing, typography, colors, borderRadius as radii } from '../theme';
+import ThemedText from '@/src/design/components/Text';
 
 interface Props {
   segments: string[];
@@ -33,8 +34,10 @@ export const SegmentedControl: React.FC<Props> = ({ segments, value, onChange })
       style={{
         height: 44,
         borderRadius: radii.md,
-        backgroundColor: colors.background.higher,
+        backgroundColor: colors.surfaceMuted,
         padding: spacing[1],
+        borderWidth: 1,
+        borderColor: colors.border,
         flexDirection: 'row',
         alignItems: 'center',
       }}
@@ -44,7 +47,7 @@ export const SegmentedControl: React.FC<Props> = ({ segments, value, onChange })
           position: 'absolute',
           height: 36,
           width: width / segments.length - spacing[1],
-          backgroundColor: colors.accent,
+          backgroundColor: colors.primary,
           borderRadius: 10,
           transform: [{ translateX }],
         }}
@@ -66,17 +69,18 @@ export const SegmentedControl: React.FC<Props> = ({ segments, value, onChange })
             onPress={() => onChange(segment)}
             hitSlop={12}
           >
-            <Text
+            <ThemedText
               style={[
                 typography.body,
                 {
-                  color: selected ? colors.accentOn : colors.text.primary,
+                  color: selected ? colors.onPrimary : colors.text.primary,
                   fontWeight: '600',
                 },
               ]}
+              
             >
               {segment}
-            </Text>
+            </ThemedText>
           </Pressable>
         );
       })}

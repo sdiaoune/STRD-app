@@ -3,12 +3,15 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors, spacing, typography, getCurrentThemeName } from '../theme';
+import Button from './Button';
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   message: string;
   style?: any;
+  actionLabel?: string;
+  onActionPress?: () => void;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
@@ -16,6 +19,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   message,
   style,
+  actionLabel,
+  onActionPress,
 }) => {
   const themed = React.useMemo(() => stylesFactory(), [getCurrentThemeName()]);
   return (
@@ -25,6 +30,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       </View>
       <Text style={themed.title}>{title}</Text>
       <Text style={themed.message}>{message}</Text>
+      {actionLabel && onActionPress ? (
+        <Button onPress={onActionPress} style={{ marginTop: spacing.md }}>
+          {actionLabel}
+        </Button>
+      ) : null}
     </View>
   );
 };
@@ -40,7 +50,9 @@ const stylesFactory = () => StyleSheet.create({
   iconWrapper: {
     padding: spacing[3],
     borderRadius: spacing.lg,
-    backgroundColor: colors.overlay,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   title: {
     fontSize: typography.h2.fontSize,

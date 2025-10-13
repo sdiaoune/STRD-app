@@ -32,26 +32,59 @@ const THEME_PREFERENCE_KEY = 'strd_theme_preference';
 const RUN_MEDIA_BUCKET = 'avatars';
 
 const uploadImageToStorage = async (bucket: string, path: string, uri: string) => {
-  const fileExt = (uri.split('.').pop() || 'jpg').toLowerCase();
-  const mime = fileExt === 'png' ? 'image/png' : 'image/jpeg';
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token;
-  const baseUrl = (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_SUPABASE_URL as string;
-  if (!token || !baseUrl) return null;
-  const uploadUrl = `${baseUrl}/storage/v1/object/${bucket}/${encodeURIComponent(path)}`;
-  const result = await FileSystem.uploadAsync(uploadUrl, uri, {
-    httpMethod: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': mime,
-      'x-upsert': 'false',
-    },
-    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-  });
-  if (result.status !== 200) return null;
-  const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(path);
-  if (!publicUrl?.publicUrl) return null;
-  return `${publicUrl.publicUrl}?t=${Date.now()}`;
+  try {
+    console.log(`[uploadImageToStorage] Starting upload to bucket: ${bucket}, path: ${path}`);
+    
+    // For React Native, we need to use a different approach
+    // Convert the URI to a FormData object
+    const formData = new FormData();
+    
+    // Determine the file type from the URI
+    const fileType = uri.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeType = fileType === 'png' ? 'image/png' : 'image/jpeg';
+    
+    // Create a file object for React Native
+    formData.append('file', {
+      uri: uri,
+      type: mimeType,
+      name: path.split('/').pop() || `image.${fileType}`,
+    } as any);
+    
+    // Use Supabase client's upload method with FormData
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, formData, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: mimeType
+      });
+    
+    if (error) {
+      console.error('[uploadImageToStorage] Supabase upload error:', error);
+      return null;
+    }
+    
+    if (!data?.path) {
+      console.error('[uploadImageToStorage] No path returned from upload');
+      return null;
+    }
+    
+    // Get the public URL
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+    
+    if (!publicUrlData?.publicUrl) {
+      console.error('[uploadImageToStorage] Failed to get public URL');
+      return null;
+    }
+    
+    console.log('[uploadImageToStorage] Upload successful:', publicUrlData.publicUrl);
+    return `${publicUrlData.publicUrl}?t=${Date.now()}`;
+  } catch (error) {
+    console.error('[uploadImageToStorage] Unexpected error:', error);
+    return null;
+  }
 };
 
 interface AppState {
@@ -532,10 +565,15 @@ export const useStore = create<AppState>((set, get) => ({
 
   postRun: async (caption: string, image?: string) => {
     const userId = get().currentUser.id;
-    if (!userId) return false;
+    if (!userId) {
+      console.error('[postRun] No user ID found');
+      return false;
+    }
+    
     const { encodePolyline } = await import('../utils/geo');
     const path = get().runState.path.map(p => ({ latitude: p.latitude, longitude: p.longitude }));
     const routePolyline = path.length >= 2 ? encodePolyline(path) : null;
+    
     // Compute average pace from distance and duration to avoid Infinity/NaN
     const distanceKm = Math.round(get().runState.distanceKm * 100) / 100;
     const elapsedSeconds = get().runState.elapsedSeconds;
@@ -543,18 +581,36 @@ export const useStore = create<AppState>((set, get) => ({
     // Compute average pace using precise seconds: (minutes) / km
     const paceMinPerKmRaw = distanceKm > 0 ? ((elapsedSeconds / 60) / distanceKm) : 0;
     const avgPaceMinPerKm = isFinite(paceMinPerKmRaw) && !isNaN(paceMinPerKmRaw) ? Math.round(paceMinPerKmRaw * 10) / 10 : 0;
+    
     let mediaUrl: string | null = null;
     if (image) {
+      console.log('[postRun] Uploading image:', image);
       if (/^https?:/i.test(image)) {
         mediaUrl = image;
+        console.log('[postRun] Image is already a URL, using as-is');
       } else {
-        const fileExt = (image.split('.').pop() || 'jpg').toLowerCase();
-        const path = `${userId}/runs/${Date.now()}.${fileExt}`;
-        mediaUrl = await uploadImageToStorage(RUN_MEDIA_BUCKET, path, image);
+        try {
+          const fileExt = (image.split('.').pop() || 'jpg').toLowerCase();
+          const imagePath = `${userId}/runs/${Date.now()}.${fileExt}`;
+          console.log('[postRun] Uploading to path:', imagePath);
+          
+          mediaUrl = await uploadImageToStorage(RUN_MEDIA_BUCKET, imagePath, image);
+          
+          if (!mediaUrl) {
+            console.error('[postRun] Image upload failed - no URL returned');
+          } else {
+            console.log('[postRun] Image uploaded successfully:', mediaUrl);
+          }
+        } catch (error) {
+          console.error('[postRun] Image upload error:', error);
+          mediaUrl = null;
+        }
       }
     }
 
+    // If user selected an image but upload failed, return false
     if (image && !mediaUrl) {
+      console.error('[postRun] Cannot post - image upload failed');
       return false;
     }
 

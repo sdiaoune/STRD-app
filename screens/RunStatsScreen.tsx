@@ -146,7 +146,7 @@ export const RunStatsScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Route Preview</Text>
             <View style={styles.routeImageContainer}>
               <View style={styles.routeImagePlaceholder}>
-                <Ionicons name="image" size={48} color={colors.muted} />
+                <Ionicons name="image" size={48} color={colors.icon.secondary} />
                 <Text style={styles.routeImageText}>Route Image</Text>
               </View>
             </View>

@@ -3,6 +3,7 @@ import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { EmptyState } from '../components/EmptyState';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { supabase } from '../supabase/client';
 import { useNavigation } from '@react-navigation/native';
@@ -83,7 +84,18 @@ export const NotificationsScreen: React.FC = () => {
             {!item.is_read && <View style={styles.unreadDot} />}
           </TouchableOpacity>
         )}
-        ListEmptyComponent={!loading ? <Text style={styles.empty}>No notifications</Text> : null}
+        ListEmptyComponent={!loading ? (
+          <EmptyState
+            icon="notifications-outline"
+            title="No notifications"
+            message="Follow runners and join events to see updates here"
+            actionLabel="Find runners to follow"
+            onActionPress={() => {
+              // @ts-ignore
+              navigation.navigate('Search' as never, { screen: 'UserSearch' } as never);
+            }}
+          />
+        ) : null}
       />
     </SafeAreaView>
   );

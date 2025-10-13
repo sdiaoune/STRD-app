@@ -16,10 +16,11 @@ const scale = (size: number) => {
   return Math.max(Math.round(scaled), 12);
 };
 
+// Sporty, energetic type scale: crisper headings, compact body
 const sizes = {
-  xs: 12,
-  sm: 14,
-  md: 16,
+  xs: 13,
+  sm: 15,
+  md: 15,
   lg: 18,
   xl: 20,
   "2xl": 24,
@@ -36,8 +37,8 @@ export const variants: Record<
   caption: { fontSize: scale(sizes.xs), lineHeight: lineHeight(sizes.xs), fontWeight: "400" },
   body: { fontSize: scale(sizes.md), lineHeight: lineHeight(sizes.md), fontWeight: "400" },
   bodyLarge: { fontSize: scale(sizes.lg), lineHeight: lineHeight(sizes.lg), fontWeight: "400" },
-  subheading: { fontSize: scale(sizes.xl), lineHeight: lineHeight(sizes.xl), fontWeight: "600" },
-  title: { fontSize: scale(sizes["2xl"]), lineHeight: lineHeight(sizes["2xl"]), fontWeight: "600" },
+  subheading: { fontSize: scale(sizes.xl), lineHeight: lineHeight(sizes.xl), fontWeight: "700" },
+  title: { fontSize: scale(sizes["2xl"]), lineHeight: lineHeight(sizes["2xl"]), fontWeight: "700" },
   headline: { fontSize: scale(sizes["3xl"]), lineHeight: lineHeight(sizes["3xl"]), fontWeight: "700" },
   display: { fontSize: scale(sizes["4xl"]), lineHeight: lineHeight(sizes["4xl"]), fontWeight: "700" },
 };
@@ -53,3 +54,4 @@ export type TextVariant = keyof typeof variants;
 export const getTextVariant = (variant: TextVariant): TypographyVariant => variants[variant];
 
 export const getFontSize = (variant: TextVariant) => variants[variant].fontSize;
+

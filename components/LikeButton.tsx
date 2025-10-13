@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, getCurrentThemeName } from '../theme';
+import * as Haptics from 'expo-haptics';
 
 interface LikeButtonProps {
   isLiked: boolean;
@@ -20,15 +21,18 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   return (
     <TouchableOpacity 
       style={[themed.container, style]} 
-      onPress={onPress}
+      onPress={() => {
+        Haptics.selectionAsync();
+        onPress();
+      }}
       activeOpacity={0.7}
     >
       <Ionicons 
         name="flash" 
         size={20} 
-        color={isLiked ? colors.primary : colors.muted} 
+        color={isLiked ? colors.primary : colors.icon.secondary} 
       />
-      <Text style={[themed.count, { color: isLiked ? colors.primary : colors.muted }]}>
+      <Text style={[themed.count, { color: isLiked ? colors.primary : colors.text.secondary }]}>
         {likeCount}
       </Text>
     </TouchableOpacity>

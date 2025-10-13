@@ -118,7 +118,7 @@ export const PostDetailsScreen: React.FC = () => {
             <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
             {currentUser.id === post.userId && (
               <TouchableOpacity onPress={handleDelete} style={{ marginLeft: spacing.md }} accessibilityRole="button">
-                <Ionicons name="trash" size={20} color={colors.muted} />
+                <Ionicons name="trash" size={20} color={colors.icon.secondary} />
               </TouchableOpacity>
             )}
           </View>

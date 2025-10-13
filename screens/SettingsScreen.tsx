@@ -2,7 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../state/store';
-import { borderRadius, colors, spacing, typography, getCurrentThemeName } from '../theme';
+import { borderRadius, colors, spacing, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { supabase } from '../supabase/client';
 import { useTheme as useDesignTheme } from '../src/design/useTheme';
 
@@ -16,37 +17,36 @@ export const SettingsScreen: React.FC = () => {
   const { setMode } = useDesignTheme();
   const [eventIdDraft, setEventIdDraft] = React.useState('');
   const [coverUrlDraft, setCoverUrlDraft] = React.useState('');
-  // Recreate styles when theme changes so colors update immediately
-  const themedStyles = React.useMemo(() => createStyles(), [getCurrentThemeName()]);
+  const styles = useLegacyStyles(createStyles);
   return (
-    <SafeAreaView style={themedStyles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.section}>
-        <Text style={themedStyles.sectionTitle}>Units</Text>
+        <Text style={styles.sectionTitle}>Units</Text>
         <View style={styles.row}>
-          <Pressable onPress={() => setUnit('metric')} style={[themedStyles.unitBtn, unit === 'metric' && themedStyles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
-            <Text style={[themedStyles.unitText, unit === 'metric' && themedStyles.unitTextActive]}>Metric (km)</Text>
+          <Pressable onPress={() => setUnit('metric')} style={[styles.unitBtn, unit === 'metric' && styles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
+            <Text style={[styles.unitText, unit === 'metric' && styles.unitTextActive]}>Metric (km)</Text>
           </Pressable>
-          <Pressable onPress={() => setUnit('imperial')} style={[themedStyles.unitBtn, unit === 'imperial' && themedStyles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
-            <Text style={[themedStyles.unitText, unit === 'imperial' && themedStyles.unitTextActive]}>Imperial (mi)</Text>
+          <Pressable onPress={() => setUnit('imperial')} style={[styles.unitBtn, unit === 'imperial' && styles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
+            <Text style={[styles.unitText, unit === 'imperial' && styles.unitTextActive]}>Imperial (mi)</Text>
           </Pressable>
         </View>
       </View>
       <View style={styles.section}>
-        <Text style={themedStyles.sectionTitle}>Appearance</Text>
+        <Text style={styles.sectionTitle}>Appearance</Text>
         <View style={styles.row}>
-          <Pressable onPress={() => { setTheme('dark'); void setMode('dark'); }} style={[themedStyles.unitBtn, theme === 'dark' && themedStyles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
-            <Text style={[themedStyles.unitText, theme === 'dark' && themedStyles.unitTextActive]}>Dark</Text>
+          <Pressable onPress={() => { setTheme('dark'); void setMode('dark'); }} style={[styles.unitBtn, theme === 'dark' && styles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
+            <Text style={[styles.unitText, theme === 'dark' && styles.unitTextActive]}>Dark</Text>
           </Pressable>
-          <Pressable onPress={() => { setTheme('light'); void setMode('light'); }} style={[themedStyles.unitBtn, theme === 'light' && themedStyles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
-            <Text style={[themedStyles.unitText, theme === 'light' && themedStyles.unitTextActive]}>Light</Text>
+          <Pressable onPress={() => { setTheme('light'); void setMode('light'); }} style={[styles.unitBtn, theme === 'light' && styles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
+            <Text style={[styles.unitText, theme === 'light' && styles.unitTextActive]}>Light</Text>
           </Pressable>
         </View>
       </View>
       <View style={styles.section}>
-        <Text style={themedStyles.sectionTitle}>Admin tools</Text>
+        <Text style={styles.sectionTitle}>Admin tools</Text>
         <View style={{ marginBottom: spacing.sm }}>
           <TouchableOpacity
-            style={themedStyles.actionBtn}
+            style={styles.actionBtn}
             onPress={async () => {
               try {
                 if (!currentUser?.id) return;
@@ -57,30 +57,30 @@ export const SettingsScreen: React.FC = () => {
               }
             }}
           >
-            <Text style={themedStyles.actionBtnText}>Promote me to Super Admin</Text>
+            <Text style={styles.actionBtnText}>Promote me to Super Admin</Text>
           </TouchableOpacity>
         </View>
         <View style={{ gap: spacing.sm }}>
-          <Text style={themedStyles.smallLabel}>Event ID</Text>
+          <Text style={styles.smallLabel}>Event ID</Text>
           <TextInput
             value={eventIdDraft}
             onChangeText={setEventIdDraft}
             placeholder="uuid"
             placeholderTextColor={colors.muted}
-            style={themedStyles.input}
+            style={styles.input}
             autoCapitalize="none"
           />
-          <Text style={themedStyles.smallLabel}>Cover Image URL</Text>
+          <Text style={styles.smallLabel}>Cover Image URL</Text>
           <TextInput
             value={coverUrlDraft}
             onChangeText={setCoverUrlDraft}
             placeholder="https://..."
             placeholderTextColor={colors.muted}
-            style={themedStyles.input}
+            style={styles.input}
             autoCapitalize="none"
           />
           <TouchableOpacity
-            style={themedStyles.actionBtn}
+            style={styles.actionBtn}
             onPress={async () => {
               if (!eventIdDraft || !coverUrlDraft) return;
               try {
@@ -92,14 +92,14 @@ export const SettingsScreen: React.FC = () => {
               }
             }}
           >
-            <Text style={themedStyles.actionBtnText}>Update Event Cover</Text>
+            <Text style={styles.actionBtnText}>Update Event Cover</Text>
           </TouchableOpacity>
         </View>
       </View>
       <View style={styles.section}>
-        <Text style={themedStyles.sectionTitle}>Account</Text>
-        <TouchableOpacity style={themedStyles.signOutBtn} onPress={async () => { await signOut(); }} accessibilityRole="button" hitSlop={12}>
-          <Text style={themedStyles.signOutText}>Sign out</Text>
+        <Text style={styles.sectionTitle}>Account</Text>
+        <TouchableOpacity style={styles.signOutBtn} onPress={async () => { await signOut(); }} accessibilityRole="button" hitSlop={12}>
+          <Text style={styles.signOutText}>Sign out</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -159,7 +159,4 @@ const createStyles = () =>
     },
     actionBtnText: { ...typography.body, color: colors.primary, fontWeight: '600' },
   });
-
-const styles = createStyles();
-
 

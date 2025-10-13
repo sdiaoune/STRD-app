@@ -39,7 +39,7 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
             )}
           </View>
           <View style={styles.distanceChip}>
-            <Ionicons name="location" size={16} color={colors.text.muted} />
+            <Ionicons name="location" size={16} color={colors.icon.secondary} />
             <Text style={styles.distanceText}>{distanceLabel}</Text>
           </View>
         </View>
@@ -61,13 +61,13 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
 
         <View style={{ marginBottom: spacing.md }}>
           <View style={styles.metaRow}>
-            <Ionicons name="calendar" size={18} color={colors.text.muted} />
+            <Ionicons name="calendar" size={18} color={colors.icon.secondary} />
             <Text style={styles.metaText}>
               {formatEventDate(event.dateISO)} • {formatEventTime(event.dateISO)}
             </Text>
           </View>
           <View style={styles.metaRow}>
-            <Ionicons name="location-outline" size={18} color={colors.text.muted} />
+            <Ionicons name="location-outline" size={18} color={colors.icon.secondary} />
             <Text numberOfLines={1} style={styles.metaText} accessibilityLabel={`Location ${event.location.name}`}>
               {event.location.name}
             </Text>
@@ -93,7 +93,7 @@ const createStyles = () =>
     container: {
       backgroundColor: colors.card,
       borderRadius: borderRadius.lg,
-      padding: spacing.md,
+      padding: spacing.lg,
       borderWidth: 1,
       borderColor: colors.border,
       marginBottom: spacing.md,
@@ -131,11 +131,11 @@ const createStyles = () =>
     },
     coverWrap: {
       marginBottom: spacing.md,
-      borderRadius: borderRadius.md,
+      borderRadius: borderRadius.lg,
       overflow: 'hidden',
     },
     coverImage: {
-      height: 150,
+      height: 180,
       width: '100%',
     },
     title: {

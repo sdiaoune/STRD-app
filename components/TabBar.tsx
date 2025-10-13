@@ -20,8 +20,8 @@ interface Props {
 export const TabBar: React.FC<Props> = ({ items, activeKey, onPress }) => {
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
-      <BlurView intensity={70} tint="dark" style={{ paddingVertical: spacing[2] }}>
-        <View style={{ flexDirection: 'row', paddingHorizontal: spacing[4], gap: spacing[3] }}>
+      <BlurView intensity={80} tint="dark" style={{ paddingVertical: spacing[3] }}>
+        <View style={{ flexDirection: 'row', paddingHorizontal: spacing[4], gap: spacing[3], alignItems: 'center', minHeight: 56 }}>
           {items.map((item) => {
             const active = item.key === activeKey;
             return (
@@ -30,7 +30,7 @@ export const TabBar: React.FC<Props> = ({ items, activeKey, onPress }) => {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
                 onPress={() => onPress(item.key)}
-                style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[2] }}
+                style={{ flex: 1, alignItems: 'center', paddingVertical: spacing[1] }}
                 hitSlop={12}
               >
                 <View
@@ -51,7 +51,7 @@ export const TabBar: React.FC<Props> = ({ items, activeKey, onPress }) => {
                       style={{
                         marginLeft: spacing[1],
                         color: active ? colors.onPrimary : colors.text.secondary,
-                        fontWeight: '600',
+                        fontWeight: '700',
                       }}
                     >
                       {item.label}

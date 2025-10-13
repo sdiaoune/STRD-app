@@ -9,6 +9,7 @@ type SemanticColors = {
   background: string;
   surface: string;
   elevatedSurface: string;
+  surfaceMuted: string;
   overlay: string;
   card: string;
   primary: string;
@@ -19,6 +20,11 @@ type SemanticColors = {
     primary: string;
     secondary: string;
     tertiary: string;
+    muted: string;
+  };
+  icon: {
+    primary: string;
+    secondary: string;
     muted: string;
   };
   muted: string;
@@ -48,6 +54,7 @@ const buildSemanticColors = (palette: Palette): SemanticColors => {
     background: scheme.background,
     surface: scheme.surface,
     elevatedSurface: scheme.elevatedSurface,
+    surfaceMuted: (scheme as any).surfaceMuted ?? scheme.elevatedSurface,
     overlay: scheme.overlay,
     card: scheme.surface,
     primary: scheme.primary,
@@ -59,6 +66,11 @@ const buildSemanticColors = (palette: Palette): SemanticColors => {
       secondary: scheme.textSecondary,
       tertiary: scheme.textTertiary,
       muted: scheme.textTertiary,
+    },
+    icon: {
+      primary: scheme.textSecondary,
+      secondary: scheme.textTertiary,
+      muted: scheme.muted,
     },
     muted: scheme.muted,
     border: scheme.border,
@@ -109,6 +121,7 @@ export const colors = {
   get background() { return getColors(getCurrentTheme()).background; },
   get surface() { return getColors(getCurrentTheme()).surface; },
   get elevatedSurface() { return getColors(getCurrentTheme()).elevatedSurface; },
+  get surfaceMuted() { return getColors(getCurrentTheme()).surfaceMuted; },
   get overlay() { return getColors(getCurrentTheme()).overlay; },
   get card() { return getColors(getCurrentTheme()).card; },
   get primary() { return getColors(getCurrentTheme()).primary; },
@@ -116,6 +129,7 @@ export const colors = {
   get accent() { return getColors(getCurrentTheme()).accent; },
   get onPrimary() { return getColors(getCurrentTheme()).onPrimary; },
   get text() { return getColors(getCurrentTheme()).text; },
+  get icon() { return getColors(getCurrentTheme()).icon; },
   get muted() { return getColors(getCurrentTheme()).muted; },
   get border() { return getColors(getCurrentTheme()).border; },
   get outline() { return getColors(getCurrentTheme()).outline; },
@@ -161,6 +175,22 @@ export const typography = {
   caption: tokens.typography.caption,
   small: { fontSize: 12, fontWeight: '400' as const },
 };
+
+// Shared surface styles for cards and pills
+export const sharedStyles = {
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pill: {
+    minHeight: 24,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+} as const;
 
 // New re-exports (non-breaking additions)
 export const shadows = tokens.nativeShadows;

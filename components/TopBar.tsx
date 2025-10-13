@@ -104,8 +104,26 @@ export const TopBar: React.FC<Props> = ({
       })}
     >
       <View style={styles.topRow}>
+        <View style={styles.leftActions}>
+          <Pressable
+            onPress={handleNavigateToSearch}
+            accessibilityRole="button"
+            accessibilityLabel="Search"
+            hitSlop={12}
+            style={({ pressed }) => [
+              styles.iconButton,
+              {
+                borderRadius: theme.radius.lg,
+                marginRight: theme.spacing.sm,
+                backgroundColor: pressed ? theme.colors.bgElevated : 'transparent',
+              },
+            ]}
+          >
+            <Ionicons name="search" size={22} color={theme.colors.text} />
+          </Pressable>
+        </View>
         <View style={styles.titleColumn}>
-          <Heading level="h3" style={{ marginBottom: caption ? theme.spacing.xs : 0 }}>
+          <Heading level="h3" style={{ marginBottom: caption ? theme.spacing.xs : 0, fontWeight: '700' }}>
             {title}
           </Heading>
           {caption ? (
@@ -146,58 +164,45 @@ export const TopBar: React.FC<Props> = ({
           </Pressable>
         </View>
       </View>
-      <View style={styles.searchWrapper}>
-        <Input
-          value={searchValue}
-          editable={isEditable}
-          onChangeText={onChangeSearch}
-          placeholder={searchPlaceholder}
-          accessibilityLabel={searchAccessibilityLabel ?? searchPlaceholder}
-          returnKeyType="search"
-          onSubmitEditing={() => {
-            if (onSubmitSearch) {
-              onSubmitSearch();
-            } else if (!isEditable) {
-              handleNavigateToSearch();
-            }
-          }}
-          autoCorrect={false}
-          autoCapitalize="none"
-          leftAdornment={<Ionicons name="search" size={18} color={theme.colors.textMuted} />}
-          rightAdornment={
-            showClear ? (
-              <Pressable
-                onPress={handleClearSearch}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel="Clear search"
-                style={({ pressed }) => [styles.clearButton, pressed && { opacity: 0.7 }]}
-              >
-                <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
-              </Pressable>
-            ) : undefined
-          }
-          style={{
-            paddingVertical: theme.spacing.xs,
-            fontSize: 16,
-            lineHeight: 22,
-          }}
-          containerProps={{
-            style: {
-              width: '100%',
-            },
-          }}
-        />
-        {!isEditable ? (
-          <Pressable
-            onPress={handleNavigateToSearch}
-            accessibilityRole="button"
+      {isEditable && (
+        <View style={styles.searchWrapper}>
+          <Input
+            value={searchValue}
+            editable={isEditable}
+            onChangeText={onChangeSearch}
+            placeholder={searchPlaceholder}
             accessibilityLabel={searchAccessibilityLabel ?? searchPlaceholder}
-            style={StyleSheet.compose(styles.searchOverlay, { borderRadius: theme.radius.md })}
-            hitSlop={8}
+            returnKeyType="search"
+            onSubmitEditing={onSubmitSearch}
+            autoCorrect={false}
+            autoCapitalize="none"
+            leftAdornment={<Ionicons name="search" size={18} color={theme.colors.textMuted} />}
+            rightAdornment={
+              showClear ? (
+                <Pressable
+                  onPress={handleClearSearch}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                  style={({ pressed }) => [styles.clearButton, pressed && { opacity: 0.7 }]}
+                >
+                  <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
+                </Pressable>
+              ) : undefined
+            }
+            style={{
+              paddingVertical: theme.spacing.xs,
+              fontSize: 15,
+              lineHeight: 22,
+            }}
+            containerProps={{
+              style: {
+                width: '100%',
+              },
+            }}
           />
-        ) : null}
-      </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -212,9 +217,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  leftActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   titleColumn: {
     flex: 1,
-    marginRight: 16,
+    alignItems: 'center',
+    marginHorizontal: 8,
   },
   avatarButton: {
     alignItems: 'center',
@@ -234,9 +244,6 @@ const styles = StyleSheet.create({
   },
   searchWrapper: {
     marginTop: 16,
-  },
-  searchOverlay: {
-    ...StyleSheet.absoluteFillObject,
   },
   clearButton: {
     alignItems: 'center',

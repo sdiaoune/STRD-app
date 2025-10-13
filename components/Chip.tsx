@@ -12,13 +12,13 @@ export const Chip: React.FC<Props> = ({ label, style, ...rest }) => {
     <View
       style={[
         {
-          minHeight: 32,
+          minHeight: 24,
           paddingHorizontal: spacing[3],
-          paddingVertical: spacing[1],
-          borderRadius: 999,
+          paddingVertical: spacing[1] - 2,
+          borderRadius: 12,
           borderWidth: 1,
-          borderColor: colors.accent,
-          backgroundColor: colors.overlay,
+          borderColor: colors.primary,
+          backgroundColor: 'transparent',
           justifyContent: 'center',
           alignItems: 'center',
           alignSelf: 'flex-start',
@@ -33,8 +33,9 @@ export const Chip: React.FC<Props> = ({ label, style, ...rest }) => {
         style={{
           fontSize: typography.caption.fontSize,
           lineHeight: typography.caption.lineHeight,
-          fontWeight: '600',
-          color: colors.accent,
+          fontWeight: '700',
+          letterSpacing: 0.6,
+          color: colors.primary,
         }}
         maxFontSizeMultiplier={1.2}
       >

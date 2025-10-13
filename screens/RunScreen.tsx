@@ -164,14 +164,28 @@ export const RunScreen: React.FC = () => {
       Alert.alert('Error', 'Please add a caption to your run post.');
       return;
     }
-    const ok = await postRun(caption.trim(), selectedImage);
-    if (ok) {
-      setCaption('');
-      setSelectedImage(undefined);
-      setShowPostForm(false);
-      Alert.alert('Success', 'Run posted!');
-    } else {
-      Alert.alert('Error', 'Failed to publish your run. Please try again.');
+    
+    try {
+      const ok = await postRun(caption.trim(), selectedImage);
+      if (ok) {
+        setCaption('');
+        setSelectedImage(undefined);
+        setShowPostForm(false);
+        Alert.alert('Success', 'Run posted!');
+      } else {
+        // Check if it was an image upload failure
+        if (selectedImage) {
+          Alert.alert(
+            'Upload Failed', 
+            'Unable to upload your photo. Please check your connection and try again, or post without a photo.'
+          );
+        } else {
+          Alert.alert('Error', 'Failed to publish your run. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error posting run:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     }
   };
 
@@ -182,21 +196,57 @@ export const RunScreen: React.FC = () => {
   };
 
   const handleAddPhoto = () => {
-    (async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission required', 'Allow photo access to attach an image to your post.');
-        return;
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets?.length) {
-        setSelectedImage(result.assets[0].uri);
-      }
-    })();
+    Alert.alert(
+      'Add Photo',
+      'Choose how you want to add a photo',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Take Photo', 
+          onPress: handleTakePhoto 
+        },
+        { 
+          text: 'Choose from Library', 
+          onPress: handleChooseFromLibrary 
+        }
+      ]
+    );
+  };
+
+  const handleTakePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Allow camera access to take a photo.');
+      return;
+    }
+    
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    
+    if (!result.canceled && result.assets?.length) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Allow photo access to attach an image to your post.');
+      return;
+    }
+    
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    
+    if (!result.canceled && result.assets?.length) {
+      setSelectedImage(result.assets[0].uri);
+    }
   };
 
   const handleRemovePhoto = () => {
@@ -284,7 +334,10 @@ export const RunScreen: React.FC = () => {
                     </View>
                   ) : (
                     <TouchableOpacity style={styles.photoButton} onPress={handleAddPhoto}>
-                      <Ionicons name="camera" size={24} color={colors.primary} />
+                      <View style={styles.photoButtonIcons}>
+                        <Ionicons name="camera" size={20} color={colors.primary} />
+                        <Ionicons name="images" size={20} color={colors.primary} />
+                      </View>
                       <Text style={styles.photoButtonText}>Add Photo</Text>
                     </TouchableOpacity>
                   )}
@@ -303,7 +356,7 @@ export const RunScreen: React.FC = () => {
                   </TouchableOpacity>
                 </View>
                 {/* Spacer to avoid overlap with floating tab bar */}
-                <View style={{ height: (useBottomTabOverflow?.() ?? 0) + spacing.lg }} />
+                <View style={{ height: tabBarHeight + spacing.lg }} />
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -323,15 +376,15 @@ export const RunScreen: React.FC = () => {
             {/* Status tiles */}
             <View style={styles.statusRow}>
               <View style={styles.statusTile} accessibilityRole="text" accessibilityLabel={`GPS ${hasLocationPermission ? 'OK' : 'Disabled'}`}>
-                <Ionicons name={hasLocationPermission ? 'location' : 'location-outline'} size={18} color={hasLocationPermission ? colors.primary : colors.muted} />
+                <Ionicons name={hasLocationPermission ? 'location' : 'location-outline'} size={18} color={hasLocationPermission ? colors.primary : colors.icon.secondary} />
                 <Text style={styles.statusLabel}>GPS</Text>
               </View>
               <View style={styles.statusTile} accessibilityRole="text" accessibilityLabel={`Motion ${hasMotionPermission ? 'OK' : 'Disabled'}`}>
-                <Ionicons name={hasMotionPermission ? 'walk' : 'walk-outline'} size={18} color={hasMotionPermission ? colors.primary : colors.muted} />
+                <Ionicons name={hasMotionPermission ? 'walk' : 'walk-outline'} size={18} color={hasMotionPermission ? colors.primary : colors.icon.secondary} />
                 <Text style={styles.statusLabel}>Motion</Text>
               </View>
               <View style={styles.statusTile} accessibilityRole="text" accessibilityLabel={`Low Power ${isLowPowerMode ? 'On' : 'Off'}`}>
-                <Ionicons name={isLowPowerMode ? 'battery-dead' : 'battery-half'} size={18} color={isLowPowerMode ? colors.primary : colors.muted} />
+                <Ionicons name={isLowPowerMode ? 'battery-dead' : 'battery-half'} size={18} color={isLowPowerMode ? colors.primary : colors.icon.secondary} />
                 <Text style={styles.statusLabel}>Low Power</Text>
               </View>
             </View>
@@ -486,7 +539,7 @@ const createStyles = () => StyleSheet.create({
   },
   statusLabel: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginLeft: spacing.xs,
   },
   idleIcon: {
@@ -500,7 +553,7 @@ const createStyles = () => StyleSheet.create({
   },
   idleSubtitle: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
@@ -552,7 +605,7 @@ const createStyles = () => StyleSheet.create({
   },
   timerLabel: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginTop: spacing.sm,
   },
   metricsSection: {
@@ -571,7 +624,7 @@ const createStyles = () => StyleSheet.create({
   },
   metricLabel: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   routePreview: {
     flex: 1,
@@ -613,7 +666,7 @@ const createStyles = () => StyleSheet.create({
   },
   routeText: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
@@ -696,7 +749,7 @@ const createStyles = () => StyleSheet.create({
   },
   summaryLabel: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   captionSection: {
     marginBottom: spacing.lg,
@@ -734,6 +787,11 @@ const createStyles = () => StyleSheet.create({
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  photoButtonIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   photoButtonText: {
     ...typography.body,

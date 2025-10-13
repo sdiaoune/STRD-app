@@ -97,7 +97,7 @@ export const EventDetailsScreen: React.FC = () => {
             <Image source={{ uri: event.coverImage }} style={styles.coverMedia} contentFit="cover" />
           ) : (
             <View style={styles.coverPlaceholder}>
-              <Ionicons name="image" size={48} color={colors.muted} />
+              <Ionicons name="image" size={48} color={colors.icon.secondary} />
               <Text style={styles.coverText}>Event Cover</Text>
             </View>
           )}
@@ -161,7 +161,7 @@ export const EventDetailsScreen: React.FC = () => {
           <View style={styles.attendeesSection}>
             <Text style={styles.sectionTitle}>Attendees</Text>
             <View style={styles.attendeesPlaceholder}>
-              <Ionicons name="people" size={24} color={colors.muted} />
+              <Ionicons name="people" size={24} color={colors.icon.secondary} />
               <Text style={styles.attendeesText}>{isJoined ? 'You are attending' : 'No attendees yet'}</Text>
             </View>
           </View>

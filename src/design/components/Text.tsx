@@ -13,6 +13,7 @@ type Props = RNTextProps & {
   emphasis?: Emphasis;
   align?: "auto" | "left" | "right" | "center" | "justify";
   colorToken?: ColorToken;
+  tone?: "primary" | "secondary" | "tertiary" | "muted" | "danger" | "success" | "warning" | "info";
 };
 
 export default function Text({
@@ -23,11 +24,31 @@ export default function Text({
   variant = "body",
   align = "auto",
   colorToken,
+  tone,
   ...rest
 }: Props) {
   const { colors } = useTheme();
   const base = useMemo(() => getTextVariant(variant), [variant]);
-  const color = colorToken ? colors[colorToken] : muted ? colors.textMuted : colors.text;
+  const mappedTone = tone
+    ? tone === "primary"
+      ? colors.text.primary
+      : tone === "secondary"
+      ? colors.text.secondary
+      : tone === "tertiary"
+      ? colors.text.tertiary
+      : tone === "danger"
+      ? colors.danger
+      : tone === "success"
+      ? colors.success
+      : tone === "warning"
+      ? colors.warning
+      : tone === "info"
+      ? colors.info
+      : colors.text.muted
+    : undefined;
+  const color = colorToken
+    ? colors[colorToken]
+    : mappedTone ?? (muted ? colors.text.muted : colors.text.primary);
   const fontWeight =
     emphasis === "bold"
       ? weights.bold

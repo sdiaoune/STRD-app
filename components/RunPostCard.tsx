@@ -96,11 +96,11 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
             onPress={handleLike}
           />
           <TouchableOpacity style={styles.commentButton} onPress={() => setShowLikes(true)}>
-            <Ionicons name="people" size={20} color={colors.muted} />
+            <Ionicons name="people" size={20} color={colors.icon.secondary} />
             <Text style={styles.commentCount}>{post.likes}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.commentButton}>
-            <Ionicons name="chatbubble-outline" size={20} color={colors.muted} />
+            <Ionicons name="chatbubble-outline" size={20} color={colors.icon.secondary} />
             <Text style={styles.commentCount}>{post.comments.length}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.statsButton} onPress={handleViewStats}>
@@ -121,7 +121,7 @@ const stylesFactory = () => StyleSheet.create({
   container: {
     backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,
@@ -148,11 +148,11 @@ const stylesFactory = () => StyleSheet.create({
   },
   userHandle: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   timestamp: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   runStats: {
     flexDirection: 'row',
@@ -173,15 +173,15 @@ const stylesFactory = () => StyleSheet.create({
   },
   statLabel: {
     ...typography.small,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   routePreview: {
     marginBottom: spacing.md,
   },
   routeImage: {
     width: '100%',
-    height: 120,
-    borderRadius: borderRadius.md,
+    height: 180,
+    borderRadius: borderRadius.lg,
     backgroundColor: colors.border,
   },
   caption: {
@@ -202,7 +202,7 @@ const stylesFactory = () => StyleSheet.create({
   },
   commentCount: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginLeft: spacing.xs,
     fontWeight: '600',
   },
