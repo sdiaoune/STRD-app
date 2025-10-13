@@ -1,21 +1,18 @@
 import React from 'react';
-import { View, Image, StyleSheet, Text } from 'react-native';
+import { View, Image, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors } from '../theme';
+import Text from '@/src/design/components/Text';
+import { useTheme } from '@/src/design/useTheme';
 
 interface AvatarProps {
   source: string | null | undefined;
   size?: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
   label?: string;
 }
 
-export const Avatar: React.FC<AvatarProps> = ({
-  source,
-  size = 40,
-  style,
-  label,
-}) => {
+export const Avatar: React.FC<AvatarProps> = ({ source, size = 40, style, label }) => {
+  const theme = useTheme();
   const radius = size / 2;
   const initials = React.useMemo(() => {
     if (!label) return '';
@@ -27,16 +24,17 @@ export const Avatar: React.FC<AvatarProps> = ({
 
   return (
     <View
-      style={[
+      style={StyleSheet.flatten([
         styles.container,
         {
           width: size,
           height: size,
           borderRadius: radius,
-          borderColor: colors.border,
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.bgElevated,
         },
         style,
-      ]}
+      ])}
     >
       {source ? (
         <Image
@@ -50,7 +48,7 @@ export const Avatar: React.FC<AvatarProps> = ({
             width: size,
             height: size,
             borderRadius: radius,
-            backgroundColor: colors.muted,
+            backgroundColor: theme.colors.primary,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -58,7 +56,9 @@ export const Avatar: React.FC<AvatarProps> = ({
           accessibilityLabel={label ? `Avatar ${label}` : 'Avatar'}
         >
           {!!initials && (
-            <Text style={{ color: colors.text.primary, fontWeight: '700' }}>{initials}</Text>
+            <Text emphasis="bold" style={{ color: theme.colors.primaryText }}>
+              {initials}
+            </Text>
           )}
         </View>
       )}
@@ -69,7 +69,8 @@ export const Avatar: React.FC<AvatarProps> = ({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: colors.surface,
     borderWidth: 1,
   },
 });
+
+export default Avatar;

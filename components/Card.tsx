@@ -1,7 +1,7 @@
 import React from 'react';
-import { Platform, Pressable, View, type ViewProps } from 'react-native';
+import type { ViewProps } from 'react-native';
 
-import { borderRadius as radii, spacing, colors, shadows as themeShadows, surfaces } from '../theme';
+import CardPrimitive from '@/src/design/components/Card';
 
 interface Props extends ViewProps {
   onPress?: () => void;
@@ -9,53 +9,17 @@ interface Props extends ViewProps {
   accessibilityHint?: string;
 }
 
-export const Card: React.FC<Props> = ({
-  onPress,
-  children,
-  style,
-  accessibilityHint = 'Open details',
-  ...rest
-}) => {
-  const iosShadow = themeShadows.shadowMd.ios;
-  const androidShadow = themeShadows.shadowMd.android;
-
+export const Card: React.FC<Props> = ({ onPress, children, accessibilityHint, ...rest }) => {
   return (
-    <Pressable
-      accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityHint={onPress ? accessibilityHint : undefined}
+    <CardPrimitive
+      interactive={Boolean(onPress)}
       onPress={onPress}
-      disabled={!onPress}
-      style={({ pressed }) => [
-        {
-          backgroundColor: pressed ? colors.elevatedSurface : colors.surface,
-          padding: spacing[4],
-          borderRadius: radii.lg,
-          borderWidth: 1,
-          borderColor: colors.outline,
-          minHeight: 64,
-          overflow: 'hidden',
-          ...(Platform.OS === 'ios'
-            ? {
-                shadowColor: colors.overlay,
-                shadowOpacity: iosShadow.opacity,
-                shadowRadius: iosShadow.radius,
-                shadowOffset: { width: 0, height: iosShadow.y },
-              }
-            : { elevation: androidShadow.elevation }),
-        },
-        style,
-      ]}
+      accessibilityHint={accessibilityHint}
       {...rest}
     >
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: surfaces.translucent,
-        }}
-      />
       {children}
-    </Pressable>
+    </CardPrimitive>
   );
 };
+
+export default Card;
