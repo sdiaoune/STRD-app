@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius as radii } from '../theme';
+
+import { colors, spacing, borderRadius as radii, surfaces } from '../theme';
 
 type TabItem = {
   key: string;
@@ -19,7 +20,7 @@ interface Props {
 export const TabBar: React.FC<Props> = ({ items, activeKey, onPress }) => {
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
-      <BlurView intensity={90} style={{ paddingVertical: spacing[2] }}>
+      <BlurView intensity={70} tint="dark" style={{ paddingVertical: spacing[2] }}>
         <View style={{ flexDirection: 'row', paddingHorizontal: spacing[4], gap: spacing[3] }}>
           {items.map((item) => {
             const active = item.key === activeKey;
@@ -36,20 +37,20 @@ export const TabBar: React.FC<Props> = ({ items, activeKey, onPress }) => {
                   style={{
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[1],
-                    backgroundColor: active ? colors.accent : 'transparent',
+                    backgroundColor: active ? colors.primary : surfaces.subtle,
                     borderRadius: radii.lg,
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                     <Ionicons
                       name={item.icon}
                       size={18}
-                      color={active ? colors.accentOn : colors.text.muted}
+                      color={active ? colors.onPrimary : colors.text.secondary}
                     />
                     <Text
                       style={{
                         marginLeft: spacing[1],
-                        color: active ? colors.accentOn : colors.text.secondary,
+                        color: active ? colors.onPrimary : colors.text.secondary,
                         fontWeight: '600',
                       }}
                     >
@@ -65,13 +66,3 @@ export const TabBar: React.FC<Props> = ({ items, activeKey, onPress }) => {
     </View>
   );
 };
-
-
-
-
-
-
-
-
-
-

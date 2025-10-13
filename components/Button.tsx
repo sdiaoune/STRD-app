@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable, Text, PressableProps, View, ViewStyle, StyleProp } from 'react-native';
-import { colors, spacing, typography, borderRadius as radii } from '../theme';
-import { gradient } from '../theme';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useMemo } from 'react';
+import { Pressable, Text, type PressableProps, type ViewStyle, type StyleProp, View } from 'react-native';
+
+import { colors, spacing, typography, borderRadius as radii, opacity, surfaces } from '../theme';
 
 export interface ButtonProps extends PressableProps {
   variant?: 'primary' | 'outline' | 'ghost' | 'destructive' | 'icon';
@@ -10,6 +9,8 @@ export interface ButtonProps extends PressableProps {
   children: React.ReactNode;
   disabled?: boolean;
 }
+
+const MIN_TOUCH_SIZE = 44;
 
 export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
@@ -19,171 +20,136 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   ...props
 }) => {
-  const [pressed, setPressed] = useState(false);
-  const height = Math.max(size === 'primary' ? 56 : 48, 48);
-  const horizontalPadding = variant === 'icon' ? spacing[2] : spacing[4];
+  const sizePreset = useMemo(() => {
+    if (variant === 'icon') {
+      return { height: 48, paddingHorizontal: spacing[2], minWidth: 48 };
+    }
 
-  const variantStyles = useMemo<ViewStyle>(() => {
+    return size === 'secondary'
+      ? { height: 48, paddingHorizontal: spacing[4], minWidth: MIN_TOUCH_SIZE }
+      : { height: 56, paddingHorizontal: spacing[5], minWidth: MIN_TOUCH_SIZE };
+  }, [size, variant]);
+
+  const variantTokens = useMemo(() => {
+    const disabledOpacity = disabled ? opacity.disabled : 1;
+
     switch (variant) {
       case 'primary':
         return {
-          borderWidth: 0,
+          background: colors.primary,
+          textColor: colors.onPrimary,
           borderColor: 'transparent',
+          pressedBackground: colors.focus,
+          disabledBackground: colors.primary,
+          disabledOpacity,
+          borderWidth: 0,
         };
       case 'outline':
         return {
-          backgroundColor: 'transparent',
-          borderWidth: 1,
+          background: colors.surface,
+          textColor: colors.text.primary,
           borderColor: colors.border,
-        };
-      case 'ghost':
-        return {
-          backgroundColor: 'transparent',
-          borderWidth: 0,
-          borderColor: 'transparent',
-        };
-      case 'destructive':
-        return {
-          backgroundColor: 'transparent',
+          pressedBackground: colors.elevatedSurface,
+          disabledBackground: colors.surface,
+          disabledOpacity,
           borderWidth: 1,
-          borderColor: colors.danger,
         };
-      case 'icon':
-        return {
-          backgroundColor: 'transparent',
-          borderWidth: 0,
-          borderColor: 'transparent',
-        };
-      default:
-        return {} as ViewStyle;
-    }
-  }, [variant]);
-
-  const getTextColor = () => {
-    if (disabled) return colors.text.muted;
-    
-    switch (variant) {
-      case 'primary':
-        return colors.accentOn;
-      case 'outline':
       case 'ghost':
-        return colors.text.primary;
+        return {
+          background: surfaces.subtle,
+          textColor: colors.text.secondary,
+          borderColor: 'transparent',
+          pressedBackground: surfaces.strong,
+          disabledBackground: surfaces.subtle,
+          disabledOpacity,
+          borderWidth: 0,
+        };
       case 'destructive':
-        return colors.danger;
+        return {
+          background: colors.danger,
+          textColor: colors.onPrimary,
+          borderColor: 'transparent',
+          pressedBackground: colors.danger,
+          disabledBackground: colors.danger,
+          disabledOpacity,
+          borderWidth: 0,
+        };
       case 'icon':
-        return colors.text.primary;
       default:
-        return colors.text.primary;
+        return {
+          background: 'transparent',
+          textColor: colors.text.primary,
+          borderColor: 'transparent',
+          pressedBackground: colors.overlay,
+          disabledBackground: 'transparent',
+          disabledOpacity,
+          borderWidth: 0,
+        };
     }
-  };
+  }, [disabled, variant]);
 
-  const baseContainerStyle = useMemo<StyleProp<ViewStyle>>(() => {
-    const styles: StyleProp<ViewStyle>[] = [
+  const containerStyle: StyleProp<ViewStyle> = useMemo(
+    () => [
       {
-        height,
-        paddingHorizontal: horizontalPadding,
+        minHeight: Math.max(sizePreset.height, MIN_TOUCH_SIZE),
+        minWidth: sizePreset.minWidth,
+        paddingHorizontal: sizePreset.paddingHorizontal,
         borderRadius: radii.lg,
         justifyContent: 'center',
         alignItems: 'center',
-        opacity: disabled ? 0.48 : 1,
+        flexDirection: 'row',
+        gap: spacing[2],
         overflow: 'hidden',
+        borderWidth: variantTokens.borderWidth,
       } as ViewStyle,
-      variantStyles,
-    ];
+      style,
+    ],
+    [sizePreset.height, sizePreset.minWidth, sizePreset.paddingHorizontal, style, variantTokens.borderWidth]
+  );
 
-    if (style) {
-      styles.push(style as StyleProp<ViewStyle>);
-    }
-
-    return styles;
-  }, [disabled, height, horizontalPadding, style, variantStyles]);
-
-  if (variant === 'primary') {
-    return (
-      <Pressable
-        disabled={disabled}
-        accessibilityRole="button"
-        hitSlop={12}
-        style={baseContainerStyle}
-        onPressIn={() => setPressed(true)}
-        onPressOut={() => setPressed(false)}
-        {...props}
-      >
-        {/* Outer subtle highlight */}
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      hitSlop={12}
+      android_ripple={{ color: colors.focus, borderless: variant === 'icon' }}
+      style={({ pressed }) => [
+        containerStyle,
+        {
+          backgroundColor: pressed
+            ? variantTokens.pressedBackground
+            : disabled
+            ? variantTokens.disabledBackground
+            : variantTokens.background,
+          borderColor: variantTokens.borderColor,
+          opacity: pressed && !disabled ? opacity.pressed : variantTokens.disabledOpacity,
+        },
+      ]}
+      {...props}
+    >
+      {variant === 'outline' ? (
         <View
           pointerEvents="none"
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             borderRadius: radii.lg,
             borderWidth: 1,
-            borderColor: '#FFFFFF14',
+            borderColor: variantTokens.borderColor,
+            opacity: 0.6,
           }}
         />
-        {/* Gradient background */}
-        <LinearGradient
-          colors={gradient.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            borderRadius: radii.lg,
-            opacity: disabled ? 0.7 : 1,
-          }}
-        />
-        {/* Pressed overlay (darken ~5%) below text */}
-        {pressed ? (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.05)',
-              borderRadius: radii.lg,
-            }}
-          />
-        ) : null}
-        <Text
-          style={[
-            typography.body,
-            {
-              color: getTextColor(),
-              fontWeight: '600',
-            },
-          ]}
-        >
-          {children}
-        </Text>
-      </Pressable>
-    );
-  }
-
-  return (
-    <Pressable
-      style={baseContainerStyle}
-      disabled={disabled}
-      accessibilityRole="button"
-      hitSlop={12}
-      {...props}
-    >
+      ) : null}
       <Text
         style={[
           typography.body,
           {
-            color: getTextColor(),
+            color: variantTokens.textColor,
             fontWeight: '600',
           },
         ]}
+        maxFontSizeMultiplier={1.3}
       >
         {children}
       </Text>

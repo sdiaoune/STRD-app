@@ -62,20 +62,20 @@ export const formatEventDate = (dateISO: string): string => {
   const date = new Date(dateISO);
   const now = new Date();
   const diffMs = date.getTime() - now.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 0) {
+  const sign = Math.sign(diffMs);
+  const absDays = Math.floor(Math.abs(diffMs) / (1000 * 60 * 60 * 24));
+
+  if (absDays === 0) {
     return 'Today';
-  } else if (diffDays === 1) {
-    return 'Tomorrow';
-  } else if (diffDays < 7) {
-    return `In ${diffDays} days`;
-  } else {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
   }
+  if (sign > 0) {
+    if (absDays === 1) return 'Tomorrow';
+    if (absDays < 7) return `In ${absDays} days`;
+  } else {
+    if (absDays === 1) return '1 day ago';
+    if (absDays < 7) return `${absDays} days ago`;
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 export const formatEventTime = (dateISO: string): string => {

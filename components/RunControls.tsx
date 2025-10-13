@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    ...typography.title,
+    ...typography.h3,
     color: colors.text.primary,
   },
   statLabel: {

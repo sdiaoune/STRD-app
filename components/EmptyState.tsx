@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../theme';
+
+import { colors, spacing, typography, getCurrentThemeName } from '../theme';
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -10,39 +11,49 @@ interface EmptyStateProps {
   style?: any;
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ 
-  icon, 
-  title, 
-  message, 
-  style 
+export const EmptyState: React.FC<EmptyStateProps> = ({
+  icon,
+  title,
+  message,
+  style,
 }) => {
+  const themed = React.useMemo(() => stylesFactory(), [getCurrentThemeName()]);
   return (
-    <View style={[styles.container, style]}>
-      <Ionicons name={icon} size={48} color={colors.muted} />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+    <View style={[themed.container, style]}>
+      <View style={themed.iconWrapper}>
+        <Ionicons name={icon} size={36} color={colors.primary} />
+      </View>
+      <Text style={themed.title}>{title}</Text>
+      <Text style={themed.message}>{message}</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const stylesFactory = () => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
+    gap: spacing.md,
+  },
+  iconWrapper: {
+    padding: spacing[3],
+    borderRadius: spacing.lg,
+    backgroundColor: colors.overlay,
   },
   title: {
-    ...typography.h3,
+    fontSize: typography.h2.fontSize,
+    lineHeight: typography.h2.lineHeight,
+    fontWeight: typography.h2.fontWeight,
     color: colors.text.primary,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   message: {
-    ...typography.body,
-    color: colors.muted,
+    fontSize: typography.body.fontSize,
+    lineHeight: typography.body.lineHeight,
+    color: colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 24,
+    maxWidth: 280,
   },
 });

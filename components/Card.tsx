@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pressable, View, ViewProps, Platform } from 'react-native';
-import { borderRadius as radii, spacing, colors } from '../theme';
-import { shadows as themeShadows, surfaces } from '../theme';
+import { Platform, Pressable, View, type ViewProps } from 'react-native';
+
+import { borderRadius as radii, spacing, colors, shadows as themeShadows, surfaces } from '../theme';
 
 interface Props extends ViewProps {
   onPress?: () => void;
@@ -13,7 +13,7 @@ export const Card: React.FC<Props> = ({
   onPress,
   children,
   style,
-  accessibilityHint = 'Open event details',
+  accessibilityHint = 'Open details',
   ...rest
 }) => {
   const iosShadow = themeShadows.shadowMd.ios;
@@ -21,21 +21,22 @@ export const Card: React.FC<Props> = ({
 
   return (
     <Pressable
-      accessibilityRole="button"
-      accessibilityHint={accessibilityHint}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityHint={onPress ? accessibilityHint : undefined}
       onPress={onPress}
-      style={[
+      disabled={!onPress}
+      style={({ pressed }) => [
         {
-          backgroundColor: colors.card,
+          backgroundColor: pressed ? colors.elevatedSurface : colors.surface,
           padding: spacing[4],
           borderRadius: radii.lg,
           borderWidth: 1,
-          borderColor: colors.border,
-          minHeight: 44,
+          borderColor: colors.outline,
+          minHeight: 64,
           overflow: 'hidden',
           ...(Platform.OS === 'ios'
             ? {
-                shadowColor: '#000',
+                shadowColor: colors.overlay,
                 shadowOpacity: iosShadow.opacity,
                 shadowRadius: iosShadow.radius,
                 shadowOffset: { width: 0, height: iosShadow.y },
@@ -46,16 +47,12 @@ export const Card: React.FC<Props> = ({
       ]}
       {...rest}
     >
-      {/* Subtle surface overlay for depth on dark theme */}
       <View
         pointerEvents="none"
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: surfaces.surface1,
+          inset: 0,
+          backgroundColor: surfaces.translucent,
         }}
       />
       {children}

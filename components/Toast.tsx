@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../theme';
+
+import { colors, spacing, typography, opacity } from '../theme';
 
 interface Props {
   message: string;
@@ -12,6 +13,13 @@ interface Props {
   size?: 'normal' | 'large';
 }
 
+const typeStyles = {
+  success: { icon: 'checkmark-circle' as const, color: colors.success },
+  error: { icon: 'close-circle' as const, color: colors.danger },
+  warning: { icon: 'warning' as const, color: colors.warning },
+  info: { icon: 'information-circle' as const, color: colors.info },
+};
+
 export const Toast: React.FC<Props> = ({
   message,
   type = 'info',
@@ -21,60 +29,32 @@ export const Toast: React.FC<Props> = ({
   size = 'normal',
 }) => {
   const translateY = useRef(new Animated.Value(position === 'top' ? -100 : 100)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  const getIconName = () => {
-    switch (type) {
-      case 'success':
-        return 'checkmark-circle';
-      case 'error':
-        return 'close-circle';
-      case 'warning':
-        return 'warning';
-      default:
-        return 'information-circle';
-    }
-  };
-
-  const getIconColor = () => {
-    switch (type) {
-      case 'success':
-        return colors.success;
-      case 'error':
-        return colors.error;
-      case 'warning':
-        return colors.warning;
-      default:
-        return colors.info;
-    }
-  };
+  const alpha = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Slide in
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 320,
+        duration: 260,
         useNativeDriver: true,
       }),
-      Animated.timing(opacity, {
+      Animated.timing(alpha, {
         toValue: 1,
-        duration: 320,
+        duration: 260,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Auto dismiss
     const timer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(translateY, {
           toValue: position === 'top' ? -100 : 100,
-          duration: 320,
+          duration: 260,
           useNativeDriver: true,
         }),
-        Animated.timing(opacity, {
+        Animated.timing(alpha, {
           toValue: 0,
-          duration: 320,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]).start(() => {
@@ -83,7 +63,9 @@ export const Toast: React.FC<Props> = ({
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, onDismiss]);
+  }, [duration, onDismiss, position, alpha, translateY]);
+
+  const palette = typeStyles[type];
 
   return (
     <Animated.View
@@ -91,15 +73,16 @@ export const Toast: React.FC<Props> = ({
         styles.container,
         {
           transform: [{ translateY }],
-          opacity,
+          opacity: alpha,
           top: position === 'top' ? spacing[8] : undefined,
           bottom: position === 'bottom' ? spacing[8] : undefined,
+          borderLeftColor: palette.color,
         },
       ]}
       accessibilityRole="alert"
     >
       <View style={[styles.content, size === 'large' && styles.contentLarge]}>
-        <Ionicons name={getIconName()} size={22} color={getIconColor()} />
+        <Ionicons name={palette.icon} size={22} color={palette.color} />
         <Text
           style={[styles.text, size === 'large' && styles.textLarge, { color: colors.text.primary }]}
         >
@@ -116,33 +99,37 @@ const styles = StyleSheet.create({
     left: spacing[4],
     right: spacing[4],
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 10,
+    borderColor: colors.outline,
+    borderLeftWidth: 4,
+    shadowColor: colors.overlay,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+    opacity: opacity.hover,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
+    gap: spacing[2],
   },
   contentLarge: {
     paddingHorizontal: spacing[5],
     paddingVertical: spacing[4],
-    borderRadius: 16,
+    borderRadius: 18,
   },
   text: {
     ...typography.body,
-    marginLeft: spacing[2],
+    marginLeft: spacing[1],
     flex: 1,
   },
   textLarge: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: typography.h3.fontSize,
+    lineHeight: typography.h3.lineHeight,
   },
 });
+

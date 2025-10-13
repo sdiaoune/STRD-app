@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
+
 import { colors, spacing, borderRadius, typography } from '../theme';
 
 interface TagPillProps {
@@ -9,15 +10,30 @@ interface TagPillProps {
 
 export const TagPill: React.FC<TagPillProps> = ({ tag, style }) => {
   return (
-    <View style={[{
-      backgroundColor: colors.primary + '20',
-      paddingHorizontal: spacing.sm,
-      paddingVertical: spacing.xs,
-      borderRadius: borderRadius.md,
-      borderWidth: 1,
-      borderColor: colors.primary + '40',
-    }, style]}>
-      <Text style={[typography.small, { color: colors.primary, fontWeight: '600' }]}>{tag}</Text>
+    <View
+      style={[
+        {
+          backgroundColor: colors.overlay,
+          paddingHorizontal: spacing[3],
+          paddingVertical: spacing[1],
+          borderRadius: borderRadius.lg,
+          borderWidth: 1,
+          borderColor: colors.outline,
+        },
+        style,
+      ]}
+    >
+      <Text
+        style={{
+          fontSize: typography.caption.fontSize,
+          lineHeight: typography.caption.lineHeight,
+          fontWeight: '600',
+          color: colors.text.secondary,
+          textTransform: 'uppercase',
+        }}
+      >
+        {tag}
+      </Text>
     </View>
   );
 };
