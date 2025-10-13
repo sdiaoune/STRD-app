@@ -247,10 +247,14 @@ function AuthStack() {
 
 function AppContainer() {
   const theme = useTheme();
+  const themeName = theme.name;
+  const setThemeMode = theme.setMode;
   const isAuthenticated = useStore(state => state.isAuthenticated);
   const initializeAuth = useStore(state => state.initializeAuth);
   const hydratePreferences = useStore(state => state.hydratePreferences);
   const reloadInitialData = useStore(state => state._loadInitialData);
+  const themePreference = useStore(state => state.themePreference);
+  const hasHydratedTheme = useStore(state => state.hasHydratedTheme);
   const [showSurvey, setShowSurvey] = useState(false);
   const [hasCheckedSurvey, setHasCheckedSurvey] = useState(false);
 
@@ -280,6 +284,15 @@ function AppContainer() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!hasHydratedTheme) {
+      return;
+    }
+    if (themePreference && themePreference !== themeName) {
+      void setThemeMode(themePreference);
+    }
+  }, [hasHydratedTheme, themePreference, themeName, setThemeMode]);
 
   useEffect(() => {
     if (hasCheckedSurvey) return;
