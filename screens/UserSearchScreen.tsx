@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
@@ -7,6 +8,7 @@ import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { useStore } from '../state/store';
 import TopBar from '../components/ui/TopBar';
 import { Avatar } from '../components/Avatar';
+import Input from '../src/design/components/Input';
 
 export const UserSearchScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -47,6 +49,27 @@ export const UserSearchScreen: React.FC = () => {
       <FlatList
         data={results}
         keyExtractor={(i) => i.id}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={(
+          <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.sm }}>
+            <Input
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search people"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              leftAdornment={<Ionicons name="search" size={18} color={colors.text.secondary} />}
+            />
+          </View>
+        )}
+        ListEmptyComponent={(
+          <View style={{ padding: spacing.lg }}>
+            <Text style={{ ...typography.caption, color: colors.text.secondary }}>
+              {query.trim().length < 2 ? 'Type at least 2 characters to search' : 'No people found'}
+            </Text>
+          </View>
+        )}
         ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.border }} />}
         renderItem={({ item }) => (
           <View style={styles.userRow}>
