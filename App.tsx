@@ -10,6 +10,7 @@ import * as Location from 'expo-location';
 import { supabase } from './supabase/client';
 
 import { ThemeProvider, useTheme } from './src/design/useTheme';
+import { weights } from './src/design/typography';
 import { EventsScreen } from './screens/EventsScreen';
 import { EventDetailsScreen } from './screens/EventDetailsScreen';
 import { TimelineScreen } from './screens/TimelineScreen';
@@ -314,6 +315,12 @@ function AppContainer() {
         text: theme.colors.text,
         border: theme.colors.border,
         notification: theme.colors.primary,
+      },
+      fonts: {
+        regular: { fontFamily: 'System', fontWeight: weights.regular },
+        medium: { fontFamily: 'System', fontWeight: weights.semiBold },
+        bold: { fontFamily: 'System', fontWeight: weights.bold },
+        heavy: { fontFamily: 'System', fontWeight: weights.bold },
       },
     }),
     [theme],
