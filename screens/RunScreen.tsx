@@ -368,7 +368,12 @@ export const RunScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TopBar title="STRD" />
+      <TopBar
+        title="STRD"
+        leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
+        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
+        rightAvatar={{ source: (useStore.getState().currentUser?.avatar) || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
+      />
 
       <View style={styles.content}>
         {!runState.isRunning ? (
@@ -501,7 +506,7 @@ export const RunScreen: React.FC = () => {
 const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surface,
   },
   header: {},
   title: {},

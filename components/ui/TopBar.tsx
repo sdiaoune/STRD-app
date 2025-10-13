@@ -15,11 +15,11 @@ type Props = {
 };
 
 export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], rightAvatar }) => {
-  const { colors, spacing, typography } = useTheme();
+  const { colors, spacing, typography, mode } = useTheme();
   const styles = StyleSheet.create({
     container: {
       width: '100%',
-      backgroundColor: colors.surface,
+      backgroundColor: mode === 'light' ? colors.surface : colors.bg,
       borderBottomColor: colors.border,
       borderBottomWidth: StyleSheet.hairlineWidth,
       paddingTop: spacing.x4,

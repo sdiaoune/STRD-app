@@ -6,7 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TimelineStackParamList, AppNavigationParamList } from '../types/navigation';
 
 type TimelineScreenNavigationProp = NativeStackNavigationProp<TimelineStackParamList & AppNavigationParamList, 'TimelineList'>;
-import { colors, spacing, typography, getCurrentThemeName } from '../theme';
+import { colors, spacing, typography, getCurrentThemeName, useTheme as useTokensTheme } from '../theme';
 // Removed tab bar height hook to avoid cross-screen state updates during render
 import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
@@ -16,6 +16,7 @@ import TopBar from '../components/ui/TopBar';
 
 export const TimelineScreen: React.FC = () => {
   const navigation = useNavigation<TimelineScreenNavigationProp>();
+  const tokensTheme = useTokensTheme();
   const { timelineItems, postById, eventById } = useStore();
   const insets = useSafeAreaInsets();
   const tabBarHeight = insets.bottom;
@@ -58,7 +59,13 @@ export const TimelineScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={themedStyles.container} edges={["top"]}>
+    <SafeAreaView
+      style={[
+        themedStyles.container,
+        { backgroundColor: tokensTheme.mode === 'light' ? tokensTheme.colors.surface : tokensTheme.colors.bg },
+      ]}
+      edges={["top"]}
+    >
       <TopBar
         title="Timeline"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
@@ -67,8 +74,10 @@ export const TimelineScreen: React.FC = () => {
       />
 
       <ScrollView
-        style={themedStyles.scrollView}
-        contentContainerStyle={[themedStyles.scrollContent, { paddingBottom: spacing.lg + insets.bottom + spacing.md }]}
+        style={[themedStyles.scrollView, { backgroundColor: tokensTheme.mode === 'light' ? tokensTheme.colors.surface : tokensTheme.colors.bg }]}
+        contentContainerStyle={[themedStyles.scrollContent, { paddingBottom: spacing.lg + insets.bottom + spacing.md, backgroundColor: tokensTheme.mode === 'light' ? tokensTheme.colors.surface : tokensTheme.colors.bg }]}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
         showsVerticalScrollIndicator={false}
       >
         {timelineItems.length > 0 ? (
@@ -85,13 +94,14 @@ const createStyles = () =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.bg,
     },
     header: {},
     headerTop: {},
     title: {},
     scrollView: {
       flex: 1,
+      backgroundColor: colors.surface,
     },
     scrollContent: {
       paddingHorizontal: spacing.md,

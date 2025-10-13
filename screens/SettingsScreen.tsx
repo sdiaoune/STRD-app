@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, TouchableOpacity, View, TextInput, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View, TextInput, Alert, ScrollView } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../state/store';
 import { borderRadius, colors, spacing, typography } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
@@ -18,8 +18,16 @@ export const SettingsScreen: React.FC = () => {
   const [eventIdDraft, setEventIdDraft] = React.useState('');
   const [coverUrlDraft, setCoverUrlDraft] = React.useState('');
   const styles = useLegacyStyles(createStyles);
+  const insets = useSafeAreaInsets();
   return (
     <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: colors.bg }}
+        contentContainerStyle={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.xl, backgroundColor: colors.bg }}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Units</Text>
         <View style={styles.row}>
@@ -102,13 +110,14 @@ export const SettingsScreen: React.FC = () => {
           <Text style={styles.signOutText}>Sign out</Text>
         </TouchableOpacity>
       </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const createStyles = () =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.bg, padding: spacing.md },
+    container: { flex: 1, backgroundColor: colors.bg },
     section: { marginTop: spacing.lg },
     sectionTitle: { ...typography.h3, color: colors.text.primary, marginBottom: spacing.md },
     row: { flexDirection: 'row' },
