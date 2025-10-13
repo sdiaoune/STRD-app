@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,13 +12,11 @@ import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
 import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
-import { Ionicons } from '@expo/vector-icons';
-import { Avatar } from '../components/Avatar';
 import TopBar from '../components/TopBar';
 
 export const TimelineScreen: React.FC = () => {
   const navigation = useNavigation<TimelineScreenNavigationProp>();
-  const { timelineItems, postById, eventById, currentUser } = useStore();
+  const { timelineItems, postById, eventById } = useStore();
   const insets = useSafeAreaInsets();
   const tabBarHeight = insets.bottom;
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -70,35 +68,14 @@ export const TimelineScreen: React.FC = () => {
     }
   };
 
-  const handleProfilePress = () => {
-    navigation.getParent<NavigationProp<Record<string, object | undefined>>>()?.navigate('Profile');
-  };
-
   return (
     <SafeAreaView style={themedStyles.container} edges={["top"]}>
       <TopBar
         title="Timeline"
-        left={
-          <View style={themedStyles.searchContainer}>
-            <Ionicons name="search" size={18} color={colors.muted} style={{ marginRight: spacing.sm }} />
-            <TextInput
-              style={themedStyles.searchInput}
-              placeholder="Search STRD"
-              placeholderTextColor={colors.muted}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              returnKeyType="search"
-              onSubmitEditing={handleSearchSubmit}
-              autoCorrect={false}
-              autoCapitalize="none"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} accessibilityRole="button" hitSlop={12}>
-                <Ionicons name="close-circle" size={18} color={colors.muted} />
-              </TouchableOpacity>
-            )}
-          </View>
-        }
+        searchValue={searchQuery}
+        onChangeSearch={setSearchQuery}
+        onSubmitSearch={handleSearchSubmit}
+        onClearSearch={() => setSearchQuery('')}
       />
 
       <ScrollView
@@ -129,27 +106,6 @@ const createStyles = () =>
     header: {},
     headerTop: {},
     title: {},
-    searchContainer: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.card,
-      borderRadius: spacing.lg,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs,
-      borderWidth: 1,
-      borderColor: colors.border,
-      marginRight: spacing.md,
-    },
-    searchInput: {
-      flex: 1,
-      color: colors.text.primary,
-      paddingVertical: spacing.xs,
-    },
-    profileButton: {
-      borderRadius: spacing.lg,
-      overflow: 'hidden',
-    },
     scrollView: {
       flex: 1,
     },

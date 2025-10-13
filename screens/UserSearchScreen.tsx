@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
@@ -36,18 +36,14 @@ export const UserSearchScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TopBar title="Search" />
-      <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: 0 }}>
-        <TextInput
-          placeholder="Search runners"
-          placeholderTextColor={colors.muted}
-          value={query}
-          onChangeText={setQuery}
-          style={styles.input}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-      </View>
+      <TopBar
+        title="Search"
+        searchPlaceholder="Search runners"
+        searchAccessibilityLabel="Search runners"
+        searchValue={query}
+        onChangeSearch={setQuery}
+        onClearSearch={() => setQuery('')}
+      />
       <FlatList
         data={results}
         keyExtractor={(i) => i.id}
@@ -86,16 +82,6 @@ export const UserSearchScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  searchRow: { padding: spacing.md },
-  input: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    color: colors.text.primary,
-  },
   userRow: {
     flexDirection: 'row', alignItems: 'center', padding: spacing.md,
   },
