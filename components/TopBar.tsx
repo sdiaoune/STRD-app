@@ -64,6 +64,15 @@ export const TopBar: React.FC<Props> = ({
     }
   }, [isEditable, navigation, onPressSearch, parentNavigation]);
 
+  const handleSettingsPress = useCallback(() => {
+    if (parentNavigation) {
+      parentNavigation.navigate('Profile' as never, { screen: 'Settings' } as never);
+      return;
+    }
+
+    navigation.navigate('Settings' as never);
+  }, [navigation, parentNavigation]);
+
   const handleAvatarPress = useCallback(() => {
     if (parentNavigation) {
       parentNavigation.navigate('Profile' as never);
@@ -105,15 +114,37 @@ export const TopBar: React.FC<Props> = ({
             </Text>
           ) : null}
         </View>
-        <Pressable
-          onPress={handleAvatarPress}
-          accessibilityRole="button"
-          accessibilityLabel="Open profile"
-          hitSlop={12}
-          style={({ pressed }) => [styles.avatarButton, pressed && { opacity: 0.85 }]}
-        >
-          <Avatar source={avatarSource} size={40} label={avatarLabel} />
-        </Pressable>
+        <View style={styles.actionsRow}>
+          <Pressable
+            onPress={handleSettingsPress}
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+            hitSlop={12}
+            style={({ pressed }) => [
+              styles.iconButton,
+              {
+                borderRadius: theme.radius.lg,
+                marginRight: theme.spacing.sm,
+                backgroundColor: pressed ? theme.colors.bgElevated : 'transparent',
+              },
+            ]}
+          >
+            <Ionicons name="settings-outline" size={22} color={theme.colors.text} />
+          </Pressable>
+          <Pressable
+            onPress={handleAvatarPress}
+            accessibilityRole="button"
+            accessibilityLabel="Open profile"
+            hitSlop={12}
+            style={({ pressed }) => [
+              styles.avatarButton,
+              { borderRadius: theme.radius.lg },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Avatar source={avatarSource} size={40} label={avatarLabel} />
+          </Pressable>
+        </View>
       </View>
       <View style={styles.searchWrapper}>
         <Input
@@ -186,7 +217,20 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   avatarButton: {
-    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
   },
   searchWrapper: {
     marginTop: 16,
