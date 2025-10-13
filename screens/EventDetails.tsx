@@ -26,7 +26,7 @@ export const EventDetails: React.FC = () => {
           {event.coverImage ? (
             <Image source={{ uri: event.coverImage }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
           ) : (
-            <Ionicons name="image" size={48} color={colors.textMuted} />
+            <Ionicons name="image" size={48} color={colors.icon.secondary} />
           )}
         </View>
 
@@ -39,19 +39,19 @@ export const EventDetails: React.FC = () => {
         <View className="mt-4 space-y-2">
           <View className="flex-row items-center">
             <Ionicons name="calendar" size={20} color={colors.icon.secondary} />
-            <Text style={[typography.caption, { color: colors.text.muted, marginLeft: spacing[2] }]}>
+            <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}> 
               {formatEventDate(event.dateISO)} • {formatEventTime(event.dateISO)}
             </Text>
           </View>
           <View className="flex-row items-center">
             <Ionicons name="location-outline" size={20} color={colors.icon.secondary} />
-            <Text style={[typography.caption, { color: colors.text.muted, marginLeft: spacing[2] }]}>
+            <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}> 
               {event.location.name}
             </Text>
           </View>
           <View className="flex-row items-center">
             <Ionicons name="navigate" size={20} color={colors.icon.secondary} />
-            <Text style={[typography.caption, { color: colors.text.muted, marginLeft: spacing[2] }]}>
+            <Text style={[typography.caption, { color: colors.text.secondary, marginLeft: spacing[2] }]}> 
               {event.distanceFromUserKm == null ? 'Distance unavailable' : `${formatDistance(event.distanceFromUserKm)} away`}
             </Text>
           </View>
@@ -75,7 +75,7 @@ export const EventDetails: React.FC = () => {
 
         <View style={{ marginTop: spacing[6], alignItems: 'center', paddingVertical: spacing[6], borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, borderRadius: 12 }}>
           <Ionicons name="people" size={24} color={colors.icon.secondary} />
-          <Text style={[typography.body, { color: colors.text.muted, marginTop: spacing[2] }]}>
+          <Text style={[typography.body, { color: colors.text.secondary, marginTop: spacing[2] }]}> 
             Be the first to join. Invite friends →
           </Text>
         </View>

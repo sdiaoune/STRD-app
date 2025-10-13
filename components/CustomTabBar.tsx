@@ -47,7 +47,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
               navigation.emit({ type: 'tabLongPress', target: route.key });
             };
 
-            const color = isFocused ? colors.primary : colors.text.muted;
+            const color = isFocused ? colors.primary : colors.text.secondary;
             const size = 24;
             const icon = options.tabBarIcon?.({ focused: isFocused, color, size });
             const labelRaw = route.name === 'Run' ? 'STRD' : route.name;
@@ -68,7 +68,7 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
                     style={{
                       ...(typography.caption as any),
                       marginTop: spacing.xs,
-                      color: isFocused ? colors.primary : colors.text.muted,
+                      color: isFocused ? colors.primary : colors.text.secondary,
                       fontWeight: isFocused ? '700' : '600',
                     }}
                     numberOfLines={1}

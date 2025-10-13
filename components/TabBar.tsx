@@ -3,7 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, spacing, borderRadius as radii, surfaces } from '../theme';
+import { colors, spacing, borderRadius as radii, surfaces, getCurrentThemeName } from '../theme';
 
 type TabItem = {
   key: string;
@@ -18,9 +18,10 @@ interface Props {
 }
 
 export const TabBar: React.FC<Props> = ({ items, activeKey, onPress }) => {
+  const tint = getCurrentThemeName() === 'dark' ? 'dark' : 'light';
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
-      <BlurView intensity={80} tint="dark" style={{ paddingVertical: spacing[3] }}>
+      <BlurView intensity={80} tint={tint as any} style={{ paddingVertical: spacing[3] }}>
         <View style={{ flexDirection: 'row', paddingHorizontal: spacing[4], gap: spacing[3], alignItems: 'center', minHeight: 56 }}>
           {items.map((item) => {
             const active = item.key === activeKey;
@@ -37,7 +38,7 @@ export const TabBar: React.FC<Props> = ({ items, activeKey, onPress }) => {
                   style={{
                     paddingHorizontal: spacing[3],
                     paddingVertical: spacing[1],
-                    backgroundColor: active ? colors.primary : surfaces.subtle,
+                    backgroundColor: active ? colors.primary : colors.surfaceMuted,
                     borderRadius: radii.lg,
                   }}
                 >

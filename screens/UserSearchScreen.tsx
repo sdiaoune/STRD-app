@@ -89,7 +89,7 @@ const createStyles = () => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', padding: spacing.md,
   },
   name: { ...typography.body, color: colors.text.primary },
-  handle: { ...typography.caption, color: colors.muted },
+  handle: { ...typography.caption, color: colors.text.secondary },
   followBtn: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

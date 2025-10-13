@@ -26,7 +26,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <View style={[themed.container, style]}>
       <View style={themed.iconWrapper}>
-        <Ionicons name={icon} size={36} color={colors.primary} />
+        <Ionicons name={icon} size={36} color={colors.icon.primary} />
       </View>
       <Text style={themed.title}>{title}</Text>
       <Text style={themed.message}>{message}</Text>

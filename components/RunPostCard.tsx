@@ -156,7 +156,7 @@ const stylesFactory = () => StyleSheet.create({
   },
   runStats: {
     flexDirection: 'row',
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -182,7 +182,7 @@ const stylesFactory = () => StyleSheet.create({
     width: '100%',
     height: 180,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
   },
   caption: {
     ...typography.body,

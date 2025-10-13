@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: colors.border,
     borderLeftWidth: 4,
     shadowColor: colors.overlay,
     shadowOffset: { width: 0, height: 8 },

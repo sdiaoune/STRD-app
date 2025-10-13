@@ -97,7 +97,7 @@ export default function Button({
           borderRadius: radius.lg,
         },
         focused && {
-          borderColor: colors.outline,
+          borderColor: colors.primary,
           borderWidth: 2,
         },
         pressed && !isDisabled && {

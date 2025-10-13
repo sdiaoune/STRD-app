@@ -137,6 +137,7 @@ const createStyles = () =>
     coverImage: {
       height: 180,
       width: '100%',
+      backgroundColor: colors.surfaceMuted,
     },
     title: {
       ...typography.h2,

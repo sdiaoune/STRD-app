@@ -314,7 +314,7 @@ export const RunScreen: React.FC = () => {
                   <TextInput
                     style={styles.captionInput}
                     placeholder="How was your run?"
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={colors.text.secondary}
                     value={caption}
                     onChangeText={setCaption}
                     multiline

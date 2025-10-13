@@ -38,7 +38,7 @@ export const SignInScreen: React.FC = () => {
             value={email}
             onChangeText={setEmail}
             placeholder="you@example.com"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.text.secondary}
             keyboardType="email-address"
             autoCapitalize="none"
             style={styles.input}
@@ -48,7 +48,7 @@ export const SignInScreen: React.FC = () => {
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.text.secondary}
             secureTextEntry
             style={styles.input}
           />
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginTop: spacing.sm,
   },
   inputs: {
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginBottom: spacing.sm,
   },
   input: {
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginHorizontal: spacing.md,
   },
   googleButton: {
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginRight: spacing.sm,
   },
   footerLink: {

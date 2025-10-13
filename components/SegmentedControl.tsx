@@ -48,7 +48,7 @@ export const SegmentedControl: React.FC<Props> = ({ segments, value, onChange })
           height: 36,
           width: width / segments.length - spacing[1],
           backgroundColor: colors.primary,
-          borderRadius: 10,
+          borderRadius: radii.md,
           transform: [{ translateX }],
         }}
       />

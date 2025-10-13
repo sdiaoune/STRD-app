@@ -206,7 +206,7 @@ export const PostDetailsScreen: React.FC = () => {
         <TextInput
           style={styles.commentInput}
           placeholder="Add a comment..."
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.text.secondary}
           value={commentText}
           onChangeText={setCommentText}
           multiline
@@ -219,7 +219,7 @@ export const PostDetailsScreen: React.FC = () => {
           <Ionicons 
             name="send" 
             size={20} 
-            color={commentText.trim() ? colors.primary : colors.muted} 
+            color={commentText.trim() ? colors.primary : colors.icon.muted} 
           />
         </TouchableOpacity>
       </View>
@@ -260,11 +260,11 @@ const createStyles = () => StyleSheet.create({
   },
   userHandle: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   timestamp: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   runStats: {
     flexDirection: 'row',
@@ -287,7 +287,7 @@ const createStyles = () => StyleSheet.create({
   },
   statLabel: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   routePreview: {
     marginHorizontal: spacing.md,
@@ -297,7 +297,7 @@ const createStyles = () => StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
   },
   caption: {
     ...typography.body,
@@ -342,7 +342,7 @@ const createStyles = () => StyleSheet.create({
   },
   commentTime: {
     ...typography.small,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   commentText: {
     ...typography.body,
@@ -386,7 +386,7 @@ const createStyles = () => StyleSheet.create({
   },
   errorText: {
     ...typography.h2,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   // Mock Map Styles
   trajectoryContainer: {
@@ -495,7 +495,7 @@ const createStyles = () => StyleSheet.create({
   },
   legendText: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginLeft: spacing.xs,
   },
 });

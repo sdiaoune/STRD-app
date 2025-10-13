@@ -201,11 +201,11 @@ const createStyles = () => StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
   },
   coverText: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginTop: spacing.sm,
   },
   content: {
@@ -298,7 +298,7 @@ const createStyles = () => StyleSheet.create({
   },
   attendeesText: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginLeft: spacing.sm,
   },
   actionButtons: {
@@ -344,6 +344,6 @@ const createStyles = () => StyleSheet.create({
   },
   errorText: {
     ...typography.h2,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
 });

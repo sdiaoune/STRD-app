@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { alignItems: 'center', marginBottom: spacing.lg },
   name: { ...typography.h2, color: colors.text.primary, marginTop: spacing.md },
-  handle: { ...typography.caption, color: colors.muted },
+  handle: { ...typography.caption, color: colors.text.secondary },
   followBtn: {
     marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   following: { opacity: 0.9 },
   followText: { ...typography.body, color: colors.primary, fontWeight: '600' },
   section: { ...typography.h3, color: colors.text.primary, marginTop: spacing.lg, marginBottom: spacing.sm },
-  empty: { ...typography.body, color: colors.muted },
+  empty: { ...typography.body, color: colors.text.secondary },
   postRow: { paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   postText: { ...typography.body, color: colors.text.primary },
 });

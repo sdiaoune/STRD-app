@@ -108,10 +108,10 @@ const createStyles = () => StyleSheet.create({
   markRead: { ...typography.caption, color: colors.primary },
   row: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
   rowTitle: { ...typography.body, color: colors.text.primary },
-  rowMeta: { ...typography.caption, color: colors.muted },
+  rowMeta: { ...typography.caption, color: colors.text.secondary },
   sep: { height: 1, backgroundColor: colors.border },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
-  empty: { ...typography.caption, color: colors.muted, padding: spacing.md },
+  empty: { ...typography.caption, color: colors.text.secondary, padding: spacing.md },
 });
 
 

@@ -197,11 +197,11 @@ const createStyles = () => StyleSheet.create({
   },
   userHandle: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   timestamp: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   mainStats: {
     flexDirection: 'row',
@@ -225,7 +225,7 @@ const createStyles = () => StyleSheet.create({
   },
   statLabel: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   detailedStats: {
     padding: spacing.md,
@@ -256,7 +256,7 @@ const createStyles = () => StyleSheet.create({
   },
   detailStatLabel: {
     ...typography.caption,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
   trajectoryContainer: {
     padding: spacing.md,
@@ -297,7 +297,7 @@ const createStyles = () => StyleSheet.create({
   },
   routeImageText: {
     ...typography.body,
-    color: colors.muted,
+    color: colors.text.secondary,
     marginTop: spacing.sm,
   },
   captionSection: {
@@ -320,6 +320,6 @@ const createStyles = () => StyleSheet.create({
   },
   errorText: {
     ...typography.h2,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
 });

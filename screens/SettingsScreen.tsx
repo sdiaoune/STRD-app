@@ -66,7 +66,7 @@ export const SettingsScreen: React.FC = () => {
             value={eventIdDraft}
             onChangeText={setEventIdDraft}
             placeholder="uuid"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.text.secondary}
             style={styles.input}
             autoCapitalize="none"
           />
@@ -75,7 +75,7 @@ export const SettingsScreen: React.FC = () => {
             value={coverUrlDraft}
             onChangeText={setCoverUrlDraft}
             placeholder="https://..."
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.text.secondary}
             style={styles.input}
             autoCapitalize="none"
           />
@@ -137,7 +137,7 @@ const createStyles = () =>
       paddingVertical: spacing.sm,
       color: colors.text.primary,
     },
-    smallLabel: { ...typography.caption, color: colors.muted },
+    smallLabel: { ...typography.caption, color: colors.text.secondary },
     signOutBtn: {
       backgroundColor: colors.card,
       borderWidth: 1,
