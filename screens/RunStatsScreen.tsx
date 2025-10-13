@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../components/Avatar';
 import { useStore } from '../state/store';
 import { borderRadius, colors, spacing, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import type { TimelineStackParamList } from '../types/navigation';
 import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
 import { decodePolyline, regionForCoordinates } from '../utils/geo';
@@ -23,11 +24,12 @@ export const RunStatsScreen: React.FC = () => {
   const navigation = useNavigation<RunStatsScreenNavigationProp>();
   const route = useRoute<RunStatsScreenRouteProp>();
   const { runId } = route.params;
-  
+
   const { postById, userById } = useStore();
   const unit = useStore(state => state.unitPreference);
   const run = postById(runId);
   const user = run ? userById(run.userId) : null;
+  const styles = useLegacyStyles(createStyles);
 
   if (!run || !user) {
     return (
@@ -163,7 +165,7 @@ export const RunStatsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

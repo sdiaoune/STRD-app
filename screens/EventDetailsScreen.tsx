@@ -12,6 +12,7 @@ type EventDetailsScreenNavigationProp = NativeStackNavigationProp<EventsStackPar
 type EventDetailsScreenRouteProp = RouteProp<EventsStackParamList, 'EventDetails'>;
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { Avatar } from '../components/Avatar';
 import { Chip } from '../components/Chip';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
@@ -32,6 +33,7 @@ export const EventDetailsScreen: React.FC = () => {
 
   const [isJoined, setIsJoined] = useState(false);
   const [isReminded, setIsReminded] = useState(false);
+  const styles = useLegacyStyles(createStyles);
 
   useEffect(() => {
     let mounted = true;
@@ -179,7 +181,7 @@ export const EventDetailsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

@@ -7,6 +7,7 @@ import type { EventsStackParamList } from '../types/navigation';
 
 type EventsScreenNavigationProp = NativeStackNavigationProp<EventsStackParamList, 'EventsList'>;
 import { colors, spacing, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 // Removed tab bar height hook to avoid cross-screen state updates during render
 import { SegmentedControl } from '../components/SegmentedControl';
 import { EventCard } from '../components/EventCard';
@@ -29,6 +30,7 @@ export const EventsScreen: React.FC = () => {
   const events = getFilteredEvents();
 
   const [locationLabel, setLocationLabel] = React.useState<string>(currentUser?.city || '');
+  const styles = useLegacyStyles(createStyles);
 
   React.useEffect(() => {
     if (!locationLabel) {
@@ -93,7 +95,7 @@ export const EventsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

@@ -7,6 +7,7 @@ import type { ProfileStackParamList, AppNavigationParamList } from '../types/nav
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<ProfileStackParamList & AppNavigationParamList, 'UserProfile'>;
 import { colors, spacing, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { Avatar } from '../components/Avatar';
 import * as ImagePicker from 'expo-image-picker';
 import { StatsRow } from '../components/StatsRow';
@@ -30,6 +31,7 @@ export const ProfileScreen: React.FC = () => {
   const signOut = useStore(state => state.signOut);
   const uploadAvatar = useStore(state => state.uploadAvatar);
   const [uploading, setUploading] = React.useState(false);
+  const styles = useLegacyStyles(createStyles);
 
   const handleChangeAvatar = async () => {
     try {
@@ -200,7 +202,7 @@ export const ProfileScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

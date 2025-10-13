@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { useStore } from '../state/store';
 import TopBar from '../components/TopBar';
 import { Avatar } from '../components/Avatar';
@@ -16,6 +17,7 @@ export const UserSearchScreen: React.FC = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const route = useRoute<any>();
+  const styles = useLegacyStyles(createStyles);
 
   useEffect(() => {
     const initial = route.params?.initialQuery;
@@ -80,7 +82,7 @@ export const UserSearchScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   userRow: {
     flexDirection: 'row', alignItems: 'center', padding: spacing.md,

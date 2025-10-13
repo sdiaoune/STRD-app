@@ -9,6 +9,7 @@ type RunScreenNavigationProp = NativeStackNavigationProp<RunStackParamList, 'Run
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import * as Location from 'expo-location';
 import { formatTime, formatDistance, formatPace } from '../utils/format';
 import { useStore } from '../state/store';
@@ -41,6 +42,7 @@ export const RunScreen: React.FC = () => {
   const resumeRun = useStore((s) => s.resumeRun);
   const unit = useStore((s) => s.unitPreference);
   const tabBarHeight = useBottomTabOverflow?.() ?? 0;
+  const styles = useLegacyStyles(createStyles);
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -448,7 +450,7 @@ export const RunScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
