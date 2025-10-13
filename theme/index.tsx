@@ -10,9 +10,21 @@ import { surfaces } from './surfaces';
 export type ThemeMode = 'light' | 'dark';
 
 // Dynamic colors proxy for back-compat usage outside hooks
+let runtimeMode: ThemeMode | undefined;
+function getCurrentMode(): ThemeMode {
+  if (runtimeMode) return runtimeMode;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { useStore } = require('../state/store');
+    const pref = useStore.getState?.()?.themePreference as 'light' | 'dark' | undefined;
+    if (pref === 'light' || pref === 'dark') return pref;
+  } catch {}
+  return (Appearance.getColorScheme?.() === 'dark' ? 'dark' : 'light') as ThemeMode;
+}
+
 export const colors = new Proxy({} as any, {
   get(_target, prop: string) {
-    const mode: ThemeMode = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
+    const mode = getCurrentMode();
     const current = mode === 'dark' ? palette.dark : palette.light;
     if (prop === 'card') return current.surface;
     if (prop === 'bgElevated') return current.surface;
@@ -25,10 +37,11 @@ export const colors = new Proxy({} as any, {
 
 const ThemeContext = createContext<{ mode: ThemeMode } | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children, mode: forcedMode }: { children: React.ReactNode; mode?: ThemeMode }) {
   const scheme = useColorScheme();
-  const mode: ThemeMode = scheme === 'dark' ? 'dark' : 'light';
+  const mode: ThemeMode = forcedMode ?? (scheme === 'dark' ? 'dark' : 'light');
   const value = useMemo(() => ({ mode }), [mode]);
+  runtimeMode = mode;
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

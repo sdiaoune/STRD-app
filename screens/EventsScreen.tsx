@@ -13,7 +13,7 @@ import SegmentedControl from '../components/ui/SegmentedControl';
 import { EventCard } from '../components/EventCard';
 import EmptyState from '../components/ui/EmptyState';
 import { useStore } from '../state/store';
-import TopBar from '../components/TopBar';
+import TopBar from '../components/ui/TopBar';
 import * as Location from 'expo-location';
 
 export const EventsScreen: React.FC = () => {
@@ -53,7 +53,12 @@ export const EventsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <TopBar title={locationLabel || 'Events'} />
+      <TopBar
+        title={locationLabel || 'Events'}
+        leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
+        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
+        rightAvatar={{ source: (useStore.getState().currentUser?.avatar) || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
+      />
 
       <View style={styles.segmentedContainer}>
         <SegmentedControl

@@ -12,7 +12,7 @@ import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
 import EmptyState from '../components/ui/EmptyState';
 import { useStore } from '../state/store';
-import TopBar from '../components/TopBar';
+import TopBar from '../components/ui/TopBar';
 
 export const TimelineScreen: React.FC = () => {
   const navigation = useNavigation<TimelineScreenNavigationProp>();
@@ -61,6 +61,9 @@ export const TimelineScreen: React.FC = () => {
     <SafeAreaView style={themedStyles.container} edges={["top"]}>
       <TopBar
         title="Timeline"
+        leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
+        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
+        rightAvatar={{ source: (useStore.getState().currentUser?.avatar) || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
 
       <ScrollView
@@ -82,7 +85,7 @@ const createStyles = () =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.bg,
+      backgroundColor: colors.surface,
     },
     header: {},
     headerTop: {},

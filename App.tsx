@@ -388,12 +388,18 @@ function AppContainer() {
   );
 }
 
+function TokensBridge({ children }: { children: React.ReactNode }) {
+  const legacy = useLegacyDesignTheme();
+  const mode = legacy.name as 'light' | 'dark';
+  return <TokensThemeProvider mode={mode}>{children}</TokensThemeProvider>;
+}
+
 export default function App() {
   return (
-    <TokensThemeProvider>
-      <LegacyThemeProvider>
+    <LegacyThemeProvider>
+      <TokensBridge>
         <AppContainer />
-      </LegacyThemeProvider>
-    </TokensThemeProvider>
+      </TokensBridge>
+    </LegacyThemeProvider>
   );
 }

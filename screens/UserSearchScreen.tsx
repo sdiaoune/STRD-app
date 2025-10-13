@@ -5,7 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { useStore } from '../state/store';
-import TopBar from '../components/TopBar';
+import TopBar from '../components/ui/TopBar';
 import { Avatar } from '../components/Avatar';
 
 export const UserSearchScreen: React.FC = () => {
@@ -40,12 +40,9 @@ export const UserSearchScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <TopBar
         title="Search"
-        searchPlaceholder="Search runners"
-        searchAccessibilityLabel="Search runners"
-        searchValue={query}
-        onChangeSearch={setQuery}
-        onClearSearch={() => setQuery('')}
-        editableSearch={true}
+        leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => {} }}
+        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
+        rightAvatar={{ source: (useStore.getState().currentUser?.avatar) || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
       <FlatList
         data={results}
