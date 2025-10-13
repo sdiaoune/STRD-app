@@ -52,22 +52,6 @@ export const SettingsScreen: React.FC = () => {
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Admin tools</Text>
-        <View style={{ marginBottom: spacing.sm }}>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={async () => {
-              try {
-                if (!currentUser?.id) return;
-                await supabase.from('profiles').update({ is_super_admin: true }).eq('id', currentUser.id);
-                Alert.alert('Success', 'You are now a super-admin.');
-              } catch {
-                Alert.alert('Error', 'Failed to update admin flag.');
-              }
-            }}
-          >
-            <Text style={styles.actionBtnText}>Promote me to Super Admin</Text>
-          </TouchableOpacity>
-        </View>
         <View style={{ gap: spacing.sm }}>
           <Text style={styles.smallLabel}>Event ID</Text>
           <TextInput

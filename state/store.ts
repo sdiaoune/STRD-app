@@ -591,7 +591,7 @@ export const useStore = create<AppState>((set, get) => ({
       } else {
         try {
           const fileExt = (image.split('.').pop() || 'jpg').toLowerCase();
-          const imagePath = `${userId}/runs/${Date.now()}.${fileExt}`;
+          const imagePath = `${userId}/runs/${(global as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2)}.${fileExt}`;
           console.log('[postRun] Uploading to path:', imagePath);
           
           mediaUrl = await uploadImageToStorage(RUN_MEDIA_BUCKET, imagePath, image);

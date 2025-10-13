@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { supabase } from './supabase/client';
+import Constants from 'expo-constants';
 
 import { ThemeProvider as LegacyThemeProvider, useTheme as useLegacyDesignTheme } from './src/design/useTheme';
 import { ThemeProvider as TokensThemeProvider, useTheme as useTokensTheme, getNavigationTheme as getTokensNavigationTheme } from './theme';
@@ -43,8 +44,8 @@ function EventsStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: theme.colors.bg },
-        headerTintColor: theme.colors.text,
-        headerTitleStyle: { color: theme.colors.text },
+        headerTintColor: theme.colors.text.primary,
+        headerTitleStyle: { color: theme.colors.text.primary } as any,
       }}
     >
       <Stack.Screen 
@@ -72,8 +73,8 @@ function TimelineStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: theme.colors.bg },
-        headerTintColor: theme.colors.text,
-        headerTitleStyle: { color: theme.colors.text },
+        headerTintColor: theme.colors.text.primary,
+        headerTitleStyle: { color: theme.colors.text.primary } as any,
       }}
     >
       <Stack.Screen 
@@ -116,8 +117,8 @@ function RunStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: theme.colors.bg },
-        headerTintColor: theme.colors.text,
-        headerTitleStyle: { color: theme.colors.text },
+        headerTintColor: theme.colors.text.primary,
+        headerTitleStyle: { color: theme.colors.text.primary } as any,
       }}
     >
       <Stack.Screen 
@@ -135,8 +136,8 @@ function ProfileStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: theme.colors.bg },
-        headerTintColor: theme.colors.text,
-        headerTitleStyle: { color: theme.colors.text },
+        headerTintColor: theme.colors.text.primary,
+        headerTitleStyle: { color: theme.colors.text.primary } as any,
       }}
     >
       <Stack.Screen 
@@ -184,8 +185,8 @@ function NotificationsStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: theme.colors.bg },
-        headerTintColor: theme.colors.text,
-        headerTitleStyle: { color: theme.colors.text },
+        headerTintColor: theme.colors.text.primary,
+        headerTitleStyle: { color: theme.colors.text.primary } as any,
       }}
     >
       <Stack.Screen 
@@ -203,8 +204,8 @@ function SearchStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: theme.colors.bg },
-        headerTintColor: theme.colors.text,
-        headerTitleStyle: { color: theme.colors.text },
+        headerTintColor: theme.colors.text.primary,
+        headerTitleStyle: { color: theme.colors.text.primary } as any,
       }}
     >
       <Stack.Screen 
@@ -227,8 +228,8 @@ function AuthStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: theme.colors.bg },
-        headerTintColor: theme.colors.text,
-        headerTitleStyle: { color: theme.colors.text },
+        headerTintColor: theme.colors.text.primary,
+        headerTitleStyle: { color: theme.colors.text.primary } as any,
       }}
     >
       <Stack.Screen 
@@ -352,7 +353,7 @@ function AppContainer() {
               tabBarActiveTintColor: theme.colors.primary,
               tabBarInactiveTintColor: theme.colors.text.muted,
               tabBarStyle: {
-                backgroundColor: theme.colors.bgElevated,
+                backgroundColor: theme.colors.surface,
                 borderTopWidth: 0,
                 elevation: 0,
                 shadowOpacity: 0,
@@ -395,6 +396,17 @@ function TokensBridge({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    const dsn = (Constants.expoConfig?.extra as any)?.SENTRY_DSN as string | undefined;
+    if (dsn) {
+      try {
+        // Lazy-load Sentry to avoid hard dependency during dev
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const Sentry = require('@sentry/react-native');
+        Sentry.init({ dsn, tracesSampleRate: 0.2 });
+      } catch {}
+    }
+  }, []);
   return (
     <LegacyThemeProvider>
       <TokensBridge>

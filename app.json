@@ -44,8 +44,6 @@
       "expo-web-browser"
     ],
     "extra": {
-      "EXPO_PUBLIC_SUPABASE_URL": "https://kazihjfwwvoyplkrdyvx.supabase.co",
-      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthemloamZ3d3ZveXBsa3JkeXZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxOTUxMzksImV4cCI6MjA3MDc3MTEzOX0.wyykL8EVCS74ONSDJmvWaQ4JqPPHhqAWgvsvpbUSbdY",
       "eas": {
         "projectId": "d0b07368-f7ec-4704-b57b-72bbd21330fc"
       }
