@@ -10,6 +10,7 @@ import type { Event } from '../types/models';
 import { useStore } from '../state/store';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
 import { Image } from 'expo-image';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 
 interface Props {
   event: Event;
@@ -21,6 +22,8 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   const organization = orgById(event.orgId);
   const unit = useStore(s => s.unitPreference);
   const distanceLabel = event.distanceFromUserKm == null ? '—' : formatDistance(event.distanceFromUserKm, unit);
+
+  const styles = useLegacyStyles(createStyles);
 
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
@@ -85,76 +88,77 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 1,
-    paddingRight: spacing.sm,
-  },
-  orgName: {
-    ...typography.caption,
-    color: colors.text.primary,
-  },
-  distanceChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.bg,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing[2],
-    paddingVertical: spacing[1],
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  distanceText: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    marginLeft: spacing[1],
-  },
-  coverWrap: {
-    marginBottom: spacing.md,
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-  },
-  coverImage: {
-    height: 150,
-    width: '100%',
-  },
-  title: {
-    ...typography.h2,
-    color: colors.text.primary,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  metaText: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    marginLeft: spacing[2],
-    flexShrink: 1,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  tag: {
-    marginRight: spacing[1],
-    marginBottom: spacing[1],
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      borderRadius: borderRadius.lg,
+      padding: spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: spacing.md,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.md,
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexShrink: 1,
+      paddingRight: spacing.sm,
+    },
+    orgName: {
+      ...typography.caption,
+      color: colors.text.primary,
+    },
+    distanceChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.bg,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing[2],
+      paddingVertical: spacing[1],
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    distanceText: {
+      ...typography.caption,
+      color: colors.text.secondary,
+      marginLeft: spacing[1],
+    },
+    coverWrap: {
+      marginBottom: spacing.md,
+      borderRadius: borderRadius.md,
+      overflow: 'hidden',
+    },
+    coverImage: {
+      height: 150,
+      width: '100%',
+    },
+    title: {
+      ...typography.h2,
+      color: colors.text.primary,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.xs,
+    },
+    metaText: {
+      ...typography.caption,
+      color: colors.text.secondary,
+      marginLeft: spacing[2],
+      flexShrink: 1,
+    },
+    tagsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    tag: {
+      marginRight: spacing[1],
+      marginBottom: spacing[1],
+    },
+  });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,7 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { supabase } from './supabase/client';
 
-import { colors, getNavigationTheme } from './theme';
+import { ThemeProvider, useTheme } from './src/design/useTheme';
+import { weights } from './src/design/typography';
 import { EventsScreen } from './screens/EventsScreen';
 import { EventDetailsScreen } from './screens/EventDetailsScreen';
 import { TimelineScreen } from './screens/TimelineScreen';
@@ -37,12 +38,13 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function EventsStack() {
+  const theme = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text.primary,
-        headerTitleStyle: { color: colors.text.primary },
+        headerStyle: { backgroundColor: theme.colors.bg },
+        headerTintColor: theme.colors.text,
+        headerTitleStyle: { color: theme.colors.text },
       }}
     >
       <Stack.Screen 
@@ -65,12 +67,13 @@ function EventsStack() {
 }
 
 function TimelineStack() {
+  const theme = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text.primary,
-        headerTitleStyle: { color: colors.text.primary },
+        headerStyle: { backgroundColor: theme.colors.bg },
+        headerTintColor: theme.colors.text,
+        headerTitleStyle: { color: theme.colors.text },
       }}
     >
       <Stack.Screen 
@@ -108,12 +111,13 @@ function TimelineStack() {
 }
 
 function RunStack() {
+  const theme = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text.primary,
-        headerTitleStyle: { color: colors.text.primary },
+        headerStyle: { backgroundColor: theme.colors.bg },
+        headerTintColor: theme.colors.text,
+        headerTitleStyle: { color: theme.colors.text },
       }}
     >
       <Stack.Screen 
@@ -126,12 +130,13 @@ function RunStack() {
 }
 
 function ProfileStack() {
+  const theme = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text.primary,
-        headerTitleStyle: { color: colors.text.primary },
+        headerStyle: { backgroundColor: theme.colors.bg },
+        headerTintColor: theme.colors.text,
+        headerTitleStyle: { color: theme.colors.text },
       }}
     >
       <Stack.Screen 
@@ -174,12 +179,13 @@ function ProfileStack() {
 }
 
 function NotificationsStack() {
+  const theme = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text.primary,
-        headerTitleStyle: { color: colors.text.primary },
+        headerStyle: { backgroundColor: theme.colors.bg },
+        headerTintColor: theme.colors.text,
+        headerTitleStyle: { color: theme.colors.text },
       }}
     >
       <Stack.Screen 
@@ -192,12 +198,13 @@ function NotificationsStack() {
 }
 
 function SearchStack() {
+  const theme = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text.primary,
-        headerTitleStyle: { color: colors.text.primary },
+        headerStyle: { backgroundColor: theme.colors.bg },
+        headerTintColor: theme.colors.text,
+        headerTitleStyle: { color: theme.colors.text },
       }}
     >
       <Stack.Screen 
@@ -215,12 +222,13 @@ function SearchStack() {
 }
 
 function AuthStack() {
+  const theme = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.text.primary,
-        headerTitleStyle: { color: colors.text.primary },
+        headerStyle: { backgroundColor: theme.colors.bg },
+        headerTintColor: theme.colors.text,
+        headerTitleStyle: { color: theme.colors.text },
       }}
     >
       <Stack.Screen 
@@ -237,12 +245,16 @@ function AuthStack() {
   );
 }
 
-export default function App() {
+function AppContainer() {
+  const theme = useTheme();
+  const themeName = theme.name;
+  const setThemeMode = theme.setMode;
   const isAuthenticated = useStore(state => state.isAuthenticated);
   const initializeAuth = useStore(state => state.initializeAuth);
   const hydratePreferences = useStore(state => state.hydratePreferences);
-  const themePreference = useStore(state => state.themePreference);
   const reloadInitialData = useStore(state => state._loadInitialData);
+  const themePreference = useStore(state => state.themePreference);
+  const hasHydratedTheme = useStore(state => state.hasHydratedTheme);
   const [showSurvey, setShowSurvey] = useState(false);
   const [hasCheckedSurvey, setHasCheckedSurvey] = useState(false);
 
@@ -274,6 +286,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!hasHydratedTheme) {
+      return;
+    }
+    if (themePreference && themePreference !== themeName) {
+      void setThemeMode(themePreference);
+    }
+  }, [hasHydratedTheme, themePreference, themeName, setThemeMode]);
+
+  useEffect(() => {
     if (hasCheckedSurvey) return;
     (async () => {
       try {
@@ -297,9 +318,30 @@ export default function App() {
     setShowSurvey(false);
   };
 
+  const navigationTheme = useMemo(
+    () => ({
+      dark: theme.name === 'dark',
+      colors: {
+        primary: theme.colors.primary,
+        background: theme.colors.bg,
+        card: theme.colors.bgElevated,
+        text: theme.colors.text,
+        border: theme.colors.border,
+        notification: theme.colors.primary,
+      },
+      fonts: {
+        regular: { fontFamily: 'System', fontWeight: weights.regular },
+        medium: { fontFamily: 'System', fontWeight: weights.semiBold },
+        bold: { fontFamily: 'System', fontWeight: weights.bold },
+        heavy: { fontFamily: 'System', fontWeight: weights.bold },
+      },
+    }),
+    [theme],
+  );
+
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={getNavigationTheme()}>
+      <NavigationContainer theme={navigationTheme}>
         {isAuthenticated ? (
           <Tab.Navigator
             initialRouteName="Run"
@@ -325,10 +367,10 @@ export default function App() {
 
                 return <Ionicons name={iconName} size={size} color={color} />;
               },
-              tabBarActiveTintColor: colors.primary,
-              tabBarInactiveTintColor: colors.muted,
+              tabBarActiveTintColor: theme.colors.primary,
+              tabBarInactiveTintColor: theme.colors.textMuted,
               tabBarStyle: {
-                backgroundColor: colors.card,
+                backgroundColor: theme.colors.bgElevated,
                 borderTopWidth: 0,
                 elevation: 0,
                 shadowOpacity: 0,
@@ -354,12 +396,20 @@ export default function App() {
           <AuthStack />
         )}
       </NavigationContainer>
-      <StatusBar style={themePreference === 'light' ? 'dark' : 'light'} />
+      <StatusBar style={theme.name === 'light' ? 'dark' : 'light'} />
       <OnboardingSurveyModal
         visible={showSurvey}
         onSubmit={handleSurveySubmit}
         onSkip={handleSurveySkip}
       />
     </SafeAreaProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContainer />
+    </ThemeProvider>
   );
 }

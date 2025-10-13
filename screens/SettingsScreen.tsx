@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStore } from '../state/store';
 import { borderRadius, colors, spacing, typography, getCurrentThemeName } from '../theme';
 import { supabase } from '../supabase/client';
+import { useTheme as useDesignTheme } from '../src/design/useTheme';
 
 export const SettingsScreen: React.FC = () => {
   const signOut = useStore(state => state.signOut);
@@ -12,6 +13,7 @@ export const SettingsScreen: React.FC = () => {
   const theme = useStore(state => state.themePreference);
   const setTheme = useStore(state => state.setThemePreference);
   const currentUser = useStore(state => state.currentUser);
+  const { setMode } = useDesignTheme();
   const [eventIdDraft, setEventIdDraft] = React.useState('');
   const [coverUrlDraft, setCoverUrlDraft] = React.useState('');
   // Recreate styles when theme changes so colors update immediately
@@ -32,10 +34,10 @@ export const SettingsScreen: React.FC = () => {
       <View style={styles.section}>
         <Text style={themedStyles.sectionTitle}>Appearance</Text>
         <View style={styles.row}>
-          <Pressable onPress={() => setTheme('dark')} style={[themedStyles.unitBtn, theme === 'dark' && themedStyles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
+          <Pressable onPress={() => { setTheme('dark'); void setMode('dark'); }} style={[themedStyles.unitBtn, theme === 'dark' && themedStyles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
             <Text style={[themedStyles.unitText, theme === 'dark' && themedStyles.unitTextActive]}>Dark</Text>
           </Pressable>
-          <Pressable onPress={() => setTheme('light')} style={[themedStyles.unitBtn, theme === 'light' && themedStyles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
+          <Pressable onPress={() => { setTheme('light'); void setMode('light'); }} style={[themedStyles.unitBtn, theme === 'light' && themedStyles.unitBtnActive]} accessibilityRole="button" hitSlop={12}>
             <Text style={[themedStyles.unitText, theme === 'light' && themedStyles.unitTextActive]}>Light</Text>
           </Pressable>
         </View>

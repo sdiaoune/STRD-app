@@ -14,6 +14,7 @@ const { width } = Dimensions.get('window');
 
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { Avatar } from '../components/Avatar';
 import { LikeButton } from '../components/LikeButton';
 import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
@@ -34,6 +35,7 @@ export const PostDetailsScreen: React.FC = () => {
   const post = postById(postId);
   const user = post ? userById(post.userId) : null;
   const decodedPath = post?.routePolyline ? decodePolyline(post.routePolyline) : [];
+  const styles = useLegacyStyles(createStyles);
 
   if (!post || !user) {
     return (
@@ -226,7 +228,7 @@ export const PostDetailsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

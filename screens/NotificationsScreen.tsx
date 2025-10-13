@@ -3,6 +3,7 @@ import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { supabase } from '../supabase/client';
 import { useNavigation } from '@react-navigation/native';
 import TopBar from '../components/TopBar';
@@ -21,6 +22,7 @@ export const NotificationsScreen: React.FC = () => {
   const [items, setItems] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
+  const styles = useLegacyStyles(createStyles);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,7 +89,7 @@ export const NotificationsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: {},
   title: {},

@@ -1,40 +1,67 @@
 import React from 'react';
-import { Text, TextProps } from 'react-native';
-import { typography, colors, type ThemeColors } from '../theme';
+import type { TextProps as RNTextProps } from 'react-native';
 
-type Variant = 'display' | 'h1' | 'h2' | 'body' | 'caption';
+import Text from '@/src/design/components/Text';
+import type { TextVariant } from '@/src/design/typography';
 
-type TextTone = keyof ThemeColors['text'];
+type LegacyVariant = 'display' | 'h1' | 'h2' | 'body' | 'caption';
+type LegacyTone = 'primary' | 'secondary' | 'tertiary' | 'muted' | 'accent';
 
-export interface AppTextProps extends TextProps {
-  variant?: Variant;
-  color?: TextTone | 'accent';
+type Props = RNTextProps & {
+  variant?: LegacyVariant;
+  color?: LegacyTone;
   weight?: '400' | '500' | '600' | '700';
-}
+};
 
-export const AppText: React.FC<AppTextProps> = ({
+const variantMap: Record<LegacyVariant, TextVariant> = {
+  display: 'display',
+  h1: 'headline',
+  h2: 'title',
+  body: 'body',
+  caption: 'caption',
+};
+
+const emphasisMap: Record<Props['weight'], 'regular' | 'semiBold' | 'bold'> = {
+  '400': 'regular',
+  '500': 'semiBold',
+  '600': 'semiBold',
+  '700': 'bold',
+};
+
+const toneMap = (
+  tone: LegacyTone | undefined,
+): { token?: 'primary'; muted?: boolean } => {
+  switch (tone) {
+    case 'accent':
+      return { token: 'primary' };
+    case 'secondary':
+    case 'tertiary':
+    case 'muted':
+      return { muted: true };
+    case 'primary':
+    default:
+      return {};
+  }
+};
+
+export const AppText: React.FC<Props> = ({
   variant = 'body',
   color = 'primary',
-  weight,
+  weight = '400',
   style,
   children,
   ...rest
 }) => {
-  const baseVariantStyle = typography[variant] as any;
-  const colorValue = color === 'accent' ? colors.accent : colors.text[color];
+  const { token, muted } = toneMap(color);
+  const emphasis = emphasisMap[weight] ?? 'regular';
 
   return (
     <Text
-      style={[
-        baseVariantStyle,
-        variant === 'display' || variant === 'h1' || variant === 'h2'
-          ? typography.monoDigits
-          : null,
-        { color: colorValue },
-        weight ? { fontWeight: weight } : null,
-        style,
-      ]}
-      maxFontSizeMultiplier={1.3}
+      variant={variantMap[variant]}
+      emphasis={emphasis}
+      muted={muted}
+      colorToken={token}
+      style={style}
       {...rest}
     >
       {children}
@@ -42,12 +69,4 @@ export const AppText: React.FC<AppTextProps> = ({
   );
 };
 
-
-
-
-
-
-
-
-
-
+export default AppText;

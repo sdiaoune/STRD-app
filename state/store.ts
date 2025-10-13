@@ -72,6 +72,7 @@ interface AppState {
   // Preferences
   unitPreference: 'metric' | 'imperial';
   themePreference: 'dark' | 'light';
+  hasHydratedTheme: boolean;
   
   // Actions
   likeToggle: (postId: string) => Promise<void>;
@@ -133,6 +134,7 @@ export const useStore = create<AppState>((set, get) => ({
   followingUserIds: [],
   unitPreference: 'metric',
   themePreference: 'dark',
+  hasHydratedTheme: false,
 
   setActivityType: (type: 'run' | 'walk') => {
     set((state) => ({ runState: { ...state.runState, activityType: type } }));
@@ -142,7 +144,7 @@ export const useStore = create<AppState>((set, get) => ({
     AsyncStorage.setItem(UNIT_PREFERENCE_KEY, unit).catch(() => {});
   },
   setThemePreference: (theme: 'dark' | 'light') => {
-    set({ themePreference: theme });
+    set({ themePreference: theme, hasHydratedTheme: true });
     AsyncStorage.setItem(THEME_PREFERENCE_KEY, theme).catch(() => {});
   },
   eventFilter: 'forYou',
@@ -722,14 +724,19 @@ export const useStore = create<AppState>((set, get) => ({
   hydratePreferences: async () => {
     try {
       const unit = await AsyncStorage.getItem(UNIT_PREFERENCE_KEY);
-      if (unit === 'metric' || unit === 'imperial') {
-        set({ unitPreference: unit });
-      }
       const theme = await AsyncStorage.getItem(THEME_PREFERENCE_KEY);
-      if (theme === 'dark' || theme === 'light') {
-        set({ themePreference: theme });
+      const updates: Partial<AppState> = { hasHydratedTheme: true };
+
+      if (unit === 'metric' || unit === 'imperial') {
+        updates.unitPreference = unit;
       }
+      if (theme === 'dark' || theme === 'light') {
+        updates.themePreference = theme;
+      }
+
+      set(updates);
     } catch {
+      set({ hasHydratedTheme: true });
       // ignore hydration errors
     }
   },

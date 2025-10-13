@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { useStore } from '../state/store';
 import TopBar from '../components/TopBar';
 import { Avatar } from '../components/Avatar';
@@ -16,6 +17,7 @@ export const UserSearchScreen: React.FC = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const route = useRoute<any>();
+  const styles = useLegacyStyles(createStyles);
 
   useEffect(() => {
     const initial = route.params?.initialQuery;
@@ -36,18 +38,14 @@ export const UserSearchScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TopBar title="Search" />
-      <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: 0 }}>
-        <TextInput
-          placeholder="Search runners"
-          placeholderTextColor={colors.muted}
-          value={query}
-          onChangeText={setQuery}
-          style={styles.input}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-      </View>
+      <TopBar
+        title="Search"
+        searchPlaceholder="Search runners"
+        searchAccessibilityLabel="Search runners"
+        searchValue={query}
+        onChangeSearch={setQuery}
+        onClearSearch={() => setQuery('')}
+      />
       <FlatList
         data={results}
         keyExtractor={(i) => i.id}
@@ -84,18 +82,8 @@ export const UserSearchScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  searchRow: { padding: spacing.md },
-  input: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    color: colors.text.primary,
-  },
   userRow: {
     flexDirection: 'row', alignItems: 'center', padding: spacing.md,
   },
