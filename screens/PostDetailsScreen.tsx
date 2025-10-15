@@ -97,7 +97,7 @@ export const PostDetailsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={headerHeight + 24}>
       <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Post Header */}
@@ -121,9 +121,15 @@ export const PostDetailsScreen: React.FC = () => {
 
         {/* Run Stats */}
         <View style={styles.runStats}>
-          <Stat icon="speedometer" value={fmtDistance(post.distanceKm * 1000)} label="Distance" />
-          <Stat icon="time" value={fmtDuration(post.durationMin * 60)} label="Duration" />
-          <Stat icon="flash" value={fmtPace(Math.round(post.avgPaceMinPerKm * 60))} label="Pace" />
+          <View style={styles.stat}>
+            <Stat icon="speedometer" value={fmtDistance(post.distanceKm * 1000)} label="Distance" />
+          </View>
+          <View style={styles.stat}>
+            <Stat icon="time" value={fmtDuration(post.durationMin * 60)} label="Duration" />
+          </View>
+          <View style={styles.stat}>
+            <Stat icon="flash" value={fmtPace(Math.round(post.avgPaceMinPerKm * 60))} label="Pace" />
+          </View>
         </View>
 
         {/* Run Route Map */}

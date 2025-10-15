@@ -59,7 +59,7 @@ export const EventDetailsScreen: React.FC = () => {
 
   if (!event || !organization) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Event not found</Text>
         </View>
@@ -90,7 +90,7 @@ export const EventDetailsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.coverImage}>
           {event.coverImage ? (
