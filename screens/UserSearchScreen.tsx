@@ -104,7 +104,7 @@ export const UserSearchScreen: React.FC = () => {
 };
 
 const createStyles = () => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
+  container: { flex: 1, backgroundColor: colors.bg },
   userRow: {
     flexDirection: 'row', alignItems: 'center', padding: spacing.md,
   },

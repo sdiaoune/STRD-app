@@ -109,7 +109,7 @@ export const NotificationsScreen: React.FC = () => {
 };
 
 const createStyles = () => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
+  container: { flex: 1, backgroundColor: colors.bg },
   header: {},
   title: {},
   markRead: { ...typography.caption, color: colors.primary },

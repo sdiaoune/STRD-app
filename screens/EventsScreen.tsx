@@ -103,7 +103,7 @@ export const EventsScreen: React.FC = () => {
 const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.bg,
   },
   header: {},
   title: {},
