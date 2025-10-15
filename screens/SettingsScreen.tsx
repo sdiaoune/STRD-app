@@ -20,7 +20,7 @@ export const SettingsScreen: React.FC = () => {
   const styles = useLegacyStyles(createStyles);
   const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.bg }}
         contentContainerStyle={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.xl, backgroundColor: colors.bg }}
