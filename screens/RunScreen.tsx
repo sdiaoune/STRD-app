@@ -8,7 +8,7 @@ import type { RunStackParamList } from '../types/navigation';
 type RunScreenNavigationProp = NativeStackNavigationProp<RunStackParamList, 'RunTracker'>;
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import * as Location from 'expo-location';
 import { formatTime } from '../utils/format';
@@ -44,6 +44,7 @@ export const RunScreen: React.FC = () => {
   const unit = useStore((s) => s.unitPreference);
   const tabBarHeight = useBottomTabOverflow?.() ?? 0;
   const styles = useLegacyStyles(createStyles);
+  const tokensTheme = useTokensTheme();
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -367,7 +368,12 @@ export const RunScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: tokensTheme.mode === 'light' ? tokensTheme.colors.surface : tokensTheme.colors.bg },
+      ]}
+    >
       <TopBar
         title="STRD"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { useStore } from '../state/store';
 import TopBar from '../components/ui/TopBar';
@@ -20,6 +20,7 @@ export const UserSearchScreen: React.FC = () => {
   const [results, setResults] = useState<any[]>([]);
   const route = useRoute<any>();
   const styles = useLegacyStyles(createStyles);
+  const tokensTheme = useTokensTheme();
 
   useEffect(() => {
     const initial = route.params?.initialQuery;
@@ -39,7 +40,12 @@ export const UserSearchScreen: React.FC = () => {
   }, [query]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: tokensTheme.mode === 'light' ? tokensTheme.colors.surface : tokensTheme.colors.bg },
+      ]}
+    >
       <TopBar
         title="Search"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => {} }}

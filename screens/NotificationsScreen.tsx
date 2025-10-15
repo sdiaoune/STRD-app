@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme } from '../theme';
 import EmptyState from '../components/ui/EmptyState';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { supabase } from '../supabase/client';
@@ -24,6 +24,7 @@ export const NotificationsScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const styles = useLegacyStyles(createStyles);
+  const tokensTheme = useTokensTheme();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,7 +61,12 @@ export const NotificationsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: tokensTheme.mode === 'light' ? tokensTheme.colors.surface : tokensTheme.colors.bg },
+      ]}
+    >
       <TopBar
         title="Notifications"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}

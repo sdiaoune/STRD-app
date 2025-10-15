@@ -6,7 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { EventsStackParamList } from '../types/navigation';
 
 type EventsScreenNavigationProp = NativeStackNavigationProp<EventsStackParamList, 'EventsList'>;
-import { colors, spacing, typography } from '../theme';
+import { colors, spacing, typography, useTheme as useTokensTheme } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 // Removed tab bar height hook to avoid cross-screen state updates during render
 import SegmentedControl from '../components/ui/SegmentedControl';
@@ -31,6 +31,7 @@ export const EventsScreen: React.FC = () => {
 
   const [locationLabel, setLocationLabel] = React.useState<string>(currentUser?.city || '');
   const styles = useLegacyStyles(createStyles);
+  const tokensTheme = useTokensTheme();
 
   React.useEffect(() => {
     if (!locationLabel) {
@@ -52,7 +53,13 @@ export const EventsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: tokensTheme.mode === 'light' ? tokensTheme.colors.surface : tokensTheme.colors.bg },
+      ]}
+      edges={["top"]}
+    >
       <TopBar
         title={locationLabel || 'Events'}
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
