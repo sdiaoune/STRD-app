@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import { Chip } from '../components/Chip';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
 import { useStore } from '../state/store';
 import { supabase } from '../supabase/client';
+import * as Location from 'expo-location';
 
 export const EventDetailsScreen: React.FC = () => {
   const navigation = useNavigation<EventDetailsScreenNavigationProp>();
@@ -30,9 +31,11 @@ export const EventDetailsScreen: React.FC = () => {
   const unit = useStore(state => state.unitPreference);
   const event = eventById(eventId);
   const organization = event ? orgById(event.orgId) : null;
+  const isOwnerOrCreator = !!(event && (event.createdByUserId === currentUser.id || (organization && (organization.ownerId === currentUser.id))));
 
   const [isJoined, setIsJoined] = useState(false);
   const [isReminded, setIsReminded] = useState(false);
+  const [localDistanceKm, setLocalDistanceKm] = useState<number | null>(null);
   const styles = useLegacyStyles(createStyles);
 
   useEffect(() => {
@@ -56,6 +59,30 @@ export const EventDetailsScreen: React.FC = () => {
     })();
     return () => { mounted = false; };
   }, [currentUser.id, event?.id]);
+
+  // Compute distance on the client as a fallback when server value is null
+  useEffect(() => {
+    (async () => {
+      if (!event || event.distanceFromUserKm != null) return;
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          try { await Location.requestForegroundPermissionsAsync(); } catch {}
+        }
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced } as any);
+        const toRad = (v: number) => (v * Math.PI) / 180;
+        const R = 6371; // km
+        const dLat = toRad(event.location.lat - pos.coords.latitude);
+        const dLon = toRad(event.location.lon - pos.coords.longitude);
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(pos.coords.latitude)) * Math.cos(toRad(event.location.lat)) * Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const km = R * c;
+        setLocalDistanceKm(km);
+        // Opportunistically refresh distances server-side for future views
+        try { await supabase.rpc('update_event_distances_km', { lat: pos.coords.latitude, lon: pos.coords.longitude }); } catch {}
+      } catch {}
+    })();
+  }, [event]);
 
   if (!event || !organization) {
     return (
@@ -136,7 +163,10 @@ export const EventDetailsScreen: React.FC = () => {
             <View style={styles.dateTimeItem}>
               <Ionicons name="navigate" size={20} color={colors.primary} />
               <Text style={styles.dateTimeText}>
-                {event.distanceFromUserKm == null ? 'Distance unavailable' : `${formatDistance(event.distanceFromUserKm, unit)} away`}
+                {(() => {
+                  const km = (event.distanceFromUserKm != null) ? event.distanceFromUserKm : localDistanceKm;
+                  return km == null ? 'Distance unavailable' : `${formatDistance(km, unit)} away`;
+                })()}
               </Text>
             </View>
           </View>
@@ -169,13 +199,18 @@ export const EventDetailsScreen: React.FC = () => {
       </ScrollView>
 
       {/* Action Buttons */}
-      <View style={[styles.actionButtons, { paddingBottom: insets.bottom + spacing.sm, marginBottom: tabBarHeight + spacing.md }]}>
+      <View style={[styles.actionButtons, { paddingBottom: insets.bottom + spacing.sm, marginBottom: tabBarHeight + spacing.md }]}> 
         <TouchableOpacity style={styles.remindButton} onPress={handleRemindMe}>
           <Text style={styles.remindButtonText}>{isReminded ? 'Reminder Set' : 'Remind Me'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.imInButton} onPress={handleImIn}>
           <Text style={styles.imInButtonText}>{isJoined ? 'Leave' : "I'm In"}</Text>
         </TouchableOpacity>
+        {isOwnerOrCreator ? (
+          <TouchableOpacity style={[styles.imInButton, { backgroundColor: colors.card, marginLeft: spacing.sm }]} onPress={() => navigation.navigate('EditEvent' as any, { eventId: event.id } as any)}>
+            <Text style={[styles.imInButtonText, { color: colors.text.primary }]}>Edit</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </SafeAreaView>
   );

@@ -14,6 +14,9 @@ import { ThemeProvider as LegacyThemeProvider, useTheme as useLegacyDesignTheme 
 import { ThemeProvider as TokensThemeProvider, useTheme as useTokensTheme, getNavigationTheme as getTokensNavigationTheme } from './theme';
 import { EventsScreen } from './screens/EventsScreen';
 import { EventDetailsScreen } from './screens/EventDetailsScreen';
+import { CreatePageScreen } from './screens/CreatePageScreen';
+import { CreateEventScreen } from './screens/CreateEventScreen';
+import { EditEventScreen } from './screens/EditEventScreen';
 import { TimelineScreen } from './screens/TimelineScreen';
 import { PostDetailsScreen } from './screens/PostDetailsScreen';
 import { RunStatsScreen } from './screens/RunStatsScreen';
@@ -62,6 +65,21 @@ function EventsStack() {
         name="BusinessProfile" 
         component={BusinessProfileScreen}
         options={{ title: 'Organization', headerBackTitle: 'Events' }}
+      />
+      <Stack.Screen 
+        name="CreatePage" 
+        component={CreatePageScreen}
+        options={{ title: 'Create Page' }}
+      />
+      <Stack.Screen 
+        name="CreateEvent" 
+        component={CreateEventScreen}
+        options={{ title: 'Create Event' }}
+      />
+      <Stack.Screen 
+        name="EditEvent" 
+        component={EditEventScreen}
+        options={{ title: 'Edit Event' }}
       />
     </Stack.Navigator>
   );

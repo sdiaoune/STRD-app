@@ -13,9 +13,10 @@ export type User = {
 export type Organization = {
   id: string;
   name: string;
-  type: 'community' | 'partner';
+  type: 'community' | 'partner' | 'sponsor' | 'run_club';
   logo: string | null;
   city: string;
+  ownerId?: string;
 };
 
 export type Event = {
@@ -33,6 +34,7 @@ export type Event = {
   description: string | null;
   distanceFromUserKm: number | null;
   coverImage?: string | null;
+  createdByUserId?: string;
 };
 
 export type Comment = {

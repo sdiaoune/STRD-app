@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -24,7 +24,9 @@ export const EventsScreen: React.FC = () => {
     currentUser, 
     eventFilter, 
     filterEvents, 
-    getFilteredEvents 
+    getFilteredEvents,
+    distanceRadiusMi,
+    setDistanceRadiusMi,
   } = useStore();
 
   const events = getFilteredEvents();
@@ -63,7 +65,12 @@ export const EventsScreen: React.FC = () => {
       <TopBar
         title={locationLabel || 'Events'}
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
-        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
+        rightActions={[
+          { icon: 'add-circle-outline', accessibilityLabel: 'Create Event', onPress: () => navigation.navigate('CreateEvent' as any) },
+          { icon: 'business-outline', accessibilityLabel: 'Create Page', onPress: () => navigation.navigate('CreatePage' as any) },
+          { icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }
+        ]}
+        compact
         rightAvatar={{ source: (useStore.getState().currentUser?.avatar) || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
 
@@ -76,6 +83,25 @@ export const EventsScreen: React.FC = () => {
             filterEvents(scope);
           }}
         />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm }}>
+          <Text style={{ color: tokensTheme.colors.text.secondary, marginRight: spacing.sm }}>Radius</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {[10, 15, 20, 25, 30].map((mi) => (
+              <Pressable key={mi} onPress={() => setDistanceRadiusMi(mi)} accessibilityRole="button" hitSlop={12}
+                style={{
+                  paddingHorizontal: spacing.sm,
+                  paddingVertical: 6,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: mi === distanceRadiusMi ? tokensTheme.colors.primary : tokensTheme.colors.border,
+                  backgroundColor: mi === distanceRadiusMi ? tokensTheme.colors.primary : tokensTheme.colors.card,
+                }}
+              >
+                <Text style={{ color: mi === distanceRadiusMi ? tokensTheme.colors.bg : tokensTheme.colors.text.primary, fontWeight: '600' }}>{mi} mi</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
       </View>
 
       <ScrollView 

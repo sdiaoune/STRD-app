@@ -99,6 +99,7 @@ interface AppState {
   currentUser: User;
   followingUserIds: string[];
   eventFilter: 'forYou' | 'all';
+  distanceRadiusMi: number;
   runState: RunState;
   isAuthenticated: boolean;
   authError: string | null;
@@ -126,6 +127,7 @@ interface AppState {
   clearReminder: (eventId: string) => Promise<boolean>;
   setUnitPreference: (unit: 'metric' | 'imperial') => void;
   setThemePreference: (theme: 'dark' | 'light') => void;
+  setDistanceRadiusMi: (mi: number) => void;
   signIn: (method: 'email' | 'google', email?: string, password?: string) => Promise<void>;
   signUp: (name: string, email: string, password?: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -137,6 +139,11 @@ interface AppState {
   searchUsers: (query: string) => Promise<User[]>;
   followUser: (userId: string) => Promise<boolean>;
   unfollowUser: (userId: string) => Promise<boolean>;
+  createPage: (args: { name: string; type: Organization['type']; city: string; logoUri?: string }) => Promise<string>;
+  updatePage: (orgId: string, args: { name?: string; city?: string; logoUri?: string }) => Promise<boolean>;
+  createEvent: (orgId: string, dto: { title: string; dateISO: string; city: string; location: { name: string; lat: number; lon: number }; tags: string[]; description?: string | null }, coverUri?: string) => Promise<boolean>;
+  updateEvent: (eventId: string, updates: Partial<{ title: string; dateISO: string; city: string; location: { name: string; lat: number; lon: number }; tags: string[]; description: string | null }>, coverUri?: string) => Promise<boolean>;
+  deleteEvent: (eventId: string) => Promise<boolean>;
   
   // Helpers
   eventById: (id: string) => Event | undefined;
@@ -168,6 +175,7 @@ export const useStore = create<AppState>((set, get) => ({
   unitPreference: 'metric',
   themePreference: 'dark',
   hasHydratedTheme: false,
+  distanceRadiusMi: 10,
 
   setActivityType: (type: 'run' | 'walk') => {
     set((state) => ({ runState: { ...state.runState, activityType: type } }));
@@ -179,6 +187,10 @@ export const useStore = create<AppState>((set, get) => ({
   setThemePreference: (theme: 'dark' | 'light') => {
     set({ themePreference: theme, hasHydratedTheme: true });
     AsyncStorage.setItem(THEME_PREFERENCE_KEY, theme).catch(() => {});
+  },
+  setDistanceRadiusMi: (mi: number) => {
+    const clamped = Math.min(30, Math.max(10, Math.round(mi)));
+    set({ distanceRadiusMi: clamped });
   },
   eventFilter: 'forYou',
   runState: {
@@ -272,6 +284,7 @@ export const useStore = create<AppState>((set, get) => ({
       type: o.type,
       logo: o.logo_url,
       city: o.city,
+      ownerId: (o as any).owner_id ?? undefined,
     }));
 
     const eventsMapped: Event[] = (events || []).map(e => ({
@@ -289,14 +302,12 @@ export const useStore = create<AppState>((set, get) => ({
       description: e.description,
       distanceFromUserKm: e.distance_from_user_km ?? null,
       coverImage: e.cover_image_url ?? e.cover_image ?? null,
+      createdByUserId: (e as any).created_by ?? undefined,
     }));
 
     const followingUsers = (userFollowRows || []).map((row: any) => row.followee_id as string);
 
-    const eventsWithinRadius = eventsMapped.filter(event => {
-      if (event.distanceFromUserKm == null) return true;
-      return event.distanceFromUserKm <= 16.0934; // 10 miles in km
-    });
+    const eventsWithinRadius = eventsMapped; // filter by radius later so user can adjust
 
     const likesByPostId = new Set((likes || []).map(l => `${l.post_id}`));
     const commentsByPostId = new Map<string, Comment[]>();
@@ -868,6 +879,155 @@ export const useStore = create<AppState>((set, get) => ({
     return true;
   },
 
+  // Page creation/update
+  createPage: async ({ name, type, city, logoUri }: { name: string; type: Organization['type']; city: string; logoUri?: string }) => {
+    const userId = get().currentUser.id;
+    if (!userId) return '';
+    let logoUrl: string | null = null;
+    if (logoUri) {
+      const fileExt = (logoUri.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${userId}/pages/${Date.now()}/logo.${fileExt}`;
+      logoUrl = await (async () => {
+        const displayUrl = await uploadImageToStorage('page-logos', path, logoUri);
+        return displayUrl ? displayUrl.split('?')[0] : null;
+      })();
+      if (!logoUrl) return '';
+    }
+    const { data, error } = await supabase
+      .from('organizations')
+      .insert({ name, type, city, logo_url: logoUrl, owner_id: userId })
+      .select('*')
+      .single();
+    if (error || !data) return '';
+    const org: Organization = { id: data.id, name: data.name, type: data.type, logo: data.logo_url, city: data.city, ownerId: data.owner_id };
+    set((state) => ({ organizations: [org, ...state.organizations] }));
+    return org.id;
+  },
+
+  updatePage: async (orgId: string, { name, city, logoUri }: { name?: string; city?: string; logoUri?: string }) => {
+    const updates: any = {};
+    if (name !== undefined) updates.name = name;
+    if (city !== undefined) updates.city = city;
+    if (logoUri) {
+      const userId = get().currentUser.id;
+      const fileExt = (logoUri.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${userId}/pages/${orgId}/logo.${fileExt}`;
+      const displayUrl = await uploadImageToStorage('page-logos', path, logoUri);
+      if (!displayUrl) return false;
+      updates.logo_url = displayUrl.split('?')[0];
+    }
+    const { error, data } = await supabase.from('organizations').update(updates).eq('id', orgId).select('*').single();
+    if (error) return false;
+    set((state) => ({
+      organizations: state.organizations.map(o => o.id === orgId ? { id: data.id, name: data.name, type: data.type, logo: data.logo_url, city: data.city, ownerId: data.owner_id } : o),
+    }));
+    return true;
+  },
+
+  // Event creation/update/delete
+  createEvent: async (
+    orgId: string,
+    dto: { title: string; dateISO: string; city: string; location: { name: string; lat: number; lon: number }; tags: string[]; description?: string | null },
+    coverUri?: string
+  ) => {
+    let coverUrl: string | null = null;
+    if (coverUri) {
+      const userId = get().currentUser.id;
+      const fileExt = (coverUri.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${userId}/events/${Date.now()}/cover.${fileExt}`;
+      const displayUrl = await uploadImageToStorage('event-covers', path, coverUri);
+      if (!displayUrl) return false;
+      coverUrl = displayUrl.split('?')[0];
+    }
+    const payload: any = {
+      org_id: orgId,
+      title: dto.title,
+      date: dto.dateISO,
+      city: dto.city,
+      location_name: dto.location.name,
+      location_lat: dto.location.lat,
+      location_lon: dto.location.lon,
+      tags: dto.tags,
+      description: dto.description ?? null,
+      cover_image_url: coverUrl,
+    };
+    const { data, error } = await supabase.from('events').insert(payload).select('*').single();
+    if (error || !data) return false;
+    const e: Event = {
+      id: data.id,
+      title: data.title,
+      orgId: data.org_id,
+      dateISO: data.date,
+      city: data.city,
+      location: { name: data.location_name, lat: data.location_lat, lon: data.location_lon },
+      tags: data.tags || [],
+      description: data.description,
+      distanceFromUserKm: data.distance_from_user_km ?? null,
+      coverImage: data.cover_image_url ?? null,
+      createdByUserId: data.created_by ?? undefined,
+    };
+    set((state) => ({
+      events: [e, ...state.events],
+      timelineItems: [{ type: 'event', refId: e.id, createdAtISO: e.dateISO }, ...state.timelineItems],
+    }));
+    return true;
+  },
+
+  updateEvent: async (
+    eventId: string,
+    updates: Partial<{ title: string; dateISO: string; city: string; location: { name: string; lat: number; lon: number }; tags: string[]; description: string | null }>,
+    coverUri?: string
+  ) => {
+    const payload: any = {};
+    if (updates.title !== undefined) payload.title = updates.title;
+    if (updates.dateISO !== undefined) payload.date = updates.dateISO;
+    if (updates.city !== undefined) payload.city = updates.city;
+    if (updates.location !== undefined) {
+      payload.location_name = updates.location.name;
+      payload.location_lat = updates.location.lat;
+      payload.location_lon = updates.location.lon;
+    }
+    if (updates.tags !== undefined) payload.tags = updates.tags;
+    if (updates.description !== undefined) payload.description = updates.description;
+    if (coverUri) {
+      const userId = get().currentUser.id;
+      const fileExt = (coverUri.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${userId}/events/${eventId}/cover.${fileExt}`;
+      const displayUrl = await uploadImageToStorage('event-covers', path, coverUri);
+      if (!displayUrl) return false;
+      payload.cover_image_url = displayUrl.split('?')[0];
+    }
+    const { data, error } = await supabase.from('events').update(payload).eq('id', eventId).select('*').single();
+    if (error || !data) return false;
+    set((state) => ({
+      events: state.events.map(ev => ev.id === eventId ? {
+        id: data.id,
+        title: data.title,
+        orgId: data.org_id,
+        dateISO: data.date,
+        city: data.city,
+        location: { name: data.location_name, lat: data.location_lat, lon: data.location_lon },
+        tags: data.tags || [],
+        description: data.description,
+        distanceFromUserKm: data.distance_from_user_km ?? null,
+        coverImage: data.cover_image_url ?? null,
+        createdByUserId: data.created_by ?? undefined,
+      } : ev),
+      timelineItems: state.timelineItems.map(t => (t.type === 'event' && t.refId === eventId) ? { ...t, createdAtISO: data.date } : t),
+    }));
+    return true;
+  },
+
+  deleteEvent: async (eventId: string) => {
+    const { error } = await supabase.from('events').delete().eq('id', eventId);
+    if (error) return false;
+    set((state) => ({
+      events: state.events.filter(e => e.id !== eventId),
+      timelineItems: state.timelineItems.filter(t => !(t.type === 'event' && t.refId === eventId)),
+    }));
+    return true;
+  },
+
   // Helper functions
   eventById: (id: string) => {
     return get().events.find(event => event.id === id);
@@ -887,6 +1047,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   getFilteredEvents: () => {
     const state = get();
+    const radiusKm = (state.distanceRadiusMi || 10) * 1.60934;
     const sortForSuperAdmin = (list: Event[]) => {
       if (!state.currentUser?.isSuperAdmin) return list;
       return [...list].sort((a, b) => {
@@ -897,12 +1058,14 @@ export const useStore = create<AppState>((set, get) => ({
       });
     };
 
+    const byRadius = state.events.filter(e => e.distanceFromUserKm == null || e.distanceFromUserKm <= radiusKm);
+
     if (state.eventFilter === 'all') {
-      return sortForSuperAdmin(state.events);
+      return sortForSuperAdmin(byRadius);
     }
 
     // For You logic: item's orgId ∈ currentUser.followingOrgs OR tag intersects currentUser.interests
-    const personalized = state.events.filter(event => {
+    const personalized = byRadius.filter(event => {
       const isFollowingOrg = state.currentUser.followingOrgs.includes(event.orgId);
       const hasMatchingTags = event.tags.some(tag =>
         (state.currentUser.interests || []).includes(tag)

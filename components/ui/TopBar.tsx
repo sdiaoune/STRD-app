@@ -12,18 +12,20 @@ type Props = {
   leftIcon?: { icon: keyof typeof Ionicons.glyphMap; accessibilityLabel: string; onPress: () => void };
   rightActions?: Action[];
   rightAvatar?: { source?: string; label?: string; onPress: () => void };
+  compact?: boolean; // reduces vertical padding for tighter pages
 };
 
-export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], rightAvatar }) => {
+export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], rightAvatar, compact }) => {
   const { colors, spacing, typography, mode } = useTheme();
+  const padY = compact ? spacing.x2 : spacing.x4;
   const styles = StyleSheet.create({
     container: {
       width: '100%',
       backgroundColor: mode === 'light' ? colors.surface : colors.bg,
       borderBottomColor: colors.border,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      paddingTop: spacing.x4,
-      paddingBottom: spacing.x4,
+      paddingTop: padY,
+      paddingBottom: padY,
       paddingHorizontal: spacing.container,
       flexDirection: 'row',
       alignItems: 'center',
@@ -62,7 +64,15 @@ export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], ri
           </Pressable>
         ) : null}
       </View>
-      <Text style={styles.title}>{title}</Text>
+      <Text
+        style={styles.title}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
+        ellipsizeMode="tail"
+      >
+        {title}
+      </Text>
       <View style={[styles.side, { justifyContent: 'flex-end' }]}>
         {rightActions.map((a) => (
           <Pressable

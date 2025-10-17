@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 // We mirror RunPostCard visual language instead of reusing Card
@@ -12,6 +12,7 @@ import { useStore } from '../state/store';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
+import * as Location from 'expo-location';
 
 interface Props {
   event: Event;
@@ -22,9 +23,36 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   const orgById = useStore((s) => s.orgById);
   const organization = orgById(event.orgId);
   const unit = useStore(s => s.unitPreference);
-  const distanceLabel = event.distanceFromUserKm == null ? '—' : fmtDistance(event.distanceFromUserKm * 1000);
+  const [fallbackMeters, setFallbackMeters] = useState<number | null>(null);
+  const distanceLabel = (() => {
+    const km = event.distanceFromUserKm != null ? event.distanceFromUserKm : (fallbackMeters != null ? fallbackMeters / 1000 : null);
+    return km == null ? '—' : fmtDistance(km * 1000);
+  })();
 
   const styles = useLegacyStyles(createStyles);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (event.distanceFromUserKm != null) return;
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          try { await Location.requestForegroundPermissionsAsync(); } catch {}
+        }
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced } as any);
+        const toRad = (v: number) => (v * Math.PI) / 180;
+        const R = 6371; // km
+        const dLat = toRad(event.location.lat - pos.coords.latitude);
+        const dLon = toRad(event.location.lon - pos.coords.longitude);
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(pos.coords.latitude)) * Math.cos(toRad(event.location.lat)) * Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const km = R * c;
+        if (mounted) setFallbackMeters(km * 1000);
+      } catch {}
+    })();
+    return () => { mounted = false; };
+  }, [event.distanceFromUserKm, event.location.lat, event.location.lon]);
 
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
