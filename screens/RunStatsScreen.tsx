@@ -88,9 +88,9 @@ export const RunStatsScreen: React.FC = () => {
 
         {/* Main Stats */}
         <View style={styles.mainStats}>
-          <Stat icon="speedometer" value={fmtDistance(run.distanceKm * 1000)} label="Distance" />
-          <Stat icon="time" value={fmtDuration(run.durationMin * 60)} label="Duration" />
-          <Stat icon="flash" value={fmtPace(Math.round(run.avgPaceMinPerKm * 60))} label="Average Pace" />
+          <Stat icon="speedometer" value={formatDistance(run.distanceKm, unit)} label="Distance" />
+          <Stat icon="time" value={fmtDuration(Math.max(0, Math.round(run.durationMin * 60)))} label="Duration" />
+          <Stat icon="flash" value={formatPace(run.avgPaceMinPerKm, unit)} label={unit === 'imperial' ? 'Avg Pace (min/mi)' : 'Avg Pace (min/km)'} />
         </View>
 
         {/* Detailed Stats */}
@@ -110,12 +110,12 @@ export const RunStatsScreen: React.FC = () => {
               <Text style={styles.detailStatLabel}>min/km</Text>
             </View>
             <View style={styles.detailStat}>
-              <Text style={styles.detailStatValue}>{(run.distanceKm * 1000).toFixed(0)}</Text>
-              <Text style={styles.detailStatLabel}>meters</Text>
+              <Text style={styles.detailStatValue}>{fmtDistance(run.distanceKm * 1000)}</Text>
+              <Text style={styles.detailStatLabel}>distance</Text>
             </View>
             <View style={styles.detailStat}>
-              <Text style={styles.detailStatValue}>{(run.durationMin * 60).toFixed(0)}</Text>
-              <Text style={styles.detailStatLabel}>seconds</Text>
+              <Text style={styles.detailStatValue}>{fmtDuration(Math.max(0, Math.round(run.durationMin * 60)))}</Text>
+              <Text style={styles.detailStatLabel}>duration</Text>
             </View>
           </View>
         </View>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,6 +30,8 @@ export const EventsScreen: React.FC = () => {
   } = useStore();
 
   const events = getFilteredEvents();
+  const reload = useStore(s => s._loadInitialData);
+  const [refreshing, setRefreshing] = React.useState(false);
 
   const [locationLabel, setLocationLabel] = React.useState<string>(currentUser?.city || '');
   const styles = useLegacyStyles(createStyles);
@@ -108,6 +110,13 @@ export const EventsScreen: React.FC = () => {
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.lg }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => { try { setRefreshing(true); await reload(); } finally { setRefreshing(false); } }}
+            tintColor={tokensTheme.colors.primary}
+          />
+        }
       >
         {events.length > 0 ? (
           events.map((event) => (

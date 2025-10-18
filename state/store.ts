@@ -859,8 +859,24 @@ export const useStore = create<AppState>((set, get) => ({
     const userId = get().currentUser.id;
     if (!userId || userIdToFollow === userId) return false;
     if (get().followingUserIds.includes(userIdToFollow)) return true;
-    const { error } = await supabase.from('user_follows').insert({ follower_id: userId, followee_id: userIdToFollow });
-    if (error && error.code !== '23505') return false;
+    const { error } = await supabase
+      .from('user_follows')
+      .insert({ follower_id: userId, followee_id: userIdToFollow }, { ignoreDuplicates: true });
+    if (error && error.code !== '23505') {
+      console.warn('[followUser] insert failed', error);
+      return false;
+    }
+    // Confirm by re-querying (RLS-safe)
+    const { data: confirm } = await supabase
+      .from('user_follows')
+      .select('followee_id')
+      .eq('follower_id', userId)
+      .eq('followee_id', userIdToFollow)
+      .maybeSingle();
+    if (!confirm) {
+      console.warn('[followUser] confirm failed');
+      return false;
+    }
     set((state) => ({
       followingUserIds: state.followingUserIds.includes(userIdToFollow)
         ? state.followingUserIds
@@ -871,8 +887,15 @@ export const useStore = create<AppState>((set, get) => ({
   unfollowUser: async (userIdToUnfollow: string) => {
     const userId = get().currentUser.id;
     if (!userId || userIdToUnfollow === userId) return false;
-    const { error } = await supabase.from('user_follows').delete().eq('follower_id', userId).eq('followee_id', userIdToUnfollow);
-    if (error) return false;
+    const { error } = await supabase
+      .from('user_follows')
+      .delete()
+      .eq('follower_id', userId)
+      .eq('followee_id', userIdToUnfollow);
+    if (error) {
+      console.warn('[unfollowUser] delete failed', error);
+      return false;
+    }
     set((state) => ({
       followingUserIds: state.followingUserIds.filter(id => id !== userIdToUnfollow),
     }));

@@ -62,7 +62,38 @@ export const ProfileScreen: React.FC = () => {
   const userRuns = runPosts.filter(post => post.userId === currentUser.id);
   const totalRuns = userRuns.length;
   const totalDistance = userRuns.reduce((sum, run) => sum + run.distanceKm, 0);
-  const weeklyStreak = Math.floor(Math.random() * 7) + 1; // Mock data
+  // Calculate ISO week streak: consecutive weeks up to the current week with >=1 run
+  const getIsoWeekKey = (date: Date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7; // 1..7, with Monday=1
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum); // Thursday in current week
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+  };
+
+  const runWeeks = React.useMemo(() => {
+    const s = new Set<string>();
+    userRuns.forEach(r => {
+      const dt = new Date(r.createdAtISO);
+      if (!isNaN(dt.getTime())) s.add(getIsoWeekKey(dt));
+    });
+    return s;
+  }, [userRuns]);
+
+  const weeklyStreak = React.useMemo(() => {
+    if (runWeeks.size === 0) return 0;
+    let count = 0;
+    let cursor = new Date();
+    // Start from current week; if no runs this week streak is 0
+    while (true) {
+      const key = getIsoWeekKey(cursor);
+      if (!runWeeks.has(key)) break;
+      count += 1;
+      cursor = new Date(cursor.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+    return count;
+  }, [runWeeks]);
 
   // Get user's recent posts (runs and events they posted)
   const userEvents = events.filter(event => {

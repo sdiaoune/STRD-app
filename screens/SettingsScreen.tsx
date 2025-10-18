@@ -4,7 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useStore } from '../state/store';
 import { borderRadius, colors, spacing, typography } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
-import { supabase } from '../supabase/client';
+// removed admin tools; no direct supabase usage here
 import { useTheme as useDesignTheme } from '../src/design/useTheme';
 
 export const SettingsScreen: React.FC = () => {
@@ -15,8 +15,7 @@ export const SettingsScreen: React.FC = () => {
   const setTheme = useStore(state => state.setThemePreference);
   const currentUser = useStore(state => state.currentUser);
   const { setMode } = useDesignTheme();
-  const [eventIdDraft, setEventIdDraft] = React.useState('');
-  const [coverUrlDraft, setCoverUrlDraft] = React.useState('');
+  // Admin tools removed
   const styles = useLegacyStyles(createStyles);
   const insets = useSafeAreaInsets();
   return (
@@ -50,44 +49,7 @@ export const SettingsScreen: React.FC = () => {
           </Pressable>
         </View>
       </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Admin tools</Text>
-        <View style={{ gap: spacing.sm }}>
-          <Text style={styles.smallLabel}>Event ID</Text>
-          <TextInput
-            value={eventIdDraft}
-            onChangeText={setEventIdDraft}
-            placeholder="uuid"
-            placeholderTextColor={colors.text.secondary}
-            style={styles.input}
-            autoCapitalize="none"
-          />
-          <Text style={styles.smallLabel}>Cover Image URL</Text>
-          <TextInput
-            value={coverUrlDraft}
-            onChangeText={setCoverUrlDraft}
-            placeholder="https://..."
-            placeholderTextColor={colors.text.secondary}
-            style={styles.input}
-            autoCapitalize="none"
-          />
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={async () => {
-              if (!eventIdDraft || !coverUrlDraft) return;
-              try {
-                const { error } = await supabase.from('events').update({ cover_image_url: coverUrlDraft }).eq('id', eventIdDraft);
-                if (error) throw error;
-                Alert.alert('Success', 'Event cover image updated.');
-              } catch {
-                Alert.alert('Error', 'Failed to update cover image.');
-              }
-            }}
-          >
-            <Text style={styles.actionBtnText}>Update Event Cover</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* Admin tools removed */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
         <TouchableOpacity style={styles.signOutBtn} onPress={async () => { await signOut(); }} accessibilityRole="button" hitSlop={12}>

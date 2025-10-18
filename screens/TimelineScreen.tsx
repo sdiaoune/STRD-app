@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,6 +18,8 @@ export const TimelineScreen: React.FC = () => {
   const navigation = useNavigation<TimelineScreenNavigationProp>();
   const tokensTheme = useTokensTheme();
   const { timelineItems, postById, eventById } = useStore();
+  const reload = useStore(s => s._loadInitialData);
+  const [refreshing, setRefreshing] = React.useState(false);
   const insets = useSafeAreaInsets();
   const tabBarHeight = insets.bottom;
   const themeName = useStore(s => s.themePreference);
@@ -79,6 +81,15 @@ export const TimelineScreen: React.FC = () => {
         contentInsetAdjustmentBehavior="never"
         automaticallyAdjustContentInsets={false}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              try { setRefreshing(true); await reload(); } finally { setRefreshing(false); }
+            }}
+            tintColor={tokensTheme.colors.primary}
+          />
+        }
       >
         {timelineItems.length > 0 ? (
           timelineItems.map((item) => renderTimelineItem(item))

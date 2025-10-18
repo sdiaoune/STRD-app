@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../types/navigation';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme } from '../theme';
 import { useStore } from '../state/store';
 import { StatsRow } from '../components/StatsRow';
 import { Avatar } from '../components/Avatar';
@@ -16,6 +16,21 @@ export const RunnerProfileScreen: React.FC = () => {
   const navigation = useNavigation<RunnerProfileScreenNav>();
   const { userId } = route.params as { userId: string };
   const { userById, runPosts } = useStore();
+  // Ensure we have the latest user info if not already in state
+  useEffect(() => {
+    (async () => {
+      if (!userById(userId)) {
+        const { supabase } = await import('../supabase/client');
+        const { data } = await supabase.from('profiles').select('id, name, handle, avatar_url').eq('id', userId).maybeSingle();
+        if (data) {
+          // hydrate minimal user into store cache for display
+          const u = { id: data.id, name: data.name, handle: data.handle, avatar: data.avatar_url, city: null, interests: [], followingOrgs: [] } as any;
+          const prev = useStore.getState().users;
+          useStore.setState({ users: [...prev.filter(p => p.id !== userId), u] });
+        }
+      }
+    })();
+  }, [userId]);
   const unit = useStore(state => state.unitPreference);
   const { formatDistance } = require('../utils/format');
   const followUser = useStore(s => s.followUser);
@@ -39,21 +54,41 @@ export const RunnerProfileScreen: React.FC = () => {
     return () => { mounted = false; };
   }, [userId, currentUser.id, isFollowing]);
 
-  const posts = runPosts.filter(p => p.userId === userId);
+  const posts = runPosts.filter(p => p.userId === userId).sort((a, b) => new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime());
   const totalRuns = posts.length;
   const totalDistance = posts.reduce((s, p) => s + p.distanceKm, 0);
-  const weeklyStreak = Math.floor(Math.random() * 7) + 1; // placeholder
+  // ISO week streak calculation
+  const getIsoWeekKey = (date: Date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+  };
+  const weekSet = new Set<string>(posts.map(p => getIsoWeekKey(new Date(p.createdAtISO))));
+  let streak = 0; {
+    let cursor = new Date();
+    while (true) {
+      const key = getIsoWeekKey(cursor);
+      if (!weekSet.has(key)) break;
+      streak += 1;
+      cursor = new Date(cursor.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+  }
+  const weeklyStreak = streak;
 
+  const theme = useTokensTheme();
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.mode === 'light' ? theme.colors.surface : theme.colors.bg }]}>
       <ScrollView contentContainerStyle={{ padding: spacing.md }}>
         <View style={styles.header}>
           <Avatar source={user?.avatar || undefined} size={80} label={user?.name || undefined} />
-          <Text style={styles.name}>{user?.name || 'Runner'}</Text>
-          <Text style={styles.handle}>{user?.handle || ''}</Text>
+          <Text style={[styles.name, { color: theme.colors.text.primary }]}>{user?.name || 'Runner'}</Text>
+          <Text style={[styles.handle, { color: theme.colors.text.secondary }]}>{user?.handle || ''}</Text>
           {userId !== currentUser.id && (
             <TouchableOpacity
-              style={[styles.followBtn, isFollowing ? styles.following : null]}
+              style={[styles.followBtn, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }, isFollowing ? styles.following : null]}
               onPress={async () => {
                 if (isFollowing) {
                   const ok = await unfollowUser(userId);
@@ -65,13 +100,13 @@ export const RunnerProfileScreen: React.FC = () => {
               }}
               disabled={isFollowing === null}
             >
-              <Text style={styles.followText}>{isFollowing ? 'Following' : 'Follow'}</Text>
+              <Text style={[styles.followText, { color: theme.colors.primary }]}>{isFollowing ? 'Following' : 'Follow'}</Text>
             </TouchableOpacity>
           )}
         </View>
 
         <View style={{ marginTop: spacing.md }}>
-          <StatsRow stats={[{ label: 'Total Runs', value: totalRuns }, { label: 'Weekly Streak', value: weeklyStreak }, { label: 'Total Distance', value: `${formatDistance(totalDistance, unit)}` }]} />
+          <StatsRow stats={[{ label: 'Total Runs', value: totalRuns }, { label: 'Weekly Streak', value: weeklyStreak }, { label: 'Total Distance', value: formatDistance(totalDistance, unit) }]} />
         </View>
 
         <Text style={styles.section}>Recent Posts</Text>
@@ -79,8 +114,8 @@ export const RunnerProfileScreen: React.FC = () => {
           <Text style={styles.empty}>No visible runs.</Text>
         ) : (
           posts.map(p => (
-            <View key={p.id} style={styles.postRow}>
-              <Text style={styles.postText}>{new Date(p.createdAtISO).toLocaleDateString()} • {formatDistance(p.distanceKm, unit)}</Text>
+            <View key={p.id} style={[styles.postRow, { borderBottomColor: theme.colors.border }]}>
+              <Text style={[styles.postText, { color: theme.colors.text.primary }]}>{new Date(p.createdAtISO).toLocaleDateString()} • {formatDistance(p.distanceKm, unit)}</Text>
             </View>
           ))
         )}
