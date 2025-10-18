@@ -5,12 +5,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { useStore } from '../state/store';
-import { borderRadius, colors, spacing, typography } from '../theme';
+import { borderRadius, colors, spacing, typography, useTheme as useTokensTheme } from '../theme';
 import BlurTabBarBackground, { useBottomTabOverflow } from '../components/ui/TabBarBackground.ios';
 
 type Params = { eventId: string };
 
 export const EditEventScreen: React.FC = () => {
+  const theme = useTokensTheme();
   const route = useRoute<RouteProp<Record<string, Params>, string>>();
   const navigation = useNavigation();
   const updateEvent = useStore(state => (state as any).updateEvent);
@@ -63,25 +64,31 @@ export const EditEventScreen: React.FC = () => {
     (navigation as any).goBack();
   };
 
+  const isLight = theme.mode === 'light';
+  const fieldStyle = { backgroundColor: isLight ? '#ffffff' : colors.card, color: isLight ? '#000000' : colors.text.primary, borderColor: isLight ? '#e5e5e5' : colors.border } as const;
+  const labelStyle = { color: isLight ? '#000000' : colors.text.secondary } as const;
+  const neutralBtnStyle = { backgroundColor: isLight ? '#ffffff' : colors.card, borderColor: isLight ? '#e5e5e5' : colors.border } as const;
+  const neutralBtnText = { color: isLight ? '#000000' : colors.text.primary } as const;
+
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isLight ? '#ffffff' : colors.bg }]} edges={['bottom']}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: spacing.sm, paddingBottom: insets.bottom + tabBarHeight + spacing.xl }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.formRow}><Text style={styles.label}>Title</Text><TextInput value={title} onChangeText={setTitle} style={styles.input} /></View>
-        <View style={styles.formRow}><Text style={styles.label}>Date ISO</Text><TextInput value={dateISO} onChangeText={setDateISO} style={styles.input} /></View>
-        <View style={styles.formRow}><Text style={styles.label}>City</Text><TextInput value={city} onChangeText={setCity} style={styles.input} /></View>
-        <View style={styles.formRow}><Text style={styles.label}>Location name</Text><TextInput value={locationName} onChangeText={setLocationName} style={styles.input} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Title</Text><TextInput value={title} onChangeText={setTitle} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Date ISO</Text><TextInput value={dateISO} onChangeText={setDateISO} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>City</Text><TextInput value={city} onChangeText={setCity} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Location name</Text><TextInput value={locationName} onChangeText={setLocationName} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
         <View style={styles.row}>
-          <View style={[styles.formRow, { flex: 1, marginRight: spacing.sm }]}><Text style={styles.label}>Lat</Text><TextInput value={lat} onChangeText={setLat} style={styles.input} keyboardType="decimal-pad" /></View>
-          <View style={[styles.formRow, { flex: 1 }]}><Text style={styles.label}>Lon</Text><TextInput value={lon} onChangeText={setLon} style={styles.input} keyboardType="decimal-pad" /></View>
+          <View style={[styles.formRow, { flex: 1, marginRight: spacing.sm }]}><Text style={[styles.label, labelStyle]}>Lat</Text><TextInput value={lat} onChangeText={setLat} style={[styles.input, fieldStyle]} keyboardType="decimal-pad" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+          <View style={[styles.formRow, { flex: 1 }]}><Text style={[styles.label, labelStyle]}>Lon</Text><TextInput value={lon} onChangeText={setLon} style={[styles.input, fieldStyle]} keyboardType="decimal-pad" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
         </View>
-        <View style={styles.formRow}><Text style={styles.label}>Tags (comma-separated)</Text><TextInput value={tags} onChangeText={setTags} style={styles.input} /></View>
-        <View style={styles.formRow}><Text style={styles.label}>Description</Text><TextInput value={description} onChangeText={setDescription} style={[styles.input, { height: 100 }]} multiline /></View>
-        <TouchableOpacity style={styles.btn} onPress={pickImage}><Text style={styles.btnText}>{coverUri ? 'Change Cover' : 'Replace Cover'}</Text></TouchableOpacity>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Tags (comma-separated)</Text><TextInput value={tags} onChangeText={setTags} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Description</Text><TextInput value={description} onChangeText={setDescription} style={[styles.input, fieldStyle, { height: 100 }]} multiline placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <TouchableOpacity style={[styles.btn, neutralBtnStyle]} onPress={pickImage}><Text style={[styles.btnText, neutralBtnText]}>{coverUri ? 'Change Cover' : 'Replace Cover'}</Text></TouchableOpacity>
         <TouchableOpacity style={[styles.btn, styles.primary]} onPress={save}><Text style={[styles.btnText, styles.primaryText]}>Save</Text></TouchableOpacity>
         <TouchableOpacity style={[styles.btn, styles.danger]} onPress={remove}><Text style={[styles.btnText, styles.dangerText]}>Delete</Text></TouchableOpacity>
       </ScrollView>
@@ -98,7 +105,7 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: 'center', marginTop: spacing.md },
   btnText: { ...typography.body, color: colors.text.primary, fontWeight: '600' },
   primary: { backgroundColor: colors.primary, borderColor: colors.primary },
-  primaryText: { color: colors.bg },
+  primaryText: { color: '#ffffff' },
   danger: { borderColor: '#aa2e25' },
   dangerText: { color: '#aa2e25' },
 });

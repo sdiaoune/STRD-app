@@ -116,6 +116,11 @@ function TimelineStack() {
         options={{ title: 'Event Details', headerBackTitle: 'Timeline' }}
       />
       <Stack.Screen 
+        name="EditEvent" 
+        component={EditEventScreen}
+        options={{ title: 'Edit Event', headerBackTitle: 'Timeline' }}
+      />
+      <Stack.Screen 
         name="BusinessProfile" 
         component={BusinessProfileScreen}
         options={{ title: 'Organization', headerBackTitle: 'Timeline' }}
@@ -177,6 +182,11 @@ function ProfileStack() {
         name="EventDetails" 
         component={EventDetailsScreen}
         options={{ title: 'Event Details', headerBackTitle: 'Profile' }}
+      />
+      <Stack.Screen 
+        name="EditEvent" 
+        component={EditEventScreen}
+        options={{ title: 'Edit Event', headerBackTitle: 'Profile' }}
       />
       <Stack.Screen 
         name="BusinessProfile" 

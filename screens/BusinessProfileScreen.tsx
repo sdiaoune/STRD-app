@@ -9,7 +9,7 @@ import type { EventsStackParamList, AppNavigationParamList } from '../types/navi
 type BusinessProfileScreenNavigationProp = NativeStackNavigationProp<EventsStackParamList & AppNavigationParamList, 'BusinessProfile'>;
 type BusinessProfileScreenRouteProp = RouteProp<EventsStackParamList, 'BusinessProfile'>;
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../theme';
+import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme } from '../theme';
 import { Avatar } from '../components/Avatar';
 import { EventCard } from '../components/EventCard';
 import { RunPostCard } from '../components/RunPostCard';
@@ -22,6 +22,7 @@ export const BusinessProfileScreen: React.FC = () => {
   const { orgId } = route.params;
   
   const { orgById, events, runPosts, postById, eventById } = useStore();
+  const theme = useTokensTheme();
   const organization = orgById(orgId);
 
   if (!organization) {
@@ -54,28 +55,28 @@ export const BusinessProfileScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.bg }]}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Organization Header */}
-        <View style={styles.orgHeader}>
+        <View style={[styles.orgHeader, { backgroundColor: theme.mode === 'light' ? '#ffffff' : undefined }] }>
           <Avatar source={organization.logo} size={80} />
-          <Text style={styles.orgName}>{organization.name}</Text>
+          <Text style={[styles.orgName, { color: theme.mode === 'light' ? '#000000' : colors.text.primary }]}>{organization.name}</Text>
           {organization.type === 'partner' && (
             <View style={styles.partnerBadge}>
               <Text style={styles.partnerText}>Partner</Text>
             </View>
           )}
-          <Text style={styles.orgLocation}>{organization.city}</Text>
-          <Text style={styles.orgDescription}>
+          <Text style={[styles.orgLocation, { color: theme.mode === 'light' ? '#000000' : colors.muted }]}>{organization.city}</Text>
+          <Text style={[styles.orgDescription, { color: theme.mode === 'light' ? '#000000' : colors.text.primary }]}>
             {organization.type === 'partner' 
               ? 'Official partner organization dedicated to promoting running and wellness in the community.'
               : 'Community organization bringing runners together for events and activities.'
             }
           </Text>
           
-          <TouchableOpacity style={styles.websiteButton} onPress={handleWebsitePress}>
-            <Ionicons name="globe" size={20} color={colors.primary} />
-            <Text style={styles.websiteText}>Visit Website</Text>
+          <TouchableOpacity style={[styles.websiteButton, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]} onPress={handleWebsitePress}>
+            <Ionicons name="globe" size={20} color={theme.mode === 'light' ? '#000000' : colors.primary} />
+            <Text style={[styles.websiteText, { color: theme.mode === 'light' ? '#000000' : colors.primary }]}>Visit Website</Text>
           </TouchableOpacity>
         </View>
 
