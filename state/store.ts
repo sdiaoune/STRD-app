@@ -8,8 +8,7 @@ import type {
   Comment
 } from '../types/models';
 import { supabase } from '../supabase/client';
-import { makeRedirectUri } from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
@@ -747,7 +746,7 @@ export const useStore = create<AppState>((set, get) => ({
         }
         await get()._loadInitialData(userId);
       } else if (method === 'google') {
-        const redirectTo = makeRedirectUri({ scheme: 'strd', path: 'auth/callback' });
+        const redirectTo = AuthSession.makeRedirectUri({ scheme: 'strd', path: 'auth/callback' });
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -759,19 +758,17 @@ export const useStore = create<AppState>((set, get) => ({
         if (!data?.url) throw new Error('No auth URL');
 
         // Open browser and wait for redirect
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-        if (result.type !== 'success' || !result.url) {
-          throw new Error('Google sign-in cancelled or failed');
+        const authResult = await AuthSession.startAsync({ authUrl: data.url, returnUrl: redirectTo });
+        if (authResult.type !== 'success') {
+          throw new Error(authResult.errorCode || 'Google sign-in cancelled or failed');
         }
 
-        console.log('[signIn(google)] Processing redirect URL...');
-
-        const urlObj = new URL(result.url);
-        const code = urlObj.searchParams.get('code');
-
+        const code = (authResult.params as Record<string, string>).code;
         if (!code) {
           throw new Error('No authorization code in redirect');
         }
+
+        console.log('[signIn(google)] Processing redirect code...');
 
         console.log('[signIn(google)] Exchanging code via Supabase...');
         const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
@@ -795,49 +792,39 @@ export const useStore = create<AppState>((set, get) => ({
         }
 
         // Store Google metadata in profiles table, making sure the row exists first
-        const googleName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || null;
-        const googleAvatar = session.user.user_metadata?.avatar_url || null;
+        const userMetadata = session.user.user_metadata as Record<string, string | null | undefined> | undefined;
+        const googleName =
+          (userMetadata?.full_name as string | undefined) ||
+          (userMetadata?.name as string | undefined) ||
+          (userMetadata?.given_name as string | undefined) ||
+          null;
+        const googleAvatar =
+          (userMetadata?.avatar_url as string | undefined) ||
+          (userMetadata?.picture as string | undefined) ||
+          null;
         console.log('[signIn(google)] Google metadata - name:', googleName, 'avatar:', googleAvatar);
 
-        const { data: existingProfile, error: fetchProfileError } = await supabase
-          .from('profiles')
-          .select('id, name, avatar_url')
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (fetchProfileError && fetchProfileError.code !== 'PGRST116') {
-          console.error('[signIn(google)] Failed to fetch profile:', fetchProfileError);
-          throw new Error(fetchProfileError.message || 'Failed to fetch profile');
+        const upsertPayload: { id: string; name?: string | null; avatar_url?: string | null } = { id: userId };
+        if (googleName) {
+          upsertPayload.name = googleName;
+        }
+        if (googleAvatar) {
+          upsertPayload.avatar_url = googleAvatar;
         }
 
-        if (!existingProfile) {
-          console.log('[signIn(google)] Creating profile with Google data');
-          const { error: insertError } = await supabase.from('profiles').insert({
-            id: userId,
-            name: googleName,
-            avatar_url: googleAvatar,
-          });
-          if (insertError) {
-            console.error('[signIn(google)] Failed to create profile:', insertError);
-            throw new Error(insertError.message || 'Failed to create profile');
-          }
-        } else {
-          const updates: { name?: string | null; avatar_url?: string | null } = {};
-          if (googleName && existingProfile.name !== googleName) {
-            updates.name = googleName;
-          }
-          if (googleAvatar && existingProfile.avatar_url !== googleAvatar) {
-            updates.avatar_url = googleAvatar;
-          }
+        const { error: upsertError } = await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id' });
+        if (upsertError) {
+          console.error('[signIn(google)] Failed to upsert profile:', upsertError);
+          throw new Error(upsertError.message || 'Failed to update profile');
+        }
 
-          if (Object.keys(updates).length > 0) {
-            console.log('[signIn(google)] Updating profile with Google data');
-            const { error: updateError } = await supabase.from('profiles').update(updates).eq('id', userId);
-            if (updateError) {
-              console.error('[signIn(google)] Failed to update profile:', updateError);
-              throw new Error(updateError.message || 'Failed to update profile');
-            }
-          }
+        const { data: refreshedProfile, error: refreshedProfileError } = await supabase
+          .from('profiles')
+          .select('name, avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+        if (refreshedProfileError) {
+          console.error('[signIn(google)] Failed to fetch profile after upsert:', refreshedProfileError);
         }
 
         // Manually set auth state and load data (don't wait for onAuthStateChange)
@@ -846,8 +833,8 @@ export const useStore = create<AppState>((set, get) => ({
           currentUser: {
             ...state.currentUser,
             id: userId,
-            name: googleName ?? state.currentUser.name,
-            avatar: googleAvatar ?? state.currentUser.avatar,
+            name: refreshedProfile?.name ?? googleName ?? state.currentUser.name,
+            avatar: refreshedProfile?.avatar_url ?? googleAvatar ?? state.currentUser.avatar,
           },
         }));
 
@@ -882,26 +869,32 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   signOut: async () => {
-    await supabase.auth.signOut();
-    set({
-      isAuthenticated: false,
-      users: [],
-      organizations: [],
-      events: [],
-      runPosts: [],
-      timelineItems: [],
-      followingUserIds: [],
-      currentUser: {
-        id: '',
-        name: null,
-        handle: null,
-        avatar: null,
-        city: null,
-        interests: [],
-        followingOrgs: [],
-        isSuperAdmin: false,
-      },
-    });
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('[signOut] Failed to sign out via Supabase:', error);
+    } finally {
+      set({
+        isAuthenticated: false,
+        authError: null,
+        users: [],
+        organizations: [],
+        events: [],
+        runPosts: [],
+        timelineItems: [],
+        followingUserIds: [],
+        currentUser: {
+          id: '',
+          name: null,
+          handle: null,
+          avatar: null,
+          city: null,
+          interests: [],
+          followingOrgs: [],
+          isSuperAdmin: false,
+        },
+      });
+    }
   },
 
   initializeAuth: async () => {
