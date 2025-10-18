@@ -83,9 +83,31 @@ export const SignInScreen: React.FC = () => {
           <View style={styles.divider} />
         </View>
 
-        <Pressable style={[styles.googleButton, { backgroundColor: theme.mode === 'light' ? '#ffffff' : 'transparent', borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]} onPress={() => signIn('google')} accessibilityRole="button">
-          <Ionicons name="logo-google" size={18} color={theme.mode === 'light' ? '#000000' : colors.text.primary} style={{ marginRight: spacing.sm }} />
-          <Text style={[styles.googleText, { color: theme.mode === 'light' ? '#000000' : colors.text.primary }]}>Continue with Google</Text>
+        <Pressable
+          style={[
+            styles.googleButton,
+            {
+              backgroundColor: theme.mode === 'light' ? '#ffffff' : 'transparent',
+              borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border,
+            },
+          ]}
+          onPress={() => signIn('google')}
+          accessibilityRole="button"
+        >
+          <Ionicons
+            name="logo-google"
+            size={18}
+            color={theme.mode === 'light' ? '#000000' : colors.text.primary}
+            style={{ marginRight: spacing.sm }}
+          />
+          <Text
+            style={[
+              styles.googleText,
+              { color: theme.mode === 'light' ? '#000000' : colors.text.primary },
+            ]}
+          >
+            Continue with Google
+          </Text>
         </Pressable>
 
         <View style={styles.footerRow}>

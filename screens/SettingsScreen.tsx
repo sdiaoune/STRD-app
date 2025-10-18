@@ -52,7 +52,12 @@ export const SettingsScreen: React.FC = () => {
       {/* Admin tools removed */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
-        <TouchableOpacity style={styles.signOutBtn} onPress={async () => { await signOut(); }} accessibilityRole="button" hitSlop={12}>
+        <TouchableOpacity
+          style={styles.signOutBtn}
+          onPress={async () => { await signOut(); }}
+          accessibilityRole="button"
+          hitSlop={12}
+        >
           <Text style={styles.signOutText}>Sign out</Text>
         </TouchableOpacity>
       </View>

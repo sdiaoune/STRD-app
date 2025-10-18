@@ -30,6 +30,7 @@ export const EventsScreen: React.FC = () => {
   } = useStore();
 
   const events = getFilteredEvents();
+  const currentUserFromStore = useStore(s => s.currentUser);
   const reload = useStore(s => s._loadInitialData);
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -73,7 +74,7 @@ export const EventsScreen: React.FC = () => {
           { icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }
         ]}
         compact
-        rightAvatar={{ source: (useStore.getState().currentUser?.avatar) || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
+        rightAvatar={{ source: currentUserFromStore?.avatar || '', label: currentUserFromStore?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
 
       <View style={styles.segmentedContainer}>

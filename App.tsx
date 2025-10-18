@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import * as WebBrowser from 'expo-web-browser';
 import { supabase } from './supabase/client';
 import Constants from 'expo-constants';
 
@@ -34,6 +35,8 @@ import { SignInScreen } from './screens/SignInScreen';
 import { SignUpScreen } from './screens/SignUpScreen';
 import { useStore } from './state/store';
 import { OnboardingSurveyModal } from './components/OnboardingSurveyModal';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const LOCATION_PROMPT_KEY = 'strd_location_prompted';
 const SURVEY_STORAGE_KEY = 'strd_onboarding_survey';

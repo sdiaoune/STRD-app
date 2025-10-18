@@ -8,6 +8,9 @@ import type {
   Comment
 } from '../types/models';
 import { supabase } from '../supabase/client';
+import { makeRedirectUri, exchangeCodeAsync } from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -133,7 +136,7 @@ interface AppState {
   signOut: () => Promise<void>;
   initializeAuth: () => Promise<void>;
   hydratePreferences: () => Promise<void>;
-  _loadInitialData: () => Promise<void>;
+  _loadInitialData: (explicitUserId?: string) => Promise<void>;
   uploadAvatar: (uri: string) => Promise<string | null>;
   updateProfile: (fields: { name?: string | null; bio?: string | null }) => Promise<boolean>;
   searchUsers: (query: string) => Promise<User[]>;
@@ -192,7 +195,7 @@ export const useStore = create<AppState>((set, get) => ({
     const clamped = Math.min(30, Math.max(10, Math.round(mi)));
     set({ distanceRadiusMi: clamped });
   },
-  eventFilter: 'forYou',
+  eventFilter: 'all',
   runState: {
     isRunning: false,
     isPaused: false,
@@ -210,9 +213,13 @@ export const useStore = create<AppState>((set, get) => ({
   authError: null,
   // After auth, load initial data
   // This can be triggered by signIn/signUp
-  _loadInitialData: async () => {
-    const currentUserId = get().currentUser.id;
-    if (!currentUserId) return;
+  _loadInitialData: async (explicitUserId?: string) => {
+    const currentUserId = explicitUserId || get().currentUser.id;
+    if (!currentUserId) {
+      console.log('[_loadInitialData] No user ID, skipping data load');
+      return;
+    }
+    console.log('[_loadInitialData] Loading data for user:', currentUserId);
 
     // profiles
     const { data: profile } = await supabase
@@ -367,6 +374,14 @@ export const useStore = create<AppState>((set, get) => ({
     }
 
     const hydratedCurrentUser = users[0] ?? { ...get().currentUser, isSuperAdmin };
+
+    console.log('[_loadInitialData] Loaded:', {
+      users: users.length,
+      organizations: organizations.length,
+      events: eventsWithinRadius.length,
+      runPosts: runPosts.length,
+      timelineItems: timelineItems.length,
+    });
 
     set({
       users: [...users, ...extraUsers],
@@ -718,9 +733,11 @@ export const useStore = create<AppState>((set, get) => ({
         if (!email || !password) throw new Error('Missing credentials');
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(error.message || 'Invalid email or password');
-        set({ isAuthenticated: true });
         const userId = data.user?.id || '';
-        set((state) => ({ currentUser: { ...state.currentUser, id: userId } }));
+        set((state) => ({
+          isAuthenticated: true,
+          currentUser: { ...state.currentUser, id: userId },
+        }));
         // Ensure profile row exists to satisfy FKs and RLS
         if (userId) {
           const { data: existing } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
@@ -728,12 +745,77 @@ export const useStore = create<AppState>((set, get) => ({
             await supabase.from('profiles').insert({ id: userId, name: null });
           }
         }
-        await get()._loadInitialData();
+        await get()._loadInitialData(userId);
       } else if (method === 'google') {
-        const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+        const redirectTo = makeRedirectUri({ scheme: 'strd', path: 'auth/callback' });
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo,
+            skipBrowserRedirect: true,
+          },
+        });
         if (error) throw new Error(error.message || 'Google sign-in failed');
+        if (!data?.url) throw new Error('No auth URL');
+
+        // Open browser and wait for redirect
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        if (result.type !== 'success' || !result.url) {
+          throw new Error('Google sign-in cancelled or failed');
+        }
+
+        console.log('[signIn(google)] Processing redirect URL...');
+        
+        const urlObj = new URL(result.url);
+        const code = urlObj.searchParams.get('code');
+        
+        if (!code) {
+          throw new Error('No authorization code in redirect');
+        }
+
+        console.log('[signIn(google)] Exchanging code via Supabase...');
+        const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        
+        if (exchangeError) {
+          console.error('[signIn(google)] Exchange error:', exchangeError);
+          throw new Error(exchangeError.message || 'Failed to exchange code');
+        }
+
+        if (!sessionData?.session) {
+          throw new Error('No session after code exchange');
+        }
+
+        const userId = sessionData.session.user.id;
+        console.log('[signIn(google)] Session created, user ID:', userId);
+
+        // Store Google metadata in profiles table
+        const googleName = sessionData.session.user.user_metadata?.full_name || sessionData.session.user.user_metadata?.name || null;
+        const googleAvatar = sessionData.session.user.user_metadata?.avatar_url || null;
+        console.log('[signIn(google)] Google metadata - name:', googleName, 'avatar:', googleAvatar);
+        
+        if (googleName || googleAvatar) {
+          const { data: existing } = await supabase.from('profiles').select('id, name, avatar_url').eq('id', userId).maybeSingle();
+          if (!existing) {
+            console.log('[signIn(google)] Creating profile with Google data');
+            await supabase.from('profiles').insert({ id: userId, name: googleName, avatar_url: googleAvatar });
+          } else if (!existing.name && googleName) {
+            console.log('[signIn(google)] Updating profile with Google data');
+            await supabase.from('profiles').update({ name: googleName, avatar_url: googleAvatar }).eq('id', userId);
+          }
+        }
+
+        // Manually set auth state and load data (don't wait for onAuthStateChange)
+        set((state) => ({
+          isAuthenticated: true,
+          currentUser: { ...state.currentUser, id: userId },
+        }));
+        
+        console.log('[signIn(google)] Loading initial data...');
+        await get()._loadInitialData(userId);
+        console.log('[signIn(google)] Sign-in complete');
       }
     } catch (e: any) {
+      console.error('[signIn] Error caught:', e);
       set({ authError: e?.message || 'Sign-in failed' });
     }
   },
@@ -748,9 +830,11 @@ export const useStore = create<AppState>((set, get) => ({
       if (userId) {
         await supabase.from('profiles').insert({ id: userId, name });
       }
-      set({ isAuthenticated: true });
-      set((state) => ({ currentUser: { ...state.currentUser, id: userId, name } }));
-      await get()._loadInitialData();
+      set((state) => ({
+        isAuthenticated: true,
+        currentUser: { ...state.currentUser, id: userId, name },
+      }));
+      await get()._loadInitialData(userId);
     } catch (e: any) {
       set({ authError: e?.message || 'Sign-up failed' });
     }
@@ -758,7 +842,25 @@ export const useStore = create<AppState>((set, get) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [], followingUserIds: [] });
+    set({
+      isAuthenticated: false,
+      users: [],
+      organizations: [],
+      events: [],
+      runPosts: [],
+      timelineItems: [],
+      followingUserIds: [],
+      currentUser: {
+        id: '',
+        name: null,
+        handle: null,
+        avatar: null,
+        city: null,
+        interests: [],
+        followingOrgs: [],
+        isSuperAdmin: false,
+      },
+    });
   },
 
   initializeAuth: async () => {
@@ -771,7 +873,7 @@ export const useStore = create<AppState>((set, get) => ({
       if (!existing) {
         await supabase.from('profiles').insert({ id: userId, name: null });
       }
-      await get()._loadInitialData();
+      await get()._loadInitialData(userId);
     }
     supabase.auth.onAuthStateChange(async (_event, session) => {
       const uid = session?.user?.id;
@@ -781,7 +883,7 @@ export const useStore = create<AppState>((set, get) => ({
         if (!existing) {
           await supabase.from('profiles').insert({ id: uid, name: null });
         }
-        await get()._loadInitialData();
+        await get()._loadInitialData(uid);
       } else {
         set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [], followingUserIds: [] });
       }
@@ -861,7 +963,7 @@ export const useStore = create<AppState>((set, get) => ({
     if (get().followingUserIds.includes(userIdToFollow)) return true;
     const { error } = await supabase
       .from('user_follows')
-      .insert({ follower_id: userId, followee_id: userIdToFollow }, { ignoreDuplicates: true });
+      .insert({ follower_id: userId, followee_id: userIdToFollow });
     if (error && error.code !== '23505') {
       console.warn('[followUser] insert failed', error);
       return false;

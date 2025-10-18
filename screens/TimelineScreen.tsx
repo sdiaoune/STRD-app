@@ -17,13 +17,20 @@ import TopBar from '../components/ui/TopBar';
 export const TimelineScreen: React.FC = () => {
   const navigation = useNavigation<TimelineScreenNavigationProp>();
   const tokensTheme = useTokensTheme();
-  const { timelineItems, postById, eventById } = useStore();
+  const timelineItems = useStore(s => s.timelineItems);
+  const postById = useStore(s => s.postById);
+  const eventById = useStore(s => s.eventById);
+  const currentUser = useStore(s => s.currentUser);
   const reload = useStore(s => s._loadInitialData);
   const [refreshing, setRefreshing] = React.useState(false);
   const insets = useSafeAreaInsets();
   const tabBarHeight = insets.bottom;
   const themeName = useStore(s => s.themePreference);
   const themedStyles = React.useMemo(() => createStyles(), [themeName, getCurrentThemeName()]);
+
+  React.useEffect(() => {
+    console.log('[TimelineScreen] timelineItems.length:', timelineItems.length);
+  }, [timelineItems.length]);
 
   const handlePostPress = (postId: string) => {
     navigation.navigate('PostDetails', { postId });
@@ -36,7 +43,10 @@ export const TimelineScreen: React.FC = () => {
   const renderTimelineItem = (item: any) => {
     if (item.type === 'run') {
       const post = postById(item.refId);
-      if (!post) return null;
+      if (!post) {
+        console.log('[TimelineScreen] Missing post for refId:', item.refId);
+        return null;
+      }
       
       return (
         <RunPostCard
@@ -47,7 +57,10 @@ export const TimelineScreen: React.FC = () => {
       );
     } else if (item.type === 'event') {
       const event = eventById(item.refId);
-      if (!event) return null;
+      if (!event) {
+        console.log('[TimelineScreen] Missing event for refId:', item.refId);
+        return null;
+      }
       
       return (
         <EventCard
@@ -72,7 +85,7 @@ export const TimelineScreen: React.FC = () => {
         title="Timeline"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
         rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
-        rightAvatar={{ source: (useStore.getState().currentUser?.avatar) || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
+        rightAvatar={{ source: currentUser?.avatar || '', label: currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
 
       <ScrollView
@@ -84,8 +97,9 @@ export const TimelineScreen: React.FC = () => {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={async () => {
-              try { setRefreshing(true); await reload(); } finally { setRefreshing(false); }
+            onRefresh={() => {
+              setRefreshing(true);
+              reload().finally(() => setRefreshing(false));
             }}
             tintColor={tokensTheme.colors.primary}
           />
