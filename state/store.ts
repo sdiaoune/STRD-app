@@ -8,7 +8,7 @@ import type {
   Comment
 } from '../types/models';
 import { supabase } from '../supabase/client';
-import { makeRedirectUri, exchangeCodeAsync } from 'expo-auth-session';
+import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
@@ -765,17 +765,17 @@ export const useStore = create<AppState>((set, get) => ({
         }
 
         console.log('[signIn(google)] Processing redirect URL...');
-        
+
         const urlObj = new URL(result.url);
         const code = urlObj.searchParams.get('code');
-        
+
         if (!code) {
           throw new Error('No authorization code in redirect');
         }
 
         console.log('[signIn(google)] Exchanging code via Supabase...');
         const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        
+
         if (exchangeError) {
           console.error('[signIn(google)] Exchange error:', exchangeError);
           throw new Error(exchangeError.message || 'Failed to exchange code');
@@ -785,31 +785,72 @@ export const useStore = create<AppState>((set, get) => ({
           throw new Error('No session after code exchange');
         }
 
-        const userId = sessionData.session.user.id;
+        const { session } = sessionData;
+        const userId = session.user.id;
         console.log('[signIn(google)] Session created, user ID:', userId);
 
-        // Store Google metadata in profiles table
-        const googleName = sessionData.session.user.user_metadata?.full_name || sessionData.session.user.user_metadata?.name || null;
-        const googleAvatar = sessionData.session.user.user_metadata?.avatar_url || null;
+        // Ensure the Supabase client is aware of the fresh session before doing RLS-protected writes
+        if (session.access_token && session.refresh_token) {
+          await supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token });
+        }
+
+        // Store Google metadata in profiles table, making sure the row exists first
+        const googleName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || null;
+        const googleAvatar = session.user.user_metadata?.avatar_url || null;
         console.log('[signIn(google)] Google metadata - name:', googleName, 'avatar:', googleAvatar);
-        
-        if (googleName || googleAvatar) {
-          const { data: existing } = await supabase.from('profiles').select('id, name, avatar_url').eq('id', userId).maybeSingle();
-          if (!existing) {
-            console.log('[signIn(google)] Creating profile with Google data');
-            await supabase.from('profiles').insert({ id: userId, name: googleName, avatar_url: googleAvatar });
-          } else if (!existing.name && googleName) {
+
+        const { data: existingProfile, error: fetchProfileError } = await supabase
+          .from('profiles')
+          .select('id, name, avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (fetchProfileError && fetchProfileError.code !== 'PGRST116') {
+          console.error('[signIn(google)] Failed to fetch profile:', fetchProfileError);
+          throw new Error(fetchProfileError.message || 'Failed to fetch profile');
+        }
+
+        if (!existingProfile) {
+          console.log('[signIn(google)] Creating profile with Google data');
+          const { error: insertError } = await supabase.from('profiles').insert({
+            id: userId,
+            name: googleName,
+            avatar_url: googleAvatar,
+          });
+          if (insertError) {
+            console.error('[signIn(google)] Failed to create profile:', insertError);
+            throw new Error(insertError.message || 'Failed to create profile');
+          }
+        } else {
+          const updates: { name?: string | null; avatar_url?: string | null } = {};
+          if (googleName && existingProfile.name !== googleName) {
+            updates.name = googleName;
+          }
+          if (googleAvatar && existingProfile.avatar_url !== googleAvatar) {
+            updates.avatar_url = googleAvatar;
+          }
+
+          if (Object.keys(updates).length > 0) {
             console.log('[signIn(google)] Updating profile with Google data');
-            await supabase.from('profiles').update({ name: googleName, avatar_url: googleAvatar }).eq('id', userId);
+            const { error: updateError } = await supabase.from('profiles').update(updates).eq('id', userId);
+            if (updateError) {
+              console.error('[signIn(google)] Failed to update profile:', updateError);
+              throw new Error(updateError.message || 'Failed to update profile');
+            }
           }
         }
 
         // Manually set auth state and load data (don't wait for onAuthStateChange)
         set((state) => ({
           isAuthenticated: true,
-          currentUser: { ...state.currentUser, id: userId },
+          currentUser: {
+            ...state.currentUser,
+            id: userId,
+            name: googleName ?? state.currentUser.name,
+            avatar: googleAvatar ?? state.currentUser.avatar,
+          },
         }));
-        
+
         console.log('[signIn(google)] Loading initial data...');
         await get()._loadInitialData(userId);
         console.log('[signIn(google)] Sign-in complete');
