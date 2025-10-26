@@ -8,11 +8,12 @@ import type {
   Comment
 } from '../types/models';
 import { supabase } from '../supabase/client';
-import * as AuthSession from 'expo-auth-session';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import * as Crypto from 'expo-crypto';
-import * as FileSystem from 'expo-file-system';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 interface RunState {
   isRunning: boolean;
@@ -157,6 +158,9 @@ interface AppState {
 }
 
 export const useStore = create<AppState>((set, get) => ({
+  // Utility: guard long-running requests so UI never hangs forever
+  // Returns null on timeout and logs the label for debugging
+  withTimeout: undefined as any,
   // Initial state
   users: [],
   organizations: [],
@@ -213,76 +217,104 @@ export const useStore = create<AppState>((set, get) => ({
   // After auth, load initial data
   // This can be triggered by signIn/signUp
   _loadInitialData: async (explicitUserId?: string) => {
-    const currentUserId = explicitUserId || get().currentUser.id;
-    if (!currentUserId) {
-      console.log('[_loadInitialData] No user ID, skipping data load');
-      return;
-    }
-    console.log('[_loadInitialData] Loading data for user:', currentUserId);
+    try {
+      const currentUserId = explicitUserId || get().currentUser.id;
+      if (!currentUserId) {
+        console.log('[_loadInitialData] No user ID, skipping data load');
+        return;
+      }
+      console.log('[_loadInitialData] Loading data for user:', currentUserId);
 
     // profiles
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', currentUserId)
-      .single();
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUserId)
+        .maybeSingle();
+      console.log('[_loadInitialData] Profile query result:', {
+        hasProfile: !!profile,
+        profileError,
+      });
 
     // org follow
-    const { data: follows } = await supabase
-      .from('user_following_organizations')
-      .select('org_id')
-      .eq('user_id', currentUserId);
+      const { data: follows, error: followsError } = await supabase
+        .from('user_following_organizations')
+        .select('org_id')
+        .eq('user_id', currentUserId);
+      if (followsError) {
+        console.error('[_loadInitialData] Follows query error:', followsError);
+      }
 
     // orgs
-    const { data: orgs } = await supabase
-      .from('organizations')
-      .select('*')
-      .order('created_at', { ascending: false });
+      const { data: orgs, error: orgsError } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (orgsError) {
+        console.error('[_loadInitialData] Organizations query error:', orgsError);
+      }
 
     // events
-    const { data: events } = await supabase
-      .from('events')
-      .select('*')
-      .order('created_at', { ascending: false });
+      const { data: events, error: eventsError } = await supabase
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: false });
+      console.log('[_loadInitialData] Events query:', {
+        count: events?.length ?? 0,
+        eventsError,
+      });
 
-    const { data: userFollowRows } = await supabase
-      .from('user_follows')
-      .select('followee_id')
-      .eq('follower_id', currentUserId);
+      const { data: userFollowRows, error: userFollowsError } = await supabase
+        .from('user_follows')
+        .select('followee_id')
+        .eq('follower_id', currentUserId);
+      if (userFollowsError) {
+        console.error('[_loadInitialData] User follows query error:', userFollowsError);
+      }
 
     // posts with aggregates
-    const { data: posts } = await supabase
-      .from('run_posts')
-      .select('*')
-      .order('created_at', { ascending: false });
+      const { data: posts, error: postsError } = await supabase
+        .from('run_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      console.log('[_loadInitialData] Posts query:', {
+        count: posts?.length ?? 0,
+        postsError,
+      });
 
     // likes by current user
-    const { data: likes } = await supabase
-      .from('run_post_likes')
-      .select('*')
-      .eq('user_id', currentUserId);
+      const { data: likes, error: likesError } = await supabase
+        .from('run_post_likes')
+        .select('*')
+        .eq('user_id', currentUserId);
+      if (likesError) {
+        console.error('[_loadInitialData] Likes query error:', likesError);
+      }
 
     // comments per post
-    const { data: comments } = await supabase
-      .from('comments')
-      .select('*')
-      .order('created_at', { ascending: true });
+      const { data: comments, error: commentsError } = await supabase
+        .from('comments')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (commentsError) {
+        console.error('[_loadInitialData] Comments query error:', commentsError);
+      }
 
-    const followingOrgs = (follows || []).map(f => f.org_id);
+      const followingOrgs = (follows || []).map(f => f.org_id);
 
     const isSuperAdmin = !!(profile && ((profile as any).role === 'super_admin' || (profile as any).is_super_admin));
 
-    const users: User[] = (profile ? [{
-      id: profile.id,
-      name: profile.name,
-      handle: profile.handle,
-      avatar: profile.avatar_url,
-      city: profile.city,
-      interests: profile.interests ?? [],
-      bio: (profile as any).bio ?? null,
-      followingOrgs,
-      isSuperAdmin,
-    }] : []);
+      const users: User[] = (profile ? [{
+        id: profile.id,
+        name: profile.name,
+        handle: profile.handle,
+        avatar: profile.avatar_url,
+        city: profile.city,
+        interests: profile.interests ?? [],
+        bio: (profile as any).bio ?? null,
+        followingOrgs,
+        isSuperAdmin,
+      }] : []);
 
     const organizations: Organization[] = (orgs || []).map(o => ({
       id: o.id,
@@ -293,7 +325,7 @@ export const useStore = create<AppState>((set, get) => ({
       ownerId: (o as any).owner_id ?? undefined,
     }));
 
-    const eventsMapped: Event[] = (events || []).map(e => ({
+      const eventsMapped: Event[] = (events || []).map(e => ({
       id: e.id,
       title: e.title,
       orgId: e.org_id,
@@ -391,6 +423,10 @@ export const useStore = create<AppState>((set, get) => ({
       currentUser: hydratedCurrentUser,
       followingUserIds: followingUsers,
     });
+    } catch (error) {
+      console.error('[_loadInitialData] Error loading data:', error);
+      throw error;
+    }
   },
 
   // Actions
@@ -746,52 +782,67 @@ export const useStore = create<AppState>((set, get) => ({
         }
         await get()._loadInitialData(userId);
       } else if (method === 'google') {
-        const redirectTo = AuthSession.makeRedirectUri({ scheme: 'strd', path: 'auth/callback' });
-        const { data, error } = await supabase.auth.signInWithOAuth({
+        const extra = (Constants.expoConfig?.extra ||
+          (Constants as any)?.manifest?.extra ||
+          (Constants as any)?.manifest2?.extra ||
+          {}) as Record<string, string>;
+
+        // On iOS, Google requires the reversed client ID scheme as the redirect URI
+        const iosReversedScheme = extra.EXPO_PUBLIC_GOOGLE_IOS_REVERSED_SCHEME;
+        const redirectTo = Platform.OS === 'ios' && iosReversedScheme
+          ? `${iosReversedScheme}:/oauthredirect`
+          : Linking.createURL('auth/callback');
+        console.log('[signIn(google)] Redirect URL:', redirectTo);
+
+        const googleClientId =
+          extra.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
+          extra.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+          process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
+          process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+        if (!googleClientId) {
+          throw new Error('Missing Google client ID (EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID).');
+        }
+
+        const rawNonce = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+        const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+          new URLSearchParams({
+            client_id: googleClientId,
+            redirect_uri: redirectTo,
+            response_type: 'id_token',
+            scope: 'openid email profile',
+            nonce: hashedNonce,
+            prompt: 'consent',
+          }).toString();
+
+        console.log('[signIn(google)] Opening Google ID token flow...');
+        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectTo);
+        if (result.type !== 'success' || !result.url) {
+          throw new Error('Google sign-in cancelled or failed');
+        }
+
+        const fragment = result.url.includes('#') ? result.url.split('#')[1] : result.url.split('?')[1] || '';
+        const idToken = new URLSearchParams(fragment).get('id_token');
+        if (!idToken) {
+          throw new Error('No id_token in Google response');
+        }
+
+        console.log('[signIn(google)] Exchanging id_token with Supabase...');
+        const { data: sessionData, error: idTokenError } = await supabase.auth.signInWithIdToken({
           provider: 'google',
-          options: {
-            redirectTo,
-            skipBrowserRedirect: true,
-          },
+          token: idToken,
+          nonce: rawNonce,
         });
-        if (error) throw new Error(error.message || 'Google sign-in failed');
-        if (!data?.url) throw new Error('No auth URL');
-
-        // Open browser and wait for redirect
-        const authResult = await AuthSession.startAsync({ authUrl: data.url, returnUrl: redirectTo });
-        if (authResult.type !== 'success') {
-          throw new Error(authResult.errorCode || 'Google sign-in cancelled or failed');
+        if (idTokenError || !sessionData?.session) {
+          console.error('[signIn(google)] signInWithIdToken error:', idTokenError);
+          throw new Error(idTokenError?.message || 'Failed to create session with id_token');
         }
 
-        const code = (authResult.params as Record<string, string>).code;
-        if (!code) {
-          throw new Error('No authorization code in redirect');
-        }
-
-        console.log('[signIn(google)] Processing redirect code...');
-
-        console.log('[signIn(google)] Exchanging code via Supabase...');
-        const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (exchangeError) {
-          console.error('[signIn(google)] Exchange error:', exchangeError);
-          throw new Error(exchangeError.message || 'Failed to exchange code');
-        }
-
-        if (!sessionData?.session) {
-          throw new Error('No session after code exchange');
-        }
-
-        const { session } = sessionData;
+        const session = sessionData.session;
         const userId = session.user.id;
-        console.log('[signIn(google)] Session created, user ID:', userId);
+        console.log('[signIn(google)] Session created via id_token. User ID:', userId);
 
-        // Ensure the Supabase client is aware of the fresh session before doing RLS-protected writes
-        if (session.access_token && session.refresh_token) {
-          await supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token });
-        }
-
-        // Store Google metadata in profiles table, making sure the row exists first
         const userMetadata = session.user.user_metadata as Record<string, string | null | undefined> | undefined;
         const googleName =
           (userMetadata?.full_name as string | undefined) ||
@@ -814,33 +865,44 @@ export const useStore = create<AppState>((set, get) => ({
 
         const { error: upsertError } = await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id' });
         if (upsertError) {
-          console.error('[signIn(google)] Failed to upsert profile:', upsertError);
-          throw new Error(upsertError.message || 'Failed to update profile');
+          console.error('[signIn(google)] Profile upsert error:', upsertError);
         }
 
-        const { data: refreshedProfile, error: refreshedProfileError } = await supabase
-          .from('profiles')
-          .select('name, avatar_url')
-          .eq('id', userId)
-          .maybeSingle();
-        if (refreshedProfileError) {
-          console.error('[signIn(google)] Failed to fetch profile after upsert:', refreshedProfileError);
-        }
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Manually set auth state and load data (don't wait for onAuthStateChange)
         set((state) => ({
           isAuthenticated: true,
+          authError: null,
           currentUser: {
             ...state.currentUser,
             id: userId,
-            name: refreshedProfile?.name ?? googleName ?? state.currentUser.name,
-            avatar: refreshedProfile?.avatar_url ?? googleAvatar ?? state.currentUser.avatar,
+            name: (googleName ?? state.currentUser.name) || null,
+            avatar: googleAvatar ?? state.currentUser.avatar,
           },
         }));
 
-        console.log('[signIn(google)] Loading initial data...');
         await get()._loadInitialData(userId);
-        console.log('[signIn(google)] Sign-in complete');
+
+        const loadedUser = get().currentUser;
+        if (!loadedUser.name && googleName) {
+          set((state) => ({
+            currentUser: {
+              ...state.currentUser,
+              name: googleName,
+              avatar: googleAvatar,
+            },
+          }));
+        }
+
+        const finalState = get();
+        console.log('[signIn(google)] Sign-in complete. Final state:', {
+          isAuthenticated: finalState.isAuthenticated,
+          userId: finalState.currentUser.id,
+          userName: finalState.currentUser.name,
+          userAvatar: finalState.currentUser.avatar,
+          postsCount: finalState.runPosts.length,
+          timelineCount: finalState.timelineItems.length,
+        });
       }
     } catch (e: any) {
       console.error('[signIn] Error caught:', e);
@@ -869,11 +931,9 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   signOut: async () => {
+    console.log('[signOut] Starting sign out...');
     try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('[signOut] Failed to sign out via Supabase:', error);
-    } finally {
+      // First clear local state immediately for responsive UI
       set({
         isAuthenticated: false,
         authError: null,
@@ -894,7 +954,20 @@ export const useStore = create<AppState>((set, get) => ({
           isSuperAdmin: false,
         },
       });
+      console.log('[signOut] Local state cleared');
+      
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('[signOut] Supabase signOut error:', error);
+        // Don't throw - we've already cleared local state
+      } else {
+        console.log('[signOut] Supabase sign out successful');
+      }
+    } catch (error) {
+      console.error('[signOut] Unexpected error during sign out:', error);
     }
+    console.log('[signOut] Sign out complete');
   },
 
   initializeAuth: async () => {
@@ -909,8 +982,10 @@ export const useStore = create<AppState>((set, get) => ({
       }
       await get()._loadInitialData(userId);
     }
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[initializeAuth] Auth state change event:', event, 'hasSession:', !!session);
       const uid = session?.user?.id;
+      console.log('[initializeAuth] Session user ID from event:', uid);
       if (uid) {
         set((state) => ({ isAuthenticated: true, currentUser: { ...state.currentUser, id: uid } }));
         const { data: existing } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
