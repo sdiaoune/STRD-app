@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { supabase } from './supabase/client';
 import Constants from 'expo-constants';
 
@@ -35,8 +35,6 @@ import { SignInScreen } from './screens/SignInScreen';
 import { SignUpScreen } from './screens/SignUpScreen';
 import { useStore } from './state/store';
 import { OnboardingSurveyModal } from './components/OnboardingSurveyModal';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const LOCATION_PROMPT_KEY = 'strd_location_prompted';
 const SURVEY_STORAGE_KEY = 'strd_onboarding_survey';
@@ -294,6 +292,45 @@ function AppContainer() {
   useEffect(() => {
     hydratePreferences();
     initializeAuth();
+    
+    // Handle deep links for OAuth callback
+    const handleDeepLink = async (event: { url: string }) => {
+      console.log('[App] Deep link received:', event.url);
+      const url = event.url;
+      
+      // Check if this is an auth callback
+      if (url.includes('auth/callback')) {
+        console.log('[App] OAuth callback detected, processing...');
+        // Extract query parameters from the URL
+        const urlParams = new URLSearchParams(url.split('?')[1] || '');
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
+        
+        if (error) {
+          console.error('[App] OAuth error:', error, errorDescription);
+          return;
+        }
+        
+        if (code) {
+          console.log('[App] Authorization code received via deep link');
+          // Supabase client will automatically handle this via the auth state listener
+          // We just need to wait for the session to be created
+        }
+      }
+    };
+    
+    // Listen for deep link events
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    
+    // Check if the app was opened with a deep link
+    Linking.getInitialURL().then(url => {
+      if (url) {
+        console.log('[App] Initial URL:', url);
+        handleDeepLink({ url });
+      }
+    });
+    
     (async () => {
       try {
         const prompted = await AsyncStorage.getItem(LOCATION_PROMPT_KEY);
@@ -316,6 +353,10 @@ function AppContainer() {
         // ignore permission errors during bootstrap
       }
     })();
+    
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   useEffect(() => {
