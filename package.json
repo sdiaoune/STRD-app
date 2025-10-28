@@ -61,7 +61,7 @@
   },
   "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": ">=20.16.0"
+    "node": ">=20.19.4"
   },
   "private": true
 }
