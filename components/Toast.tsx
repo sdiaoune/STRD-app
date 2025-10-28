@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, spacing, typography, opacity } from '../theme';
+import { colors, spacing, typography, opacity, useTheme } from '../theme';
 
 interface Props {
   message: string;
@@ -28,6 +28,7 @@ export const Toast: React.FC<Props> = ({
   position = 'bottom',
   size = 'normal',
 }) => {
+  const theme = useTheme();
   const translateY = useRef(new Animated.Value(position === 'top' ? -100 : 100)).current;
   const alpha = useRef(new Animated.Value(0)).current;
 
@@ -77,6 +78,11 @@ export const Toast: React.FC<Props> = ({
           top: position === 'top' ? spacing[8] : undefined,
           bottom: position === 'bottom' ? spacing[8] : undefined,
           borderLeftColor: palette.color,
+          // Light mode: solid white with subtle border; Dark mode: elevated dark surface
+          backgroundColor: theme.mode === 'light' ? '#FFFFFF' : colors.surface,
+          borderColor: theme.mode === 'light' ? '#E6EAF0' : colors.border,
+          // Keep light mode fully opaque to avoid appearing gray over white screens
+          ...(theme.mode === 'light' ? { opacity: 1 } : {}),
         },
       ]}
       accessibilityRole="alert"
