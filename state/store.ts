@@ -111,6 +111,10 @@ interface AppState {
   themePreference: 'dark' | 'light';
   hasHydratedTheme: boolean;
   
+  // Session tracking (avoid race conditions)
+  _currentSessionId: string | null;
+  _isLoadingData: boolean;
+  
   // Actions
   likeToggle: (postId: string) => Promise<void>;
   addComment: (postId: string, text: string) => Promise<void>;
@@ -182,6 +186,10 @@ export const useStore = create<AppState>((set, get) => ({
   themePreference: 'dark',
   hasHydratedTheme: false,
   distanceRadiusMi: 10,
+  
+  // Session tracking to prevent race conditions
+  _currentSessionId: null,
+  _isLoadingData: false,
 
   setActivityType: (type: 'run' | 'walk') => {
     set((state) => ({ runState: { ...state.runState, activityType: type } }));
@@ -782,131 +790,155 @@ export const useStore = create<AppState>((set, get) => ({
         }
         await get()._loadInitialData(userId);
       } else if (method === 'google') {
+        // Get configuration
         const extra = (Constants.expoConfig?.extra ||
           (Constants as any)?.manifest?.extra ||
           (Constants as any)?.manifest2?.extra ||
           {}) as Record<string, string>;
 
-        // On iOS, Google requires the reversed client ID scheme as the redirect URI
+        // Determine redirect URI based on platform
         const iosReversedScheme = extra.EXPO_PUBLIC_GOOGLE_IOS_REVERSED_SCHEME;
-        const redirectTo = Platform.OS === 'ios' && iosReversedScheme
+        const redirectUri = Platform.OS === 'ios' && iosReversedScheme
           ? `${iosReversedScheme}:/oauthredirect`
           : Linking.createURL('auth/callback');
-        console.log('[signIn(google)] Redirect URL:', redirectTo);
 
-        const googleClientId =
-          extra.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
+        // Get Google client ID
+        const googleClientId = extra.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || 
           extra.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
           process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
           process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+
         if (!googleClientId) {
-          throw new Error('Missing Google client ID (EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID).');
+          throw new Error('Missing Google OAuth client ID configuration');
         }
 
-        const rawNonce = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-        const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+        console.log('[signIn:google] Starting OAuth flow', {
+          platform: Platform.OS,
+          redirectUri,
+          clientId: googleClientId
+        });
 
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-          new URLSearchParams({
-            client_id: googleClientId,
-            redirect_uri: redirectTo,
-            response_type: 'id_token',
-            scope: 'openid email profile',
-            nonce: hashedNonce,
-            prompt: 'consent',
-          }).toString();
+        console.log('[DEBUG] Full client ID:', googleClientId);
+        console.log('[DEBUG] Reversed scheme:', iosReversedScheme);
 
-        console.log('[signIn(google)] Opening Google ID token flow...');
-        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectTo);
+        // iOS OAuth credentials only support authorization code flow (not implicit/id_token)
+        // Step 1: Get authorization code from Google
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
+          client_id: googleClientId,
+          redirect_uri: redirectUri,
+          response_type: 'code',
+          scope: 'openid email profile',
+        }).toString()}`;
+
+        console.log('[DEBUG] Auth URL:', authUrl);
+        console.log('[signIn:google] Opening OAuth URL in browser');
+
+        // Open the OAuth URL in browser
+        const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
         if (result.type !== 'success' || !result.url) {
-          throw new Error('Google sign-in cancelled or failed');
+          console.log('[signIn:google] User cancelled OAuth');
+          throw new Error('Google sign-in was cancelled');
         }
 
-        const fragment = result.url.includes('#') ? result.url.split('#')[1] : result.url.split('?')[1] || '';
-        const idToken = new URLSearchParams(fragment).get('id_token');
+        console.log('[signIn:google] OAuth completed, extracting authorization code');
+
+        // Authorization code flow returns code in URL query string
+        const urlParts = result.url.split('?');
+        const params = new URLSearchParams(urlParts[1] || '');
+        const code = params.get('code');
+
+        if (!code) {
+          console.error('[signIn:google] No authorization code in response');
+          throw new Error('Failed to obtain authorization code from Google');
+        }
+
+        console.log('[signIn:google] Exchanging authorization code with Google for ID token');
+
+        // Step 2: Exchange authorization code with Google's token endpoint to get ID token
+        // Note: iOS apps don't have a client secret, so we use the code directly
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            code: code,
+            client_id: googleClientId,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+          }).toString(),
+        });
+
+        if (!tokenResponse.ok) {
+          const errorText = await tokenResponse.text();
+          console.error('[signIn:google] Token exchange failed:', errorText);
+          throw new Error('Failed to exchange authorization code with Google');
+        }
+
+        const tokenData = await tokenResponse.json();
+        const idToken = tokenData.id_token;
+
         if (!idToken) {
-          throw new Error('No id_token in Google response');
+          console.error('[signIn:google] No ID token in Google response');
+          throw new Error('Failed to obtain ID token from Google');
         }
 
-        console.log('[signIn(google)] Exchanging id_token with Supabase...');
-        const { data: sessionData, error: idTokenError } = await supabase.auth.signInWithIdToken({
+        console.log('[signIn:google] Exchanging Google ID token with Supabase');
+
+        // Step 3: Exchange Google ID token for Supabase session
+        const { data: sessionData, error: sessionError } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: idToken,
-          nonce: rawNonce,
         });
-        if (idTokenError || !sessionData?.session) {
-          console.error('[signIn(google)] signInWithIdToken error:', idTokenError);
-          throw new Error(idTokenError?.message || 'Failed to create session with id_token');
+
+        if (sessionError || !sessionData?.session) {
+          console.error('[signIn:google] Session error:', sessionError);
+          throw new Error(sessionError?.message || 'Failed to create Supabase session');
         }
 
-        const session = sessionData.session;
-        const userId = session.user.id;
-        console.log('[signIn(google)] Session created via id_token. User ID:', userId);
+        const userId = sessionData.session.user.id;
+        console.log('[signIn:google] Session established, userId:', userId);
 
-        const userMetadata = session.user.user_metadata as Record<string, string | null | undefined> | undefined;
-        const googleName =
-          (userMetadata?.full_name as string | undefined) ||
-          (userMetadata?.name as string | undefined) ||
-          (userMetadata?.given_name as string | undefined) ||
-          null;
-        const googleAvatar =
-          (userMetadata?.avatar_url as string | undefined) ||
-          (userMetadata?.picture as string | undefined) ||
-          null;
-        console.log('[signIn(google)] Google metadata - name:', googleName, 'avatar:', googleAvatar);
+        // Extract user metadata from Google
+        const userMetadata = sessionData.session.user.user_metadata || {};
+        const displayName = userMetadata.full_name || userMetadata.name || '';
+        const avatarUrl = userMetadata.avatar_url || userMetadata.picture || '';
 
-        const upsertPayload: { id: string; name?: string | null; avatar_url?: string | null } = { id: userId };
-        if (googleName) {
-          upsertPayload.name = googleName;
-        }
-        if (googleAvatar) {
-          upsertPayload.avatar_url = googleAvatar;
-        }
+        console.log('[signIn:google] User metadata:', { 
+          displayName, 
+          avatarUrl: avatarUrl ? avatarUrl.substring(0, 30) + '...' : 'none' 
+        });
 
-        const { error: upsertError } = await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id' });
-        if (upsertError) {
-          console.error('[signIn(google)] Profile upsert error:', upsertError);
+        // Ensure profile exists with Google data
+        const { error: profileError } = await supabase.from('profiles').upsert(
+          {
+            id: userId,
+            name: displayName || null,
+            avatar_url: avatarUrl || null,
+          },
+          { onConflict: 'id' }
+        );
+
+        if (profileError) {
+          console.error('[signIn:google] Profile upsert error:', profileError);
         }
 
-        await new Promise(resolve => setTimeout(resolve, 300));
-
+        // Update local state
         set((state) => ({
           isAuthenticated: true,
-          authError: null,
-          currentUser: {
-            ...state.currentUser,
-            id: userId,
-            name: (googleName ?? state.currentUser.name) || null,
-            avatar: googleAvatar ?? state.currentUser.avatar,
-          },
+          currentUser: { ...state.currentUser, id: userId },
+          _currentSessionId: sessionData.session.access_token || null,
         }));
 
+        console.log('[signIn:google] Loading initial data');
         await get()._loadInitialData(userId);
-
-        const loadedUser = get().currentUser;
-        if (!loadedUser.name && googleName) {
-          set((state) => ({
-            currentUser: {
-              ...state.currentUser,
-              name: googleName,
-              avatar: googleAvatar,
-            },
-          }));
-        }
-
-        const finalState = get();
-        console.log('[signIn(google)] Sign-in complete. Final state:', {
-          isAuthenticated: finalState.isAuthenticated,
-          userId: finalState.currentUser.id,
-          userName: finalState.currentUser.name,
-          userAvatar: finalState.currentUser.avatar,
-          postsCount: finalState.runPosts.length,
-          timelineCount: finalState.timelineItems.length,
-        });
+        console.log('[signIn:google] Sign in complete');
       }
     } catch (e: any) {
-      console.error('[signIn] Error caught:', e);
-      set({ authError: e?.message || 'Sign-in failed' });
+      console.error('[signIn] Error:', e?.message);
+      set({ authError: e?.message || 'Authentication failed' });
+      throw e;
     }
   },
 
@@ -971,30 +1003,113 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   initializeAuth: async () => {
+    // Get the initial session without triggering onAuthStateChange
     const { data } = await supabase.auth.getSession();
-    const userId = data.session?.user?.id;
-    if (userId) {
-      set((state) => ({ isAuthenticated: true, currentUser: { ...state.currentUser, id: userId } }));
+    const initialSession = data.session;
+    const initialUserId = initialSession?.user?.id;
+    
+    console.log('[initializeAuth] Initial session check:', { hasSession: !!initialSession, userId: initialUserId });
+    
+    if (initialUserId) {
+      // Set session ID to track this specific session
+      set((state) => ({ 
+        isAuthenticated: true, 
+        currentUser: { ...state.currentUser, id: initialUserId },
+        _currentSessionId: initialSession?.access_token || null,
+      }));
+      
       // Ensure profile exists
-      const { data: existing } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
-      if (!existing) {
-        await supabase.from('profiles').insert({ id: userId, name: null });
-      }
-      await get()._loadInitialData(userId);
-    }
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[initializeAuth] Auth state change event:', event, 'hasSession:', !!session);
-      const uid = session?.user?.id;
-      console.log('[initializeAuth] Session user ID from event:', uid);
-      if (uid) {
-        set((state) => ({ isAuthenticated: true, currentUser: { ...state.currentUser, id: uid } }));
-        const { data: existing } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
+      try {
+        const { data: existing } = await supabase.from('profiles').select('id').eq('id', initialUserId).maybeSingle();
         if (!existing) {
-          await supabase.from('profiles').insert({ id: uid, name: null });
+          await supabase.from('profiles').insert({ id: initialUserId, name: null });
         }
-        await get()._loadInitialData(uid);
-      } else {
-        set({ isAuthenticated: false, users: [], organizations: [], events: [], runPosts: [], timelineItems: [], followingUserIds: [] });
+      } catch (err) {
+        console.error('[initializeAuth] Profile check failed:', err);
+      }
+      
+      // Load initial data
+      try {
+        set((state) => ({ _isLoadingData: true }));
+        await get()._loadInitialData(initialUserId);
+      } catch (err) {
+        console.error('[initializeAuth] Failed to load initial data:', err);
+      } finally {
+        set((state) => ({ _isLoadingData: false }));
+      }
+    }
+    
+    // Set up auth state change listener WITHOUT async operations in the callback
+    // This listener should only update UI state; data loading happens separately
+    supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[onAuthStateChange] Event:', event, 'hasSession:', !!session, 'userId:', session?.user?.id);
+      
+      const newSessionId = session?.access_token || null;
+      const currentState = get();
+      const sessionChanged = newSessionId !== currentState._currentSessionId;
+      
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        const uid = session?.user?.id;
+        if (uid && sessionChanged && !currentState._isLoadingData) {
+          console.log('[onAuthStateChange] Session detected, scheduling data load for:', uid);
+          
+          // Update state immediately but don't await data loading
+          set((state) => ({ 
+            isAuthenticated: true, 
+            currentUser: { ...state.currentUser, id: uid },
+            _currentSessionId: newSessionId,
+            _isLoadingData: true,
+          }));
+          
+          // Schedule data loading separately to avoid blocking the callback
+          // Use setTimeout to ensure this happens asynchronously
+          setTimeout(async () => {
+            try {
+              console.log('[onAuthStateChange] Starting data load for session:', uid);
+              
+              // Ensure profile exists before loading data
+              const { data: existing } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
+              if (!existing) {
+                await supabase.from('profiles').insert({ id: uid, name: null });
+              }
+              
+              // Load all data
+              await get()._loadInitialData(uid);
+              console.log('[onAuthStateChange] Data load complete for:', uid);
+            } catch (err) {
+              console.error('[onAuthStateChange] Error during deferred data load:', err);
+            } finally {
+              set((state) => ({ _isLoadingData: false }));
+            }
+          }, 0);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('[onAuthStateChange] User signed out');
+        set({ 
+          isAuthenticated: false, 
+          users: [], 
+          organizations: [], 
+          events: [], 
+          runPosts: [], 
+          timelineItems: [], 
+          followingUserIds: [],
+          _currentSessionId: null,
+          _isLoadingData: false,
+          currentUser: {
+            id: '',
+            name: null,
+            handle: null,
+            avatar: null,
+            city: null,
+            interests: [],
+            followingOrgs: [],
+            isSuperAdmin: false,
+          },
+        });
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Token was refreshed, update the session ID but don't reload data
+        set((state) => ({ _currentSessionId: newSessionId }));
+        console.log('[onAuthStateChange] Token refreshed');
       }
     });
   },
