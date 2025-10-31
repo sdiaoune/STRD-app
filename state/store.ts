@@ -118,6 +118,7 @@ interface AppState {
   // Actions
   likeToggle: (postId: string) => Promise<void>;
   addComment: (postId: string, text: string) => Promise<void>;
+  deleteComment: (postId: string, commentId: string) => Promise<void>;
   startRun: () => void;
   tickRun: () => void;
   pauseRun: () => void;
@@ -486,6 +487,22 @@ export const useStore = create<AppState>((set, get) => ({
         )
       }));
     }
+  },
+
+  deleteComment: async (postId: string, commentId: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return;
+    const { error } = await supabase.from('comments').delete().eq('id', commentId).eq('post_id', postId).eq('user_id', userId);
+    if (error) {
+      console.warn('[deleteComment] delete failed', error);
+      return;
+    }
+    set((state) => ({
+      runPosts: state.runPosts.map(p => p.id === postId ? {
+        ...p,
+        comments: p.comments.filter(c => c.id !== commentId)
+      } : p)
+    }));
   },
 
   startRun: () => {

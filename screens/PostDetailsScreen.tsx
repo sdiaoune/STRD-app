@@ -36,7 +36,7 @@ export const PostDetailsScreen: React.FC = () => {
   
   const [commentText, setCommentText] = useState('');
   const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
-  const { postById, userById, likeToggle, addComment, deleteRunPost, currentUser } = useStore();
+  const { postById, userById, likeToggle, addComment, deleteComment, deleteRunPost, currentUser } = useStore();
   const unit = useStore(state => state.unitPreference);
   const post = postById(postId);
   const user = post ? userById(post.userId) : null;
@@ -273,6 +273,15 @@ export const PostDetailsScreen: React.FC = () => {
                     )}
                   </View>
                   <Text style={styles.commentText}>{comment.text}</Text>
+                  {comment.userId === currentUser.id && (
+                    <TouchableOpacity 
+                      onPress={() => deleteComment(post.id, comment.id)}
+                      style={{ marginTop: spacing.xs }}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="trash" size={16} color={colors.icon.secondary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             );
