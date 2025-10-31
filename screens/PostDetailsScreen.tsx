@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions, Alert, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions, Alert, Platform, KeyboardAvoidingView, Modal } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { TimelineStackParamList } from '../types/navigation';
+import { useBottomTabOverflow } from '../components/ui/TabBarBackground.ios';
 
 type PostDetailsScreenNavigationProp = NativeStackNavigationProp<TimelineStackParamList, 'PostDetails'>;
 type PostDetailsScreenRouteProp = RouteProp<TimelineStackParamList, 'PostDetails'>;
@@ -31,8 +32,10 @@ export const PostDetailsScreen: React.FC = () => {
   const { postId } = route.params;
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const tabBarHeight = useBottomTabOverflow?.() ?? 0;
   
   const [commentText, setCommentText] = useState('');
+  const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
   const { postById, userById, likeToggle, addComment, deleteRunPost, currentUser } = useStore();
   const unit = useStore(state => state.unitPreference);
   const post = postById(postId);
@@ -69,6 +72,7 @@ export const PostDetailsScreen: React.FC = () => {
     if (commentText.trim()) {
       addComment(post.id, commentText.trim());
       setCommentText('');
+      setIsCommentModalVisible(false);
     }
   };
 
@@ -177,9 +181,8 @@ export const PostDetailsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={headerHeight + 24}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: spacing.lg + insets.bottom + tabBarHeight }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Post Header */}
         <View style={styles.postHeader}>
           <View style={styles.userInfo}>
@@ -238,6 +241,13 @@ export const PostDetailsScreen: React.FC = () => {
             likeCount={post.likes}
             onPress={handleLike}
           />
+          <TouchableOpacity 
+            style={styles.commentActionButton}
+            onPress={() => setIsCommentModalVisible(true)}
+          >
+            <Ionicons name="chatbubble-outline" size={20} color={colors.icon.secondary} />
+            <Text style={styles.commentActionCount}>{post.comments.length}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Comments */}
@@ -270,29 +280,50 @@ export const PostDetailsScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Add Comment */}
-      <View style={styles.addCommentSection}>
-        <TextInput
-          style={styles.commentInput}
-          placeholder="Add a comment..."
-          placeholderTextColor={colors.text.secondary}
-          value={commentText}
-          onChangeText={setCommentText}
-          multiline
-        />
-        <TouchableOpacity 
-          style={[styles.sendButton, !commentText.trim() && styles.sendButtonDisabled]}
-          onPress={handleAddComment}
-          disabled={!commentText.trim()}
+      {/* Comment Modal */}
+      <Modal
+        visible={isCommentModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsCommentModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <Ionicons 
-            name="send" 
-            size={20} 
-            color={commentText.trim() ? colors.primary : colors.icon.muted} 
+          <TouchableOpacity 
+            style={styles.modalBackdrop}
+            onPress={() => setIsCommentModalVisible(false)}
           />
-        </TouchableOpacity>
-      </View>
-      </KeyboardAvoidingView>
+          <View style={[styles.commentModal, { paddingBottom: insets.bottom + spacing.md }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Add a Comment</Text>
+            
+            <View style={styles.modalCommentInputContainer}>
+              <TextInput
+                style={styles.modalCommentInput}
+                placeholder="What do you think..."
+                placeholderTextColor={colors.text.secondary}
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+                autoFocus
+              />
+              <TouchableOpacity 
+                style={[styles.modalSendButton, commentText.trim() && styles.modalSendButtonActive]}
+                onPress={handleAddComment}
+                disabled={!commentText.trim()}
+              >
+                <Ionicons 
+                  name="send" 
+                  size={20} 
+                  color={commentText.trim() ? colors.onPrimary : colors.icon.muted} 
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -339,7 +370,7 @@ const createStyles = () => StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.card,
     margin: spacing.md,
-    borderRadius: borderRadius.md,
+    borderRadius: 12,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
@@ -365,7 +396,7 @@ const createStyles = () => StyleSheet.create({
   routeImage: {
     width: '100%',
     height: 200,
-    borderRadius: borderRadius.md,
+    borderRadius: 12,
     backgroundColor: colors.surfaceMuted,
   },
   caption: {
@@ -418,36 +449,6 @@ const createStyles = () => StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 20,
   },
-  addCommentSection: {
-    flexDirection: 'row',
-    padding: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.bg,
-    alignItems: 'flex-end',
-  },
-  commentInput: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginRight: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    color: colors.text.primary,
-    maxHeight: 100,
-  },
-  sendButton: {
-    padding: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
   errorContainer: {
     flex: 1,
     alignItems: 'center',
@@ -480,7 +481,7 @@ const createStyles = () => StyleSheet.create({
     width: '100%',
     height: 200,
     backgroundColor: colors.bg,
-    borderRadius: borderRadius.md,
+    borderRadius: 12,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -566,5 +567,99 @@ const createStyles = () => StyleSheet.create({
     ...typography.caption,
     color: colors.text.secondary,
     marginLeft: spacing.xs,
+  },
+  commentActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: spacing.md,
+  },
+  commentActionCount: {
+    ...typography.small,
+    color: colors.text.secondary,
+    marginLeft: spacing.xs,
+  },
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'transparent',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  commentModal: {
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg,
+    paddingTop: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: spacing.md,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  modalCommentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  modalCommentInput: {
+    flex: 1,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    color: colors.text.primary,
+    ...typography.body,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    minHeight: 44,
+    maxHeight: 100,
+  },
+  modalSendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  modalSendButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
 });

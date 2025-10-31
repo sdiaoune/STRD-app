@@ -454,20 +454,11 @@ export const useStore = create<AppState>((set, get) => ({
       } : p)
     }));
 
+    // Insert/delete the like - database trigger will automatically update likes_count
     if (willLike) {
       await supabase.from('run_post_likes').insert({ post_id: postId, user_id: userId });
-      try {
-        await supabase.rpc('increment_likes_count', { post_id_input: postId });
-      } catch {
-        await supabase.from('run_posts').update({ likes_count: (target.likes || 0) + 1 }).eq('id', postId);
-      }
     } else {
       await supabase.from('run_post_likes').delete().eq('post_id', postId).eq('user_id', userId);
-      try {
-        await supabase.rpc('decrement_likes_count', { post_id_input: postId });
-      } catch {
-        await supabase.from('run_posts').update({ likes_count: (target.likes || 0) - 1 }).eq('id', postId);
-      }
     }
   },
 

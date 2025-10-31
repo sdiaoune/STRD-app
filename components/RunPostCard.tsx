@@ -39,6 +39,11 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
     navigation.navigate('RunStats', { runId: post.id });
   };
 
+  const handleCommentPress = () => {
+    // Navigate to post details to view/add comments
+    onPress();
+  };
+
   const styles = useLegacyStyles(stylesFactory);
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
@@ -100,7 +105,7 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
             <Ionicons name="people" size={20} color={colors.icon.secondary} />
             <Text style={styles.commentCount}>{post.likes}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.commentButton}>
+          <TouchableOpacity style={styles.commentButton} onPress={handleCommentPress}>
             <Ionicons name="chatbubble-outline" size={20} color={colors.icon.secondary} />
             <Text style={styles.commentCount}>{post.comments.length}</Text>
           </TouchableOpacity>

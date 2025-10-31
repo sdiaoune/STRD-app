@@ -15,7 +15,6 @@ import { RunPostCard } from '../components/RunPostCard';
 import { EventCard } from '../components/EventCard';
 import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
-import { Button } from '../components/Button';
 import Stat from '../components/ui/Stat';
 import { formatDistance as fmtDistance } from '../utils/formatters';
 
@@ -220,10 +219,6 @@ export const ProfileScreen: React.FC = () => {
               message="Start running or create events to see your activity here"
             />
           )}
-        </View>
-
-        <View style={{ padding: spacing.md }}>
-          <Button style={{ width: '100%' }} onPress={() => (navigation as any).navigate('Settings')}>Settings</Button>
         </View>
       </ScrollView>
     </SafeAreaView>

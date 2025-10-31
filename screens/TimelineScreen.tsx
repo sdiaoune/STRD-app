@@ -22,6 +22,8 @@ export const TimelineScreen: React.FC = () => {
   const eventById = useStore(s => s.eventById);
   const currentUser = useStore(s => s.currentUser);
   const reload = useStore(s => s._loadInitialData);
+  // Subscribe to runPosts to ensure re-renders when posts are updated (e.g., when likes change)
+  const runPosts = useStore(s => s.runPosts);
   const [refreshing, setRefreshing] = React.useState(false);
   const insets = useSafeAreaInsets();
   const tabBarHeight = insets.bottom;
