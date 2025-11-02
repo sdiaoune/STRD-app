@@ -147,8 +147,9 @@ interface AppState {
   searchUsers: (query: string) => Promise<User[]>;
   followUser: (userId: string) => Promise<boolean>;
   unfollowUser: (userId: string) => Promise<boolean>;
-  createPage: (args: { name: string; type: Organization['type']; city: string; logoUri?: string }) => Promise<string>;
-  updatePage: (orgId: string, args: { name?: string; city?: string; logoUri?: string }) => Promise<boolean>;
+  createPage: (args: { name: string; type: Organization['type']; city: string; logoUri?: string; website?: string | null }) => Promise<string>;
+  updatePage: (orgId: string, args: { name?: string; city?: string; logoUri?: string; website?: string | null }) => Promise<boolean>;
+  deletePage: (orgId: string) => Promise<boolean>;
   createEvent: (orgId: string, dto: { title: string; dateISO: string; city: string; location: { name: string; lat: number; lon: number }; tags: string[]; description?: string | null }, coverUri?: string) => Promise<boolean>;
   updateEvent: (eventId: string, updates: Partial<{ title: string; dateISO: string; city: string; location: { name: string; lat: number; lon: number }; tags: string[]; description: string | null }>, coverUri?: string) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
@@ -160,6 +161,8 @@ interface AppState {
   orgById: (id: string) => Organization | undefined;
   userById: (id: string) => User | undefined;
   getFilteredEvents: () => Event[];
+  ownedOrganizations: () => Organization[];
+  manageableEvents: () => Event[];
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -255,7 +258,7 @@ export const useStore = create<AppState>((set, get) => ({
       }
 
     // orgs
-      const { data: orgs, error: orgsError } = await supabase
+  const { data: orgs, error: orgsError } = await supabase
         .from('organizations')
         .select('*')
         .order('created_at', { ascending: false });
@@ -325,12 +328,13 @@ export const useStore = create<AppState>((set, get) => ({
         isSuperAdmin,
       }] : []);
 
-    const organizations: Organization[] = (orgs || []).map(o => ({
+  const organizations: Organization[] = (orgs || []).map(o => ({
       id: o.id,
       name: o.name,
       type: o.type,
       logo: o.logo_url,
       city: o.city,
+      website: (o as any).website_url ?? null,
       ownerId: (o as any).owner_id ?? undefined,
     }));
 
@@ -1237,7 +1241,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // Page creation/update
-  createPage: async ({ name, type, city, logoUri }: { name: string; type: Organization['type']; city: string; logoUri?: string }) => {
+  createPage: async ({ name, type, city, logoUri, website }: { name: string; type: Organization['type']; city: string; logoUri?: string; website?: string | null }) => {
     const userId = get().currentUser.id;
     if (!userId) return '';
     let logoUrl: string | null = null;
@@ -1250,33 +1254,58 @@ export const useStore = create<AppState>((set, get) => ({
       })();
       if (!logoUrl) return '';
     }
+    const payload: any = { name, type, city, logo_url: logoUrl, owner_id: userId };
+    if (website !== undefined) payload.website_url = website; // only include if provided to avoid schema mismatch
     const { data, error } = await supabase
       .from('organizations')
-      .insert({ name, type, city, logo_url: logoUrl, owner_id: userId })
+      .insert(payload)
       .select('*')
       .single();
     if (error || !data) return '';
-    const org: Organization = { id: data.id, name: data.name, type: data.type, logo: data.logo_url, city: data.city, ownerId: data.owner_id };
+    const org: Organization = { id: data.id, name: data.name, type: data.type, logo: data.logo_url, city: data.city, website: (data as any).website_url ?? null, ownerId: data.owner_id };
     set((state) => ({ organizations: [org, ...state.organizations] }));
     return org.id;
   },
 
-  updatePage: async (orgId: string, { name, city, logoUri }: { name?: string; city?: string; logoUri?: string }) => {
+  updatePage: async (orgId: string, { name, city, logoUri, website }: { name?: string; city?: string; logoUri?: string; website?: string | null }) => {
     const updates: any = {};
     if (name !== undefined) updates.name = name;
     if (city !== undefined) updates.city = city;
+    if (website !== undefined) updates.website_url = website || null;
     if (logoUri) {
       const userId = get().currentUser.id;
       const fileExt = (logoUri.split('.').pop() || 'jpg').toLowerCase();
-      const path = `${userId}/pages/${orgId}/logo.${fileExt}`;
+      const path = `${userId}/pages/${orgId}/${Date.now()}/logo.${fileExt}`;
       const displayUrl = await uploadImageToStorage('page-logos', path, logoUri);
       if (!displayUrl) return false;
       updates.logo_url = displayUrl.split('?')[0];
     }
-    const { error, data } = await supabase.from('organizations').update(updates).eq('id', orgId).select('*').single();
+    // Try update; if the remote schema doesn't yet have website_url, retry without it
+    let { error, data } = await supabase.from('organizations').update(updates).eq('id', orgId).select('*').single();
+    if (error && (updates.website_url !== undefined) && (error.message?.includes('website_url') || error.code === '42703')) {
+      // remove unsupported column and retry once
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete updates.website_url;
+      const retry = await supabase.from('organizations').update(updates).eq('id', orgId).select('*').single();
+      error = retry.error as any;
+      data = retry.data as any;
+    }
     if (error) return false;
     set((state) => ({
-      organizations: state.organizations.map(o => o.id === orgId ? { id: data.id, name: data.name, type: data.type, logo: data.logo_url, city: data.city, ownerId: data.owner_id } : o),
+      organizations: state.organizations.map(o => o.id === orgId ? { id: data.id, name: data.name, type: data.type, logo: data.logo_url, city: data.city, website: (data as any).website_url ?? null, ownerId: data.owner_id } : o),
+    }));
+    return true;
+  },
+
+  deletePage: async (orgId: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const { data: org } = await supabase.from('organizations').select('owner_id').eq('id', orgId).maybeSingle();
+    if (!org || org.owner_id !== userId) return false;
+    const { error } = await supabase.from('organizations').delete().eq('id', orgId);
+    if (error) return false;
+    set((state) => ({
+      organizations: state.organizations.filter(o => o.id !== orgId),
     }));
     return true;
   },
@@ -1376,6 +1405,13 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   deleteEvent: async (eventId: string) => {
+    const state = get();
+    const ev = state.events.find(e => e.id === eventId);
+    if (!ev) return false;
+    const ownerId = state.currentUser.id;
+    const ownsOrg = !!state.organizations.find(o => o.id === ev.orgId && o.ownerId === ownerId);
+    const canDelete = ev.createdByUserId === ownerId || ownsOrg || state.currentUser.isSuperAdmin;
+    if (!canDelete) return false;
     const { error } = await supabase.from('events').delete().eq('id', eventId);
     if (error) return false;
     set((state) => ({
@@ -1432,6 +1468,21 @@ export const useStore = create<AppState>((set, get) => ({
     });
 
     return sortForSuperAdmin(personalized);
+  },
+
+  ownedOrganizations: () => {
+    const state = get();
+    const ownerId = state.currentUser.id;
+    if (!ownerId) return [];
+    return state.organizations.filter(org => org.ownerId === ownerId);
+  },
+
+  manageableEvents: () => {
+    const state = get();
+    const ownerId = state.currentUser.id;
+    if (!ownerId) return [];
+    const ownedOrgIds = new Set(state.organizations.filter(o => o.ownerId === ownerId).map(o => o.id));
+    return state.events.filter(ev => ev.createdByUserId === ownerId || ownedOrgIds.has(ev.orgId));
   },
 
   isParticipant: (_eventId: string) => true,

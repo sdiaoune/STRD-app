@@ -18,6 +18,9 @@ import { EventDetailsScreen } from './screens/EventDetailsScreen';
 import { CreatePageScreen } from './screens/CreatePageScreen';
 import { CreateEventScreen } from './screens/CreateEventScreen';
 import { EditEventScreen } from './screens/EditEventScreen';
+import { EditOrganizationScreen } from './screens/EditOrganizationScreen';
+import { ManageOrganizationsScreen } from './screens/ManageOrganizationsScreen';
+import { ManageEventsScreen } from './screens/ManageEventsScreen';
 import { TimelineScreen } from './screens/TimelineScreen';
 import { PostDetailsScreen } from './screens/PostDetailsScreen';
 import { RunStatsScreen } from './screens/RunStatsScreen';
@@ -82,6 +85,21 @@ function EventsStack() {
         component={EditEventScreen}
         options={{ title: 'Edit Event' }}
       />
+      <Stack.Screen 
+        name="EditOrganization" 
+        component={EditOrganizationScreen}
+        options={{ title: 'Edit Organization' }}
+      />
+      <Stack.Screen 
+        name="ManageOrganizations" 
+        component={ManageOrganizationsScreen}
+        options={{ title: 'Manage Organizations' }}
+      />
+      <Stack.Screen 
+        name="ManageEvents" 
+        component={ManageEventsScreen}
+        options={{ title: 'Manage Events' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -120,6 +138,11 @@ function TimelineStack() {
         name="EditEvent" 
         component={EditEventScreen}
         options={{ title: 'Edit Event', headerBackTitle: 'Timeline' }}
+      />
+      <Stack.Screen 
+        name="EditOrganization" 
+        component={EditOrganizationScreen}
+        options={{ title: 'Edit Organization', headerBackTitle: 'Timeline' }}
       />
       <Stack.Screen 
         name="BusinessProfile" 
@@ -188,6 +211,11 @@ function ProfileStack() {
         name="EditEvent" 
         component={EditEventScreen}
         options={{ title: 'Edit Event', headerBackTitle: 'Profile' }}
+      />
+      <Stack.Screen 
+        name="EditOrganization" 
+        component={EditOrganizationScreen}
+        options={{ title: 'Edit Organization', headerBackTitle: 'Profile' }}
       />
       <Stack.Screen 
         name="BusinessProfile" 

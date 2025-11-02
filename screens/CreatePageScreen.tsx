@@ -15,6 +15,7 @@ export const CreatePageScreen: React.FC = () => {
   const [city, setCity] = useState('');
   const [type, setType] = useState<'community' | 'partner' | 'sponsor' | 'run_club'>('community');
   const [logoUri, setLogoUri] = useState<string | undefined>();
+  const [website, setWebsite] = useState('');
 
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.9 });
@@ -25,7 +26,8 @@ export const CreatePageScreen: React.FC = () => {
 
   const submit = async () => {
     if (!name || !city) return;
-    const id = await createPage({ name, type, city, logoUri });
+    const normalizedWebsite = website.trim() ? website.trim() : undefined;
+    const id = await createPage({ name, type, city, logoUri, website: normalizedWebsite });
     if (!id) {
       Alert.alert('Error', 'Failed to create page');
       return;
@@ -43,6 +45,7 @@ export const CreatePageScreen: React.FC = () => {
       >
         <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Name</Text><TextInput value={name} onChangeText={setName} style={[styles.input, fieldStyle]} placeholder="Your page name" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
         <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>City</Text><TextInput value={city} onChangeText={setCity} style={[styles.input, fieldStyle]} placeholder="City" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Website (optional)</Text><TextInput value={website} onChangeText={setWebsite} style={[styles.input, fieldStyle]} placeholder="https://example.org" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} autoCapitalize="none" keyboardType="url" /></View>
         <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Type</Text><TextInput value={type} onChangeText={(t) => setType((t as any) || 'community')} style={[styles.input, fieldStyle]} placeholder="community | partner | sponsor | run_club" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
         <TouchableOpacity style={[styles.btn, fieldStyle]} onPress={pickImage}><Text style={[styles.btnText, { color: fieldStyle.color }]}>{logoUri ? 'Change Logo' : 'Pick Logo'}</Text></TouchableOpacity>
         <TouchableOpacity style={[styles.btn, styles.primary]} onPress={submit}><Text style={[styles.btnText, styles.primaryText]}>Create Page</Text></TouchableOpacity>

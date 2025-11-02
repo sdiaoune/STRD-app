@@ -181,7 +181,7 @@ export const PostDetailsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: spacing.lg + insets.bottom + tabBarHeight }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Post Header */}
         <View style={styles.postHeader}>
@@ -287,6 +287,7 @@ export const PostDetailsScreen: React.FC = () => {
             );
           })}
         </View>
+        <View style={{ height: 250 }} />
       </ScrollView>
 
       {/* Comment Modal */}

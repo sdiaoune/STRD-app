@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,6 +9,7 @@ import type { EventsStackParamList, AppNavigationParamList } from '../types/navi
 type BusinessProfileScreenNavigationProp = NativeStackNavigationProp<EventsStackParamList & AppNavigationParamList, 'BusinessProfile'>;
 type BusinessProfileScreenRouteProp = RouteProp<EventsStackParamList, 'BusinessProfile'>;
 import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme } from '../theme';
 import { Avatar } from '../components/Avatar';
 import { EventCard } from '../components/EventCard';
@@ -21,9 +22,10 @@ export const BusinessProfileScreen: React.FC = () => {
   const route = useRoute<BusinessProfileScreenRouteProp>();
   const { orgId } = route.params;
   
-  const { orgById, events, runPosts, postById, eventById } = useStore();
+  const { orgById, events, runPosts, postById, eventById, deletePage, currentUser } = useStore();
   const theme = useTokensTheme();
   const organization = orgById(orgId);
+  const isOwner = organization && organization.ownerId === currentUser.id;
 
   if (!organization) {
     return (
@@ -49,9 +51,56 @@ export const BusinessProfileScreen: React.FC = () => {
     navigation.navigate('PostDetails', { postId });
   };
 
-  const handleWebsitePress = () => {
-    // Placeholder for website link
-    console.log('Website link pressed');
+  const handleWebsitePress = async () => {
+    const url = organization?.website;
+    if (!url) return;
+    const normalized = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+    Alert.alert(
+      'Open External Link',
+      `You are about to open:\n${normalized}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          onPress: async () => {
+            try {
+              await WebBrowser.openBrowserAsync(normalized, {
+                presentationStyle: 'automatic',
+                controlsColor: theme.colors.primary,
+                toolbarColor: theme.colors.surface,
+                enableBarCollapsing: true,
+                dismissButtonStyle: 'close',
+              } as any);
+            } catch {}
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditPress = () => {
+    navigation.navigate('EditOrganization', { orgId });
+  };
+
+  const handleDeletePress = () => {
+    Alert.alert(
+      'Delete Organization',
+      'Are you sure you want to delete this organization? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deletePage(orgId);
+            navigation.goBack();
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -74,10 +123,25 @@ export const BusinessProfileScreen: React.FC = () => {
             }
           </Text>
           
-          <TouchableOpacity style={[styles.websiteButton, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]} onPress={handleWebsitePress}>
-            <Ionicons name="globe" size={20} color={theme.mode === 'light' ? '#000000' : colors.primary} />
-            <Text style={[styles.websiteText, { color: theme.mode === 'light' ? '#000000' : colors.primary }]}>Visit Website</Text>
-          </TouchableOpacity>
+          {organization.website ? (
+            <TouchableOpacity style={[styles.websiteButton, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]} onPress={handleWebsitePress}>
+              <Ionicons name="globe" size={20} color={theme.mode === 'light' ? '#000000' : colors.primary} />
+              <Text style={[styles.websiteText, { color: theme.mode === 'light' ? '#000000' : colors.primary }]}>Visit Website</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {isOwner && (
+            <View style={styles.ownerActions}>
+              <TouchableOpacity style={[styles.actionButton, styles.editButton, { marginRight: spacing.sm }]} onPress={handleEditPress}>
+                <Ionicons name="create-outline" size={18} color="#ffffff" />
+                <Text style={styles.actionButtonText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={handleDeletePress}>
+                <Ionicons name="trash-outline" size={18} color={colors.bg} />
+                <Text style={[styles.actionButtonText, { color: colors.bg }]}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Upcoming Events */}
@@ -204,5 +268,34 @@ const styles = StyleSheet.create({
   errorText: {
     ...typography.h2,
     color: colors.muted,
+  },
+  ownerActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  editButton: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  deleteButton: {
+    backgroundColor: colors.danger,
+    borderColor: colors.danger,
+  },
+  actionButtonText: {
+    ...typography.body,
+    marginLeft: spacing.sm,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });

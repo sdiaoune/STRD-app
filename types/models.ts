@@ -16,6 +16,7 @@ export type Organization = {
   type: 'community' | 'partner' | 'sponsor' | 'run_club';
   logo: string | null;
   city: string;
+  website?: string | null;
   ownerId?: string;
 };
 

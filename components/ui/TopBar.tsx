@@ -1,22 +1,25 @@
-import React from 'react';
-import { View, Pressable, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Pressable, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../theme';
 import { Avatar } from '../Avatar';
 
 type Action = { icon: keyof typeof Ionicons.glyphMap; accessibilityLabel: string; onPress: () => void };
+type DropdownAction = { label: string; icon?: keyof typeof Ionicons.glyphMap; onPress: () => void };
 
 type Props = {
   title: string;
   leftIcon?: { icon: keyof typeof Ionicons.glyphMap; accessibilityLabel: string; onPress: () => void };
   rightActions?: Action[];
+  rightDropdown?: { icon: keyof typeof Ionicons.glyphMap; accessibilityLabel: string; actions: DropdownAction[] };
   rightAvatar?: { source?: string; label?: string; onPress: () => void };
   compact?: boolean; // reduces vertical padding for tighter pages
 };
 
-export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], rightAvatar, compact }) => {
+export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], rightDropdown, rightAvatar, compact }) => {
   const { colors, spacing, typography, mode } = useTheme();
+  const [dropdownVisible, setDropdownVisible] = useState(false);
   const padY = compact ? spacing.x2 : spacing.x4;
   const styles = StyleSheet.create({
     container: {
@@ -47,7 +50,36 @@ export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], ri
     },
     side: { minWidth: 64, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'flex-start' },
     avatarBtn: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' },
+    dropdownMenu: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: spacing.sm,
+      minWidth: 200,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    dropdownItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    dropdownText: {
+      color: colors.text.primary,
+      marginLeft: spacing.sm,
+      fontSize: 16,
+    },
   });
+
+  const handleDropdownAction = (onPress: () => void) => {
+    setDropdownVisible(false);
+    onPress();
+  };
 
   return (
     <View style={styles.container}>
@@ -74,18 +106,49 @@ export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], ri
         {title}
       </Text>
       <View style={[styles.side, { justifyContent: 'flex-end' }]}>
-        {rightActions.map((a) => (
-          <Pressable
-            key={a.accessibilityLabel}
-            accessibilityRole="button"
-            accessibilityLabel={a.accessibilityLabel}
-            onPress={a.onPress}
-            hitSlop={12}
-            style={styles.button}
-          >
-            <Ionicons name={a.icon} size={22} color={colors.text.primary} />
-          </Pressable>
-        ))}
+        {rightDropdown ? (
+          <>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={rightDropdown.accessibilityLabel}
+              onPress={() => setDropdownVisible(!dropdownVisible)}
+              hitSlop={12}
+              style={styles.button}
+            >
+              <Ionicons name={rightDropdown.icon} size={22} color={colors.text.primary} />
+            </Pressable>
+            {dropdownVisible && (
+              <Modal transparent animationType="none" visible={dropdownVisible}>
+                <TouchableOpacity style={{ flex: 1 }} onPress={() => setDropdownVisible(false)} />
+                <View style={styles.dropdownMenu}>
+                  {rightDropdown.actions.map((action, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.dropdownItem}
+                      onPress={() => handleDropdownAction(action.onPress)}
+                    >
+                      {action.icon && <Ionicons name={action.icon} size={18} color={colors.text.primary} />}
+                      <Text style={styles.dropdownText}>{action.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </Modal>
+            )}
+          </>
+        ) : (
+          rightActions.map((a) => (
+            <Pressable
+              key={a.accessibilityLabel}
+              accessibilityRole="button"
+              accessibilityLabel={a.accessibilityLabel}
+              onPress={a.onPress}
+              hitSlop={12}
+              style={styles.button}
+            >
+              <Ionicons name={a.icon} size={22} color={colors.text.primary} />
+            </Pressable>
+          ))
+        )}
         {rightAvatar ? (
           <Pressable
             accessibilityRole="button"

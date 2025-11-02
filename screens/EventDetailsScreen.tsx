@@ -200,15 +200,18 @@ export const EventDetailsScreen: React.FC = () => {
 
       {/* Action Buttons */}
       <View style={[styles.actionButtons, { paddingBottom: insets.bottom + spacing.sm, marginBottom: tabBarHeight + spacing.md }]}> 
-        <TouchableOpacity style={styles.remindButton} onPress={handleRemindMe}>
-          <Text style={styles.remindButtonText}>{isReminded ? 'Reminder Set' : 'Remind Me'}</Text>
+        <TouchableOpacity style={[styles.remindButton, isReminded && styles.remindButtonActive]} onPress={handleRemindMe}>
+          <Ionicons name={isReminded ? 'notifications' : 'notifications-outline'} size={20} color={isReminded ? colors.primary : colors.icon.secondary} style={{ marginRight: spacing.xs }} />
+          <Text style={[styles.remindButtonText, isReminded && styles.remindButtonTextActive]}>{isReminded ? 'Reminder Set' : 'Remind Me'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.imInButton} onPress={handleImIn}>
+        <TouchableOpacity style={[styles.imInButton, isJoined && styles.imInButtonActive]} onPress={handleImIn}>
+          <Ionicons name={isJoined ? 'checkmark-circle' : 'checkmark-circle-outline'} size={20} color={colors.bg} style={{ marginRight: spacing.xs }} />
           <Text style={styles.imInButtonText}>{isJoined ? 'Leave' : "I'm In"}</Text>
         </TouchableOpacity>
         {isOwnerOrCreator ? (
-          <TouchableOpacity style={[styles.imInButton, { backgroundColor: colors.card, marginLeft: spacing.sm }]} onPress={() => navigation.navigate('EditEvent' as any, { eventId: event.id } as any)}>
-            <Text style={[styles.imInButtonText, { color: colors.text.primary }]}>Edit</Text>
+          <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditEvent' as any, { eventId: event.id } as any)}>
+            <Ionicons name="create-outline" size={20} color={colors.text.primary} style={{ marginRight: spacing.xs }} />
+            <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -344,6 +347,9 @@ const createStyles = () => StyleSheet.create({
     backgroundColor: colors.bg,
   },
   remindButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     flex: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
@@ -351,25 +357,70 @@ const createStyles = () => StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.md,
     marginRight: spacing.sm,
-    alignItems: 'center',
+    backgroundColor: colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  remindButtonActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.bg,
   },
   remindButtonText: {
     ...typography.body,
     color: colors.text.primary,
     fontWeight: '600',
   },
+  remindButtonTextActive: {
+    color: colors.primary,
+  },
   imInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     flex: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.primary,
     borderRadius: borderRadius.md,
     marginLeft: spacing.sm,
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  imInButtonActive: {
+    opacity: 0.85,
   },
   imInButtonText: {
     ...typography.body,
     color: colors.bg,
+    fontWeight: '600',
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    marginLeft: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  editButtonText: {
+    ...typography.body,
+    color: colors.text.primary,
     fontWeight: '600',
   },
   errorContainer: {

@@ -72,7 +72,7 @@ export const RunStatsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -124,7 +124,7 @@ export const RunStatsScreen: React.FC = () => {
         {renderTrajectory()}
 
         {/* Route Preview */}
-        {run.routePreview && (
+        {/* {run.routePreview && (
           <View style={styles.routePreview}>
             <Text style={styles.sectionTitle}>Route Preview</Text>
             <View style={styles.routeImageContainer}>
@@ -134,7 +134,7 @@ export const RunStatsScreen: React.FC = () => {
               </View>
             </View>
           </View>
-        )}
+        )} */}
 
         {/* Caption */}
         {run.caption && (
@@ -143,6 +143,7 @@ export const RunStatsScreen: React.FC = () => {
             <Text style={styles.caption}>{run.caption}</Text>
           </View>
         )}
+        <View style={{ height: 250 }} />
       </ScrollView>
     </SafeAreaView>
   );

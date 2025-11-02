@@ -68,11 +68,17 @@ export const EventsScreen: React.FC = () => {
       <TopBar
         title={locationLabel || 'Events'}
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
-        rightActions={[
-          { icon: 'add-circle-outline', accessibilityLabel: 'Create Event', onPress: () => navigation.navigate('CreateEvent' as any) },
-          { icon: 'business-outline', accessibilityLabel: 'Create Page', onPress: () => navigation.navigate('CreatePage' as any) },
-          { icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }
-        ]}
+        rightDropdown={{
+          icon: 'ellipsis-vertical',
+          accessibilityLabel: 'More options',
+          actions: [
+            { label: 'Create Event', icon: 'add-circle-outline', onPress: () => navigation.navigate('CreateEvent' as any) },
+            { label: 'Create Page', icon: 'business-outline', onPress: () => navigation.navigate('CreatePage' as any) },
+            { label: 'Manage Organizations', icon: 'business', onPress: () => navigation.navigate('ManageOrganizations' as any) },
+            { label: 'Manage Events', icon: 'calendar', onPress: () => navigation.navigate('ManageEvents' as any) },
+            { label: 'Settings', icon: 'settings-outline', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }
+          ]
+        }}
         compact
         rightAvatar={{ source: currentUserFromStore?.avatar || '', label: currentUserFromStore?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />

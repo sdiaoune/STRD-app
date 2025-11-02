@@ -23,6 +23,9 @@ export type EventsStackParamList = {
   CreatePage: undefined;
   CreateEvent: undefined;
   EditEvent: { eventId: string };
+  EditOrganization: { orgId: string };
+  ManageOrganizations: undefined;
+  ManageEvents: undefined;
 };
 
 export type TimelineStackParamList = {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, Pressable, Platform, Keyboard, Modal } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -21,6 +22,8 @@ export const EditEventScreen: React.FC = () => {
 
   const [title, setTitle] = useState(evt?.title || '');
   const [dateISO, setDateISO] = useState(evt?.dateISO || new Date().toISOString());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [iosTempDate, setIosTempDate] = useState<Date>(new Date());
   const [city, setCity] = useState(evt?.city || '');
   const [locationName, setLocationName] = useState(evt?.location.name || '');
   const [lat, setLat] = useState(String(evt?.location.lat ?? ''));
@@ -79,7 +82,63 @@ export const EditEventScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Title</Text><TextInput value={title} onChangeText={setTitle} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Date ISO</Text><TextInput value={dateISO} onChangeText={setDateISO} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <View style={styles.formRow}>
+          <Text style={[styles.label, labelStyle]}>Date & Time</Text>
+          <Pressable
+            onPress={() => { Keyboard.dismiss(); if (Platform.OS === 'ios') setIosTempDate(new Date(dateISO)); setShowDatePicker(true); }}
+            style={[styles.input, { justifyContent: 'center' }]}
+            accessibilityRole="button"
+            hitSlop={12}
+          >
+            <Text style={{ color: fieldStyle.color }}>{new Date(dateISO).toLocaleString()}</Text>
+          </Pressable>
+          {showDatePicker && Platform.OS !== 'ios' ? (
+            <DateTimePicker
+              value={new Date(dateISO)}
+              mode="datetime"
+              display="default"
+              onChange={(e, selectedDate) => {
+                setShowDatePicker(false);
+                if (!selectedDate) return;
+                setDateISO(selectedDate.toISOString());
+              }}
+            />
+          ) : null}
+          {Platform.OS === 'ios' && (
+            <Modal visible={showDatePicker} transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
+              <Pressable style={{ flex: 1 }} onPress={() => setShowDatePicker(false)} />
+              <View style={styles.iosSheet}>
+                <Text style={[styles.label, { marginBottom: spacing.sm }]}>Select date</Text>
+                <DateTimePicker
+                  value={iosTempDate}
+                  mode="date"
+                  display="spinner"
+                  themeVariant={isLight ? 'light' : 'dark'} as any
+                  style={{ height: 216 }}
+                  onChange={(_, d) => { if (d) setIosTempDate(prev => new Date(d.getFullYear(), d.getMonth(), d.getDate(), prev.getHours(), prev.getMinutes())); }}
+                />
+                <View style={{ height: spacing.md }} />
+                <Text style={[styles.label, { marginBottom: spacing.sm }]}>Select time</Text>
+                <DateTimePicker
+                  value={iosTempDate}
+                  mode="time"
+                  display="spinner"
+                  themeVariant={isLight ? 'light' : 'dark'} as any
+                  style={{ height: 216 }}
+                  onChange={(_, d) => { if (d) setIosTempDate(prev => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate(), d.getHours(), d.getMinutes())); }}
+                />
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing.md }}>
+                  <TouchableOpacity style={[styles.btn, neutralBtnStyle]} onPress={() => setShowDatePicker(false)}>
+                    <Text style={[styles.btnText, neutralBtnText]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.btn, neutralBtnStyle, { marginLeft: spacing.sm }]} onPress={() => { setDateISO(iosTempDate.toISOString()); setShowDatePicker(false); }}>
+                    <Text style={[styles.btnText, neutralBtnText]}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+          )}
+        </View>
         <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>City</Text><TextInput value={city} onChangeText={setCity} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
         <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Location name</Text><TextInput value={locationName} onChangeText={setLocationName} style={[styles.input, fieldStyle]} placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
         <View style={styles.row}>
@@ -108,6 +167,18 @@ const styles = StyleSheet.create({
   primaryText: { color: '#ffffff' },
   danger: { borderColor: '#aa2e25' },
   dangerText: { color: '#aa2e25' },
+  iosSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.card,
+    borderTopLeftRadius: borderRadius.md,
+    borderTopRightRadius: borderRadius.md,
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+  },
 });
 
 export default EditEventScreen;

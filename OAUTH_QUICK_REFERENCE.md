@@ -196,3 +196,4 @@ if (event === 'SIGNED_IN') {
 - [Fix Based On](https://github.com/supabase/gotrue-js/issues/762#issuecomment-1780006492)
 
 
+
