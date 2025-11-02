@@ -86,7 +86,7 @@ export const TimelineScreen: React.FC = () => {
       <TopBar
         title="Timeline"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
-        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
+        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Settings' as never) }]}
         rightAvatar={{ source: currentUser?.avatar || '', label: currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
 

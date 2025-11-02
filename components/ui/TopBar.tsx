@@ -142,7 +142,8 @@ export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], ri
               accessibilityRole="button"
               accessibilityLabel={a.accessibilityLabel}
               onPress={a.onPress}
-              hitSlop={12}
+              // Keep right-side hitSlop tighter on the side facing the avatar to avoid overlap
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 4 }}
               style={styles.button}
             >
               <Ionicons name={a.icon} size={22} color={colors.text.primary} />
@@ -154,7 +155,8 @@ export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], ri
             accessibilityRole="button"
             accessibilityLabel={rightAvatar.label || 'Open profile'}
             onPress={rightAvatar.onPress}
-            hitSlop={12}
+            // Mirror hitSlop to avoid encroaching on the settings button
+            hitSlop={{ top: 12, bottom: 12, left: 4, right: 12 }}
             style={styles.avatarBtn}
           >
             <Avatar source={rightAvatar.source || ''} size={28} label={rightAvatar.label} />

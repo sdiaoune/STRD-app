@@ -100,6 +100,11 @@ function EventsStack() {
         component={ManageEventsScreen}
         options={{ title: 'Manage Events' }}
       />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{ title: 'Settings', headerBackTitle: 'Events' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -154,6 +159,11 @@ function TimelineStack() {
         component={NotificationsScreen}
         options={{ title: 'Notifications' }}
       />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{ title: 'Settings', headerBackTitle: 'Timeline' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -172,6 +182,11 @@ function RunStack() {
         name="RunTracker" 
         component={RunScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{ title: 'Settings', headerBackTitle: 'STRD' }}
       />
     </Stack.Navigator>
   );
@@ -251,6 +266,11 @@ function NotificationsStack() {
         component={NotificationsScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{ title: 'Settings', headerBackTitle: 'Notifications' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -274,6 +294,11 @@ function SearchStack() {
         name="RunnerProfile" 
         component={RunnerProfileScreen}
         options={{ title: 'Runner', headerBackTitle: 'Search' }}
+      />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{ title: 'Settings', headerBackTitle: 'Search' }}
       />
     </Stack.Navigator>
   );

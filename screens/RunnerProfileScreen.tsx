@@ -80,8 +80,8 @@ export const RunnerProfileScreen: React.FC = () => {
 
   const theme = useTokensTheme();
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.mode === 'light' ? theme.colors.surface : theme.colors.bg }]}>
-      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
+    <SafeAreaView edges={['left', 'right', 'bottom']} style={[styles.container, { backgroundColor: theme.mode === 'light' ? theme.colors.surface : theme.colors.bg }]}>
+      <ScrollView contentInsetAdjustmentBehavior="never" contentContainerStyle={{ padding: spacing.md }}>
         <View style={styles.header}>
           <Avatar source={user?.avatar || undefined} size={80} label={user?.name || undefined} />
           <Text style={[styles.name, { color: theme.colors.text.primary }]}>{user?.name || 'Runner'}</Text>

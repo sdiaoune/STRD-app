@@ -5,8 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TagPill } from './TagPill';
 import { Badge } from './Badge';
 import { spacing, typography, colors, borderRadius } from '../theme';
-import { formatEventDate, formatEventTime } from '../utils/format';
-import { formatDistance as fmtDistance } from '../utils/formatters';
+import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
 import type { Event } from '../types/models';
 import { useStore } from '../state/store';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
@@ -26,7 +25,7 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   const [fallbackMeters, setFallbackMeters] = useState<number | null>(null);
   const distanceLabel = (() => {
     const km = event.distanceFromUserKm != null ? event.distanceFromUserKm : (fallbackMeters != null ? fallbackMeters / 1000 : null);
-    return km == null ? '—' : fmtDistance(km * 1000);
+    return km == null ? '—' : formatDistance(km, unit);
   })();
 
   const styles = useLegacyStyles(createStyles);

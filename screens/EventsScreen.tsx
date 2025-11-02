@@ -28,6 +28,7 @@ export const EventsScreen: React.FC = () => {
     distanceRadiusMi,
     setDistanceRadiusMi,
   } = useStore();
+  const unit = useStore(s => s.unitPreference);
 
   const events = getFilteredEvents();
   const currentUserFromStore = useStore(s => s.currentUser);
@@ -76,7 +77,7 @@ export const EventsScreen: React.FC = () => {
             { label: 'Create Page', icon: 'business-outline', onPress: () => navigation.navigate('CreatePage' as any) },
             { label: 'Manage Organizations', icon: 'business', onPress: () => navigation.navigate('ManageOrganizations' as any) },
             { label: 'Manage Events', icon: 'calendar', onPress: () => navigation.navigate('ManageEvents' as any) },
-            { label: 'Settings', icon: 'settings-outline', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }
+            { label: 'Settings', icon: 'settings-outline', onPress: () => (navigation as any).navigate('Settings' as never) }
           ]
         }}
         compact
@@ -106,7 +107,9 @@ export const EventsScreen: React.FC = () => {
                   backgroundColor: mi === distanceRadiusMi ? tokensTheme.colors.primary : tokensTheme.colors.card,
                 }}
               >
-                <Text style={{ color: mi === distanceRadiusMi ? tokensTheme.colors.bg : tokensTheme.colors.text.primary, fontWeight: '600' }}>{mi} mi</Text>
+                <Text style={{ color: mi === distanceRadiusMi ? tokensTheme.colors.bg : tokensTheme.colors.text.primary, fontWeight: '600' }}>
+                  {unit === 'imperial' ? `${mi} mi` : `${Math.round(mi * 1.60934)} km`}
+                </Text>
               </Pressable>
             ))}
           </View>

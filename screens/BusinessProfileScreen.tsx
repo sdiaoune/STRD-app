@@ -104,8 +104,8 @@ export const BusinessProfileScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.bg }]}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+    <SafeAreaView edges={['left', 'right', 'bottom']} style={[styles.container, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.bg }]}> 
+      <ScrollView contentInsetAdjustmentBehavior="never" style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Organization Header */}
         <View style={[styles.orgHeader, { backgroundColor: theme.mode === 'light' ? '#ffffff' : undefined }] }>
           <Avatar source={organization.logo} size={80} />

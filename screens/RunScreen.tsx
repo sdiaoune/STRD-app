@@ -12,7 +12,6 @@ import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme }
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import * as Location from 'expo-location';
 import { formatTime, formatDistance, formatPace } from '../utils/format';
-import { formatDistance as fmtDistance, formatPace as fmtPace } from '../utils/formatters';
 import { useStore } from '../state/store';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { regionForCoordinates } from '../utils/geo';
@@ -377,7 +376,7 @@ export const RunScreen: React.FC = () => {
       <TopBar
         title="STRD"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
-        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
+        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Settings' as never) }]}
         rightAvatar={{ source: useStore.getState().currentUser?.avatar || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
 
@@ -439,18 +438,25 @@ export const RunScreen: React.FC = () => {
             <View style={styles.metricsSection}>
               <View style={styles.metric}>
                 <Ionicons name="speedometer" size={32} color={colors.primary} />
-                <Text style={styles.metricValue}>{fmtDistance(runState.distanceKm * 1000)}</Text>
+                <Text style={styles.metricValue}>{formatDistance(runState.distanceKm, unit)}</Text>
                 <Text style={styles.metricLabel}>Distance</Text>
               </View>
               <View style={styles.metric}>
                 <Ionicons name="flash" size={32} color={colors.primary} />
-                <Text style={styles.metricValue}>{runState.currentPace > 0 ? fmtPace(Math.round(runState.currentPace * 60)) : '–'}</Text>
+                <Text style={styles.metricValue}>{runState.currentPace > 0 ? formatPace(runState.currentPace, unit) : '–'}</Text>
                 <Text style={styles.metricLabel}>Current Pace</Text>
               </View>
               <View style={styles.metric}>
                 <Ionicons name="speedometer-outline" size={32} color={colors.primary} />
                 <Text style={styles.metricValue}>
-                  {Math.max(0, Math.round((runState.currentSpeedKmh || 0) * 10) / 10)} km/h
+                  {(() => {
+                    const kmh = Math.max(0, Math.round(((runState.currentSpeedKmh || 0)) * 10) / 10);
+                    if (unit === 'imperial') {
+                      const mph = Math.round(kmh * 0.621371 * 10) / 10;
+                      return `${mph} mph`;
+                    }
+                    return `${kmh} km/h`;
+                  })()}
                 </Text>
                 <Text style={styles.metricLabel}>Speed</Text>
               </View>

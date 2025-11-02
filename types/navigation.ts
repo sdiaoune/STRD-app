@@ -26,6 +26,7 @@ export type EventsStackParamList = {
   EditOrganization: { orgId: string };
   ManageOrganizations: undefined;
   ManageEvents: undefined;
+  Settings: undefined;
 };
 
 export type TimelineStackParamList = {
@@ -34,10 +35,12 @@ export type TimelineStackParamList = {
   RunStats: { runId: string };
   EventDetails: { eventId: string };
   BusinessProfile: { orgId: string };
+  Settings: undefined;
 };
 
 export type RunStackParamList = {
   RunTracker: undefined;
+  Settings: undefined;
 };
 
 export type ProfileStackParamList = {

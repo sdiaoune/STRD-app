@@ -49,7 +49,7 @@ export const UserSearchScreen: React.FC = () => {
       <TopBar
         title="Search"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => {} }}
-        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Profile' as never, { screen: 'Settings' } as never) }]}
+        rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Settings' as never) }]}
         rightAvatar={{ source: (useStore.getState().currentUser?.avatar) || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
       <FlatList
