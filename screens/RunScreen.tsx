@@ -22,6 +22,8 @@ import { useBottomTabOverflow } from '../components/ui/TabBarBackground.ios';
 
 export const RunScreen: React.FC = () => {
   const navigation = useNavigation<RunScreenNavigationProp>();
+  // Subscribe to currentUser so avatar updates consistently like other screens
+  const currentUser = useStore((s) => s.currentUser);
   const [showPostForm, setShowPostForm] = useState(false);
   const [caption, setCaption] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | undefined>();
@@ -377,7 +379,7 @@ export const RunScreen: React.FC = () => {
         title="STRD"
         leftIcon={{ icon: 'search', accessibilityLabel: 'Search', onPress: () => (navigation as any).navigate('Search' as never) }}
         rightActions={[{ icon: 'settings-outline', accessibilityLabel: 'Settings', onPress: () => (navigation as any).navigate('Settings' as never) }]}
-        rightAvatar={{ source: useStore.getState().currentUser?.avatar || '', label: useStore.getState().currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
+        rightAvatar={{ source: currentUser?.avatar || '', label: currentUser?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
 
       <View style={styles.content}>
@@ -419,11 +421,7 @@ export const RunScreen: React.FC = () => {
                 </TouchableOpacity>
               )}
             </View>
-            {isCountingDown && (
-              <View style={styles.countdownOverlay} accessibilityLabel={`Starting in ${countdown}`}>
-                <Text style={styles.countdownText}>{countdown}</Text>
-              </View>
-            )}
+            {/* countdown overlay moved to root container for full-screen coverage */}
           </View>
         ) : (
           // Running State
@@ -511,6 +509,11 @@ export const RunScreen: React.FC = () => {
           </View>
         )}
       </View>
+      {isCountingDown && (
+        <View style={styles.countdownOverlay} accessibilityLabel={`Starting in ${countdown}`}>
+          <Text style={styles.countdownText}>{countdown}</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -705,7 +708,6 @@ const createStyles = () => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
-    paddingTop: 100,
   },
   countdownText: {
     ...typography.h1,

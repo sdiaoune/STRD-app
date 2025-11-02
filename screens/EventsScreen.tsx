@@ -80,7 +80,6 @@ export const EventsScreen: React.FC = () => {
             { label: 'Settings', icon: 'settings-outline', onPress: () => (navigation as any).navigate('Settings' as never) }
           ]
         }}
-        compact
         rightAvatar={{ source: currentUserFromStore?.avatar || '', label: currentUserFromStore?.name || 'Profile', onPress: () => (navigation as any).navigate('Profile' as never) }}
       />
 

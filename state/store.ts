@@ -15,6 +15,7 @@ import * as Crypto from 'expo-crypto';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { compressAvatarImage } from '../utils/image';
 
 interface RunState {
   isRunning: boolean;
@@ -35,7 +36,7 @@ const THEME_PREFERENCE_KEY = 'strd_theme_preference';
 // Reuse avatars bucket for run media to avoid relying on missing storage buckets in staging
 const RUN_MEDIA_BUCKET = 'avatars';
 
-const uploadImageToStorage = async (bucket: string, path: string, uri: string) => {
+const uploadImageToStorage = async (bucket: string, path: string, uri: string, mimeTypeOverride?: string) => {
   try {
     console.log(`[uploadImageToStorage] Starting upload to bucket: ${bucket}, path: ${path}`);
     
@@ -43,9 +44,10 @@ const uploadImageToStorage = async (bucket: string, path: string, uri: string) =
     // Convert the URI to a FormData object
     const formData = new FormData();
     
-    // Determine the file type from the URI
-    const fileType = uri.split('.').pop()?.toLowerCase() || 'jpg';
-    const mimeType = fileType === 'png' ? 'image/png' : 'image/jpeg';
+    // Determine the file type from the URI unless explicitly provided
+    const inferredFileType = uri.split('.').pop()?.toLowerCase() || 'jpg';
+    const inferredMimeType = inferredFileType === 'png' ? 'image/png' : 'image/jpeg';
+    const mimeType = mimeTypeOverride || inferredMimeType;
     
     // Create a file object for React Native
     formData.append('file', {
@@ -1200,9 +1202,9 @@ export const useStore = create<AppState>((set, get) => ({
   uploadAvatar: async (uri: string) => {
     const userId = get().currentUser.id;
     if (!userId) return null;
-    const fileExt = (uri.split('.').pop() || 'jpg').toLowerCase();
-    const path = `${userId}/${Date.now()}.${fileExt}`;
-    const displayUrl = await uploadImageToStorage('avatars', path, uri);
+    const compressed = await compressAvatarImage(uri);
+    const path = `${userId}/${Date.now()}.${compressed.fileExt}`;
+    const displayUrl = await uploadImageToStorage('avatars', path, compressed.uri, compressed.mimeType);
     if (!displayUrl) return null;
     const cleanUrl = displayUrl.split('?')[0];
     // Update profile
