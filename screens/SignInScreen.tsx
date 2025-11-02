@@ -73,6 +73,11 @@ export const SignInScreen: React.FC = () => {
             secureTextEntry
             style={[styles.input, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, color: theme.mode === 'light' ? '#000000' : colors.text.primary, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]}
           />
+          <View style={{ alignItems: 'flex-end', marginTop: spacing.sm }}>
+            <Pressable onPress={() => navigation.navigate('ForgotPassword' as never)} accessibilityRole="button">
+              <Text style={{ color: colors.primary, fontWeight: '600' }}>Forgot password?</Text>
+            </Pressable>
+          </View>
           <View style={{ height: spacing.lg }} />
           <Button onPress={() => signIn('email', email, password)}>Sign in</Button>
         </View>

@@ -38,6 +38,11 @@ import { SignInScreen } from './screens/SignInScreen';
 import { SignUpScreen } from './screens/SignUpScreen';
 import { useStore } from './state/store';
 import { OnboardingSurveyModal } from './components/OnboardingSurveyModal';
+import { ForgotPasswordScreen } from './screens/ForgotPasswordScreen';
+import { AuthConfirmScreen } from './screens/AuthConfirmScreen';
+import { AuthCodeErrorScreen } from './screens/AuthCodeErrorScreen';
+import { RecoveryCodeScreen } from './screens/RecoveryCodeScreen';
+import { SignupCodeScreen } from './screens/SignupCodeScreen';
 
 const LOCATION_PROMPT_KEY = 'strd_location_prompted';
 const SURVEY_STORAGE_KEY = 'strd_onboarding_survey';
@@ -324,6 +329,31 @@ function AuthStack() {
         component={SignUpScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen 
+        name="ForgotPassword" 
+        component={ForgotPasswordScreen}
+        options={{ title: 'Forgot Password' }}
+      />
+      <Stack.Screen 
+        name="AuthConfirm" 
+        component={AuthConfirmScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="AuthCodeError" 
+        component={AuthCodeErrorScreen}
+        options={{ title: 'Reset Link Error' }}
+      />
+      <Stack.Screen 
+        name="RecoveryCode" 
+        component={RecoveryCodeScreen}
+        options={{ title: 'Enter Code' }}
+      />
+      <Stack.Screen 
+        name="SignupCode" 
+        component={SignupCodeScreen}
+        options={{ title: 'Confirm Email' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -447,9 +477,33 @@ function AppContainer() {
 
   const navigationTheme = useMemo(() => getTokensNavigationTheme(theme.mode), [theme.mode]);
 
+  // React Navigation deep link config to expose web paths
+  const linking = {
+    prefixes: [Linking.createURL('/'), 'https://app.example.com', 'strd://'],
+    config: {
+      screens: {
+        // Auth routes
+        SignIn: 'auth/signin',
+        SignUp: 'auth/signup',
+        SignupCode: 'auth/signup-code',
+        ForgotPassword: 'auth/forgot',
+        RecoveryCode: 'auth/recovery-code',
+        AuthConfirm: 'auth/confirm',
+        AuthCodeError: 'auth/auth-code-error',
+        // Basic mappings for main tabs if needed
+        Timeline: 'timeline',
+        Events: 'events',
+        Search: 'search',
+        Run: 'run',
+        Notifications: 'notifications',
+        Profile: 'profile',
+      },
+    },
+  } as const;
+
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={navigationTheme}>
+      <NavigationContainer theme={navigationTheme} linking={linking}>
         {isAuthenticated ? (
           <Tab.Navigator
             initialRouteName="Run"

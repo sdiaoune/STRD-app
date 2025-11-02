@@ -14,6 +14,7 @@ import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme }
 import { Avatar } from '../components/Avatar';
 import { EventCard } from '../components/EventCard';
 import { RunPostCard } from '../components/RunPostCard';
+import { PagePostCard } from '../components/PagePostCard';
 import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
 
@@ -22,10 +23,11 @@ export const BusinessProfileScreen: React.FC = () => {
   const route = useRoute<BusinessProfileScreenRouteProp>();
   const { orgId } = route.params;
   
-  const { orgById, events, runPosts, postById, eventById, deletePage, currentUser } = useStore();
+  const { orgById, events, runPosts, postById, eventById, deletePage, currentUser, followPage, unfollowPage, pagePosts } = useStore();
   const theme = useTokensTheme();
   const organization = orgById(orgId);
   const isOwner = organization && organization.ownerId === currentUser.id;
+  const isFollowingPage = !!organization && currentUser.followingOrgs.includes(organization.id);
 
   if (!organization) {
     return (
@@ -40,8 +42,8 @@ export const BusinessProfileScreen: React.FC = () => {
   // Get organization's events
   const orgEvents = events.filter(event => event.orgId === orgId);
   
-  // Get organization's posts (mock: some run posts from partners)
-  const orgPosts = runPosts.filter(post => post.isFromPartner && Math.random() > 0.5);
+  // Get organization's page posts
+  const orgPosts = pagePosts.filter(p => p.orgId === orgId);
 
   const handleEventPress = (eventId: string) => {
     navigation.navigate('EventDetails', { eventId });
@@ -130,6 +132,24 @@ export const BusinessProfileScreen: React.FC = () => {
             </TouchableOpacity>
           ) : null}
 
+          {!isOwner && (
+            <TouchableOpacity
+              style={[styles.followBtn, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }, isFollowingPage ? styles.following : null]}
+              onPress={async () => {
+                if (!organization) return;
+                if (isFollowingPage) {
+                  await unfollowPage(organization.id);
+                } else {
+                  await followPage(organization.id);
+                }
+              }}
+              accessibilityRole="button"
+            >
+              <Ionicons name={isFollowingPage ? 'checkmark' : 'add'} size={18} color={theme.mode === 'light' ? '#000000' : colors.primary} />
+              <Text style={[styles.followBtnText, { color: theme.mode === 'light' ? '#000000' : colors.primary }]}>{isFollowingPage ? 'Following' : 'Follow'}</Text>
+            </TouchableOpacity>
+          )}
+
           {isOwner && (
             <View style={styles.ownerActions}>
               <TouchableOpacity style={[styles.actionButton, styles.editButton, { marginRight: spacing.sm }]} onPress={handleEditPress}>
@@ -160,7 +180,7 @@ export const BusinessProfileScreen: React.FC = () => {
             <EmptyState
               icon="calendar-outline"
               title="No upcoming events"
-              message="This organization hasn't posted any events yet"
+              body="This organization hasn't posted any events yet"
             />
           )}
         </View>
@@ -171,17 +191,17 @@ export const BusinessProfileScreen: React.FC = () => {
           
           {orgPosts.length > 0 ? (
             orgPosts.slice(0, 3).map((post) => (
-              <RunPostCard
+              <PagePostCard
                 key={post.id}
                 post={post}
-                onPress={() => handlePostPress(post.id)}
+                onPress={() => {}}
               />
             ))
           ) : (
             <EmptyState
               icon="document-outline"
               title="No posts yet"
-              message="This organization hasn't shared any posts yet"
+              body="This organization hasn't shared any posts yet"
             />
           )}
         </View>
@@ -215,7 +235,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.card,
     marginBottom: spacing.sm,
   },
   partnerText: {
@@ -242,7 +262,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.card,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -252,6 +272,19 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
     fontWeight: '600',
   },
+  followBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: spacing.sm,
+  },
+  following: { opacity: 0.9 },
+  followBtnText: { ...typography.body, marginLeft: spacing.sm, fontWeight: '600', color: colors.primary },
   section: {
     padding: spacing.md,
   },
@@ -280,7 +313,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.card,
     borderWidth: 1,
     borderColor: colors.border,
   },

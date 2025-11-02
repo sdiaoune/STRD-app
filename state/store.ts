@@ -7,6 +7,7 @@ import type {
   TimelineItem,
   Comment
 } from '../types/models';
+import type { PagePost } from '../types/models';
 import { supabase } from '../supabase/client';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -96,6 +97,7 @@ interface AppState {
   organizations: Organization[];
   events: Event[];
   runPosts: RunPost[];
+  pagePosts: PagePost[];
   timelineItems: TimelineItem[];
 
   // UI State
@@ -147,6 +149,8 @@ interface AppState {
   searchUsers: (query: string) => Promise<User[]>;
   followUser: (userId: string) => Promise<boolean>;
   unfollowUser: (userId: string) => Promise<boolean>;
+  followPage: (orgId: string) => Promise<boolean>;
+  unfollowPage: (orgId: string) => Promise<boolean>;
   createPage: (args: { name: string; type: Organization['type']; city: string; logoUri?: string; website?: string | null }) => Promise<string>;
   updatePage: (orgId: string, args: { name?: string; city?: string; logoUri?: string; website?: string | null }) => Promise<boolean>;
   deletePage: (orgId: string) => Promise<boolean>;
@@ -161,6 +165,7 @@ interface AppState {
   orgById: (id: string) => Organization | undefined;
   userById: (id: string) => User | undefined;
   getFilteredEvents: () => Event[];
+  getTimelineItems: (scope: 'all' | 'forYou') => TimelineItem[];
   ownedOrganizations: () => Organization[];
   manageableEvents: () => Event[];
 }
@@ -174,6 +179,7 @@ export const useStore = create<AppState>((set, get) => ({
   organizations: [],
   events: [],
   runPosts: [],
+  pagePosts: [],
   timelineItems: [],
   currentUser: {
     id: '',
@@ -289,6 +295,14 @@ export const useStore = create<AppState>((set, get) => ({
         .from('run_posts')
         .select('*')
         .order('created_at', { ascending: false });
+    // organization (page) posts
+      const { data: orgPosts, error: orgPostsError } = await supabase
+        .from('organization_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (orgPostsError) {
+        console.error('[_loadInitialData] Organization posts query error:', orgPostsError);
+      }
       console.log('[_loadInitialData] Posts query:', {
         count: posts?.length ?? 0,
         postsError,
@@ -384,6 +398,14 @@ export const useStore = create<AppState>((set, get) => ({
       isFromPartner: p.is_from_partner,
     }));
 
+    const pagePosts: PagePost[] = (orgPosts || []).map(op => ({
+      id: op.id,
+      orgId: op.org_id,
+      createdAtISO: op.created_at,
+      content: op.content,
+      imageUrl: op.image_url ?? null,
+    }));
+
     // Timeline: latest posts + events
     const timelineItems: TimelineItem[] = [
       ...runPosts.map(p => ({ type: 'run' as const, refId: p.id, createdAtISO: p.createdAtISO })),
@@ -432,6 +454,7 @@ export const useStore = create<AppState>((set, get) => ({
       organizations,
       events: eventsWithinRadius,
       runPosts,
+      pagePosts,
       timelineItems,
       currentUser: hydratedCurrentUser,
       followingUserIds: followingUsers,
@@ -922,18 +945,46 @@ export const useStore = create<AppState>((set, get) => ({
           avatarUrl: avatarUrl ? avatarUrl.substring(0, 30) + '...' : 'none' 
         });
 
-        // Ensure profile exists with Google data
-        const { error: profileError } = await supabase.from('profiles').upsert(
-          {
-            id: userId,
-            name: displayName || null,
-            avatar_url: avatarUrl || null,
-          },
-          { onConflict: 'id' }
-        );
+        // Ensure profile exists without overwriting user's existing values
+        try {
+          const { data: existingProfile, error: fetchErr } = await supabase
+            .from('profiles')
+            .select('id, name, avatar_url')
+            .eq('id', userId)
+            .maybeSingle();
 
-        if (profileError) {
-          console.error('[signIn:google] Profile upsert error:', profileError);
+          if (fetchErr) {
+            console.warn('[signIn:google] Profile fetch error:', fetchErr);
+          }
+
+          if (!existingProfile) {
+            // Create fresh profile with Google-provided defaults
+            const { error: insertErr } = await supabase.from('profiles').insert({
+              id: userId,
+              name: (displayName || null),
+              avatar_url: (avatarUrl || null),
+            });
+            if (insertErr) {
+              console.error('[signIn:google] Profile insert error:', insertErr);
+            }
+          } else {
+            // Only fill missing fields; never override user-selected values
+            const updates: Record<string, any> = { id: userId };
+            if ((!existingProfile.name || existingProfile.name === '') && displayName) {
+              updates.name = displayName;
+            }
+            if ((!existingProfile.avatar_url || existingProfile.avatar_url === '') && avatarUrl) {
+              updates.avatar_url = avatarUrl;
+            }
+            if (Object.keys(updates).length > 1) {
+              const { error: updateErr } = await supabase.from('profiles').upsert(updates, { onConflict: 'id' });
+              if (updateErr) {
+                console.error('[signIn:google] Profile update error:', updateErr);
+              }
+            }
+          }
+        } catch (profileEx) {
+          console.error('[signIn:google] Profile ensure failed:', profileEx);
         }
 
         // Update local state
@@ -1240,6 +1291,42 @@ export const useStore = create<AppState>((set, get) => ({
     return true;
   },
 
+  // Follow/Unfollow Pages (Organizations)
+  followPage: async (orgId: string) => {
+    const state = get();
+    const userId = state.currentUser.id;
+    if (!userId) return false;
+    if (state.currentUser.followingOrgs.includes(orgId)) return true;
+    const { error } = await supabase
+      .from('user_following_organizations')
+      .insert({ user_id: userId, org_id: orgId });
+    if (error && error.code !== '23505') {
+      console.warn('[followPage] insert failed', error);
+      return false;
+    }
+    set((s) => ({
+      currentUser: { ...s.currentUser, followingOrgs: [...s.currentUser.followingOrgs, orgId] },
+    }));
+    return true;
+  },
+  unfollowPage: async (orgId: string) => {
+    const userId = get().currentUser.id;
+    if (!userId) return false;
+    const { error } = await supabase
+      .from('user_following_organizations')
+      .delete()
+      .eq('user_id', userId)
+      .eq('org_id', orgId);
+    if (error) {
+      console.warn('[unfollowPage] delete failed', error);
+      return false;
+    }
+    set((s) => ({
+      currentUser: { ...s.currentUser, followingOrgs: s.currentUser.followingOrgs.filter(id => id !== orgId) },
+    }));
+    return true;
+  },
+
   // Page creation/update
   createPage: async ({ name, type, city, logoUri, website }: { name: string; type: Organization['type']; city: string; logoUri?: string; website?: string | null }) => {
     const userId = get().currentUser.id;
@@ -1468,6 +1555,25 @@ export const useStore = create<AppState>((set, get) => ({
     });
 
     return sortForSuperAdmin(personalized);
+  },
+
+  getTimelineItems: (scope: 'all' | 'forYou') => {
+    const state = get();
+    const events = scope === 'all' ? state.events : state.getFilteredEvents();
+    const runPosts = scope === 'all'
+      ? state.runPosts
+      : state.runPosts.filter(p => state.followingUserIds.includes(p.userId));
+    const pagePosts = scope === 'all'
+      ? state.pagePosts
+      : state.pagePosts.filter(pp => state.currentUser.followingOrgs.includes(pp.orgId));
+
+    const items: TimelineItem[] = [
+      ...runPosts.map(p => ({ type: 'run' as const, refId: p.id, createdAtISO: p.createdAtISO })),
+      ...events.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO })),
+      ...pagePosts.map(pp => ({ type: 'page_post' as const, refId: pp.id, createdAtISO: pp.createdAtISO })),
+    ];
+
+    return items.sort((a, b) => new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime());
   },
 
   ownedOrganizations: () => {

@@ -6,10 +6,10 @@ import { colors, spacing, typography, borderRadius, useTheme as useTokensTheme }
 import { Button } from '../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../state/store';
+import { supabase } from '../supabase/client';
 
 export const SignUpScreen: React.FC = () => {
   const navigation = useNavigation();
-  const signUp = useStore(state => state.signUp);
   const signIn = useStore(state => state.signIn);
   const authError = useStore(state => state.authError);
 
@@ -81,7 +81,17 @@ export const SignUpScreen: React.FC = () => {
             style={[styles.input, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, color: theme.mode === 'light' ? '#000000' : colors.text.primary, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]}
           />
           <View style={{ height: spacing.lg }} />
-          <Button onPress={() => signUp(name, email, password)}>Create account</Button>
+          <Button onPress={async () => {
+            try {
+              if (!email || !password) throw new Error('Missing credentials');
+              const { error } = await supabase.auth.signUp({ email, password });
+              if (error) throw error;
+              // Send user to OTP screen to confirm signup
+              (navigation as any).navigate('SignupCode', { email, name });
+            } catch (e: any) {
+              useStore.setState({ authError: e?.message || 'Sign-up failed' });
+            }
+          }}>Create account</Button>
         </View>
 
         <View style={styles.dividerRow}>

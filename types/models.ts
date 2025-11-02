@@ -62,8 +62,16 @@ export type RunPost = {
   isFromPartner?: boolean;
 };
 
+export type PagePost = {
+  id: string;
+  orgId: string;
+  createdAtISO: string;
+  content: string;
+  imageUrl?: string | null;
+};
+
 export type TimelineItem = {
-  type: 'run' | 'event';
+  type: 'run' | 'event' | 'page_post';
   refId: string;
   createdAtISO: string;
 };
