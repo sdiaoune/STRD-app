@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../supabase/client';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { openUserProfile } from '../utils/openUserProfile';
 
 interface LikesSheetProps { postId: string; onClose: () => void }
 
 export default function LikesSheet({ postId, onClose }: LikesSheetProps) {
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; handle: string | null; avatar: string | null }>>([]);
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     let mounted = true;
@@ -54,13 +57,18 @@ export default function LikesSheet({ postId, onClose }: LikesSheetProps) {
               keyExtractor={(u) => u.id}
               ItemSeparatorComponent={() => <View style={styles.sep} />}
               renderItem={({ item }) => (
-                <View style={styles.row}>
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={() => { onClose(); openUserProfile(navigation as any, item.id); }}
+                  accessibilityRole="button"
+                  hitSlop={12}
+                >
                   <Image source={{ uri: item.avatar || '' }} style={styles.avatar} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.name}>{item.name || 'User'}</Text>
                     {!!item.handle && <Text style={styles.handle}>@{item.handle}</Text>}
                   </View>
-                </View>
+                </TouchableOpacity>
               )}
               style={{ maxHeight: 320 }}
             />

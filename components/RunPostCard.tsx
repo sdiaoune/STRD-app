@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TimelineStackParamList } from '../types/navigation';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
+import { openUserProfile } from '../utils/openUserProfile';
 
 type RunPostCardNavigationProp = NativeStackNavigationProp<TimelineStackParamList, 'TimelineList'>;
 
@@ -44,6 +45,10 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
     onPress();
   };
 
+  const handleUserPress = () => {
+    openUserProfile(navigation as any, post.userId);
+  };
+
   const styles = useLegacyStyles(stylesFactory);
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
@@ -53,13 +58,13 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
         activeOpacity={0.7}
       >
         <View style={styles.header}>
-          <View style={styles.userInfo}>
+          <TouchableOpacity style={styles.userInfo} onPress={handleUserPress} accessibilityRole="button" hitSlop={12}>
             <Avatar source={user?.avatar || ''} size={40} />
             <View style={styles.userDetails}>
               <Text style={styles.userName}>{user?.name}</Text>
               <Text style={styles.userHandle}>{user?.handle}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
           <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
         </View>
 

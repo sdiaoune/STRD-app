@@ -8,6 +8,7 @@ import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { supabase } from '../supabase/client';
 import { useNavigation } from '@react-navigation/native';
 import TopBar from '../components/TopBar';
+import { openUserProfile } from '../utils/openUserProfile';
 
 type Notif = {
   id: string;
@@ -54,9 +55,7 @@ export const NotificationsScreen: React.FC = () => {
       // @ts-ignore
       navigation.navigate('Timeline' as never, { screen: 'PostDetails', params: { postId: n.target_id } } as never);
     } else if (n.target_type === 'user') {
-      // Navigate to profile (RunnerProfile in Profile stack)
-      // @ts-ignore
-      navigation.navigate('Profile' as never, { screen: 'RunnerProfile', params: { userId: n.target_id } } as never);
+      openUserProfile(navigation as any, n.target_id);
     }
   };
 

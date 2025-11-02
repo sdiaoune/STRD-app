@@ -9,6 +9,7 @@ import { useStore } from '../state/store';
 import TopBar from '../components/ui/TopBar';
 import { Avatar } from '../components/Avatar';
 import Input from '../src/design/components/Input';
+import { openUserProfile } from '../utils/openUserProfile';
 
 export const UserSearchScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -79,7 +80,7 @@ export const UserSearchScreen: React.FC = () => {
         ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.border }} />}
         renderItem={({ item }) => (
           <View style={styles.userRow}>
-            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }} onPress={() => (navigation as any).navigate('RunnerProfile', { userId: item.id })}>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }} onPress={() => openUserProfile(navigation as any, item.id)}>
               <Avatar source={item.avatar || undefined} size={40} label={item.name || undefined} />
               <View style={{ flex: 1, marginLeft: spacing.md }}>
                 <Text style={styles.name}>{item.name || 'Unnamed Runner'}</Text>

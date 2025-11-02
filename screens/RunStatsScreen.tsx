@@ -16,6 +16,7 @@ import { useLegacyStyles } from '../theme/useLegacyStyles';
 import type { TimelineStackParamList } from '../types/navigation';
 import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
 import { decodePolyline, regionForCoordinates } from '../utils/geo';
+import { openUserProfile } from '../utils/openUserProfile';
 
 
 type RunStatsScreenNavigationProp = NativeStackNavigationProp<TimelineStackParamList, 'RunStats'>;
@@ -153,13 +154,13 @@ export const RunStatsScreen: React.FC = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.userInfo}>
+          <TouchableOpacity style={styles.userInfo} onPress={() => openUserProfile(navigation as any, run.userId)} accessibilityRole="button" hitSlop={12}>
             <Avatar source={user.avatar} size={48} />
             <View style={styles.userDetails}>
               <Text style={styles.userName}>{user.name}</Text>
               <Text style={styles.userHandle}>{user.handle}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
           <Text style={styles.timestamp}>{getRelativeTime(run.createdAtISO)}</Text>
         </View>
 
