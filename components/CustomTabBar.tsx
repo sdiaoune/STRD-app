@@ -10,6 +10,8 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
   const insets = useSafeAreaInsets();
   // subscribe to themePreference so the bar re-renders on toggle
   const themeName = useStore(s => s.themePreference) || getCurrentThemeName();
+  // Subscribe to accent so active tab color updates instantly
+  useStore(s => s.accentPreference);
   const isLight = themeName === 'light';
 
   return (

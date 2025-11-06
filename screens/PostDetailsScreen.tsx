@@ -26,6 +26,7 @@ import { useStore } from '../state/store';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { openUserProfile } from '../utils/openUserProfile';
 import { decodePolyline, regionForCoordinates } from '../utils/geo';
+import CertifiedBadge from '../components/CertifiedBadge';
 
 export const PostDetailsScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailsScreenNavigationProp>();
@@ -189,7 +190,10 @@ export const PostDetailsScreen: React.FC = () => {
           <TouchableOpacity style={styles.userInfo} onPress={() => openUserProfile(navigation as any, post.userId)} accessibilityRole="button" hitSlop={12}>
             <Avatar source={user.avatar} size={48} />
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user.name}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.userName}>{user.name}</Text>
+                {user.isCertified ? <CertifiedBadge /> : null}
+              </View>
               <Text style={styles.userHandle}>{user.handle}</Text>
             </View>
           </TouchableOpacity>
@@ -267,9 +271,12 @@ export const PostDetailsScreen: React.FC = () => {
                 <View style={styles.commentContent}>
                   <View style={styles.commentHeader}>
                     <TouchableOpacity onPress={() => openUserProfile(navigation as any, comment.userId)} accessibilityRole="button" hitSlop={12}>
-                      <Text style={styles.commentUserName}>
-                        {commentUser?.name || 'Unknown User'}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={styles.commentUserName}>
+                          {commentUser?.name || 'Unknown User'}
+                        </Text>
+                        {commentUser?.isCertified ? <CertifiedBadge /> : null}
+                      </View>
                     </TouchableOpacity>
                     {comment.createdAtISO && (
                       <Text style={styles.commentTime}>

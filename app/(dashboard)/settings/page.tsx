@@ -7,7 +7,7 @@ const fetcher = (url: string) => fetch(url).then(r => r.json());
 export default function SettingsPage() {
   const { data, mutate } = useSWR('/api/preferences', fetcher);
   const [saving, setSaving] = useState(false);
-  const prefs = data || { theme: 'system', defaultRunVisibility: 'private', notifyLikes: true, notifyFollows: true, notifyEventInvites: true };
+  const prefs = data || { theme: 'system', accentColor: 'blue', defaultRunVisibility: 'private', notifyLikes: true, notifyFollows: true, notifyEventInvites: true };
 
   const update = async (patch: any) => {
     setSaving(true);
@@ -26,6 +26,36 @@ export default function SettingsPage() {
           {['system','light','dark'].map(t => (
             <button key={t} className={`px-3 py-1 rounded border ${prefs.theme===t?'bg-primary text-primary-foreground':''}`} onClick={() => update({ theme: t })} disabled={saving}>{t}</button>
           ))}
+        </div>
+        <div className="pt-2">
+          <div className="text-xs text-gray-500 mb-2">Accent color</div>
+          <div className="flex items-center gap-2">
+            {([
+              { key: 'blue',   light: '#2D5BFF', dark: '#5B86FF' },
+              { key: 'teal',   light: '#14B8A6', dark: '#2DD4BF' },
+              { key: 'violet', light: '#7C3AED', dark: '#A78BFA' },
+              { key: 'pink',   light: '#EC4899', dark: '#F472B6' },
+              { key: 'orange', light: '#F97316', dark: '#FB923C' },
+              { key: 'green',  light: '#16A34A', dark: '#22C55E' },
+            ] as const).map(opt => (
+              <button
+                key={opt.key}
+                title={opt.key}
+                className={`w-8 h-8 rounded-full border ${prefs.accentColor===opt.key?'ring-2 ring-primary border-primary':'border-gray-300'}`}
+                style={{ backgroundColor: opt.light }}
+                onClick={() => update({ accentColor: opt.key })}
+                disabled={saving}
+              />
+            ))}
+            <input
+              aria-label="Custom accent color"
+              type="color"
+              className="w-10 h-10 rounded-full overflow-hidden cursor-pointer"
+              defaultValue={/^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(prefs.accentColor) ? prefs.accentColor : '#A855F7'}
+              onChange={(e)=> update({ accentColor: e.target.value })}
+              disabled={saving}
+            />
+          </div>
         </div>
       </section>
 

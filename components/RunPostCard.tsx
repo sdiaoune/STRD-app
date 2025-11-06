@@ -15,6 +15,9 @@ import type { TimelineStackParamList } from '../types/navigation';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 import { openUserProfile } from '../utils/openUserProfile';
+import CertifiedBadge from './CertifiedBadge';
+import { supabase } from '../supabase/client';
+import SponsorDurationModal from './SponsorDurationModal';
 
 type RunPostCardNavigationProp = NativeStackNavigationProp<TimelineStackParamList, 'TimelineList'>;
 
@@ -31,6 +34,7 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
   const user = userById(post.userId);
   const navigation = useNavigation<RunPostCardNavigationProp>();
   const unit = useStore(state => state.unitPreference);
+  const isSuperAdmin = useStore(state => state.currentUser.isSuperAdmin);
 
   const handleLike = () => {
     likeToggle(post.id);
@@ -50,6 +54,26 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
   };
 
   const styles = useLegacyStyles(stylesFactory);
+  const nowTs = Date.now();
+  const isSponsored = !!(
+    post.sponsoredUntil &&
+    new Date(post.sponsoredUntil).getTime() > nowTs &&
+    (!post.sponsoredFrom || new Date(post.sponsoredFrom).getTime() <= nowTs)
+  );
+  const [showSponsorPicker, setShowSponsorPicker] = useState(false);
+
+  const setSponsoredUntil = async (untilISO: string | null) => {
+    try {
+      const payload: any = { sponsored_until: untilISO };
+      const { error } = await supabase.from('run_posts').update(payload).eq('id', post.id);
+      if (error) return;
+      // update local state
+      const next = untilISO;
+      const prev = useStore.getState().runPosts;
+      useStore.setState({ runPosts: prev.map(p => p.id === post.id ? { ...p, sponsoredUntil: next } : p) });
+    } catch {}
+  };
+  const openSponsorPicker = () => setShowSponsorPicker(true);
   return (
     <Animated.View entering={FadeIn.duration(140).easing(Easing.out(Easing.cubic))} layout={Layout.springify().damping(20).stiffness(120)}>
       <TouchableOpacity
@@ -61,11 +85,27 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
           <TouchableOpacity style={styles.userInfo} onPress={handleUserPress} accessibilityRole="button" hitSlop={12}>
             <Avatar source={user?.avatar || ''} size={40} />
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user?.name}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.userName}>{user?.name}</Text>
+                {user?.isCertified ? <CertifiedBadge /> : null}
+              </View>
               <Text style={styles.userHandle}>{user?.handle}</Text>
             </View>
           </TouchableOpacity>
-          <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {isSponsored && (
+              <View style={styles.pinnedPill}>
+                <Ionicons name="pricetag" size={12} color={colors.primary} />
+                <Text style={styles.pinnedText}>Sponsored</Text>
+              </View>
+            )}
+            <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
+            {isSuperAdmin ? (
+              <TouchableOpacity onPress={openSponsorPicker} style={{ marginLeft: spacing.xs }} accessibilityRole="button" hitSlop={12}>
+                <Ionicons name={'pricetag-outline'} size={18} color={colors.primary} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
 
         <View style={styles.runStats}>
@@ -124,6 +164,21 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
         // @ts-ignore - web-only overlay component; on native you may ignore
         <LikesSheet postId={post.id} onClose={() => setShowLikes(false)} />
       )}
+      <SponsorDurationModal
+        visible={showSponsorPicker}
+        onClose={() => setShowSponsorPicker(false)}
+        onConfirm={async (startISO, untilISO) => {
+          setShowSponsorPicker(false);
+          // Write both start and end
+          try {
+            const { error } = await supabase.from('run_posts').update({ sponsored_from: startISO, sponsored_until: untilISO }).eq('id', post.id);
+            if (!error) {
+              const prev = useStore.getState().runPosts;
+              useStore.setState({ runPosts: prev.map(p => p.id === post.id ? { ...p, sponsoredFrom: startISO, sponsoredUntil: untilISO } : p) });
+            }
+          } catch {}
+        }}
+      />
     </Animated.View>
   );
 };
@@ -164,6 +219,23 @@ const stylesFactory = () => StyleSheet.create({
   timestamp: {
     ...typography.caption,
     color: colors.text.secondary,
+  },
+  pinnedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    marginRight: spacing.xs,
+  },
+  pinnedText: {
+    ...typography.caption,
+    color: colors.primary,
+    marginLeft: spacing[1],
+    fontWeight: '700',
   },
   runStats: {
     flexDirection: 'row',

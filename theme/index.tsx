@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useColorScheme, Appearance } from 'react-native';
+import { useStore } from '../state/store';
 
 import * as palette from './colors';
 import { typography } from './typography';
@@ -35,12 +36,14 @@ export const colors = new Proxy({} as any, {
   },
 });
 
-const ThemeContext = createContext<{ mode: ThemeMode } | undefined>(undefined);
+const ThemeContext = createContext<{ mode: ThemeMode; accent?: string } | undefined>(undefined);
 
 export function ThemeProvider({ children, mode: forcedMode }: { children: React.ReactNode; mode?: ThemeMode }) {
   const scheme = useColorScheme();
   const mode: ThemeMode = forcedMode ?? (scheme === 'dark' ? 'dark' : 'light');
-  const value = useMemo(() => ({ mode }), [mode]);
+  // Subscribe to accent preference to force a tree re-render on change
+  const accentPref = useStore((s) => s.accentPreference);
+  const value = useMemo(() => ({ mode, accent: accentPref }), [mode, accentPref]);
   runtimeMode = mode;
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

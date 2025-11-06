@@ -17,6 +17,7 @@ import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
 import Stat from '../components/ui/Stat';
 import { formatDistance as fmtDistance } from '../utils/formatters';
+import CertifiedBadge from '../components/CertifiedBadge';
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
@@ -167,7 +168,10 @@ export const ProfileScreen: React.FC = () => {
             </View>
           ) : (
             <TouchableOpacity onPress={() => setEditingName(true)}>
-              <Text style={styles.userName}>{currentUser.name || 'Set your name'}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.userName}>{currentUser.name || 'Set your name'}</Text>
+                {currentUser.isCertified ? <CertifiedBadge /> : null}
+              </View>
             </TouchableOpacity>
           )}
           <Text style={styles.userHandle}>{currentUser.handle}</Text>

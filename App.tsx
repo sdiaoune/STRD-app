@@ -31,6 +31,7 @@ import { UserSearchScreen } from './screens/UserSearchScreen';
 import { RunnerProfileScreen } from './screens/RunnerProfileScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { NotificationsScreen } from './screens/NotificationsScreen';
+import { AdminToolsScreen } from './screens/AdminToolsScreen';
 import BlurTabBarBackground, { useBottomTabOverflow } from './components/ui/TabBarBackground.ios';
 import CustomTabBar from './components/CustomTabBar';
 import { HapticTab } from './components/HapticTab';
@@ -110,6 +111,11 @@ function EventsStack() {
         component={SettingsScreen}
         options={{ title: 'Settings', headerBackTitle: 'Events' }}
       />
+      <Stack.Screen 
+        name="AdminTools" 
+        component={AdminToolsScreen}
+        options={{ title: 'Admin Tools', headerBackTitle: 'Settings' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -169,6 +175,11 @@ function TimelineStack() {
         component={SettingsScreen}
         options={{ title: 'Settings', headerBackTitle: 'Timeline' }}
       />
+      <Stack.Screen 
+        name="AdminTools" 
+        component={AdminToolsScreen}
+        options={{ title: 'Admin Tools', headerBackTitle: 'Settings' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -192,6 +203,11 @@ function RunStack() {
         name="Settings" 
         component={SettingsScreen}
         options={{ title: 'Settings', headerBackTitle: 'STRD' }}
+      />
+      <Stack.Screen 
+        name="AdminTools" 
+        component={AdminToolsScreen}
+        options={{ title: 'Admin Tools', headerBackTitle: 'Settings' }}
       />
     </Stack.Navigator>
   );
@@ -252,6 +268,11 @@ function ProfileStack() {
         component={SettingsScreen}
         options={{ title: 'Settings', headerBackTitle: 'Profile' }}
       />
+      <Stack.Screen 
+        name="AdminTools" 
+        component={AdminToolsScreen}
+        options={{ title: 'Admin Tools', headerBackTitle: 'Settings' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -275,6 +296,11 @@ function NotificationsStack() {
         name="Settings" 
         component={SettingsScreen}
         options={{ title: 'Settings', headerBackTitle: 'Notifications' }}
+      />
+      <Stack.Screen 
+        name="AdminTools" 
+        component={AdminToolsScreen}
+        options={{ title: 'Admin Tools', headerBackTitle: 'Settings' }}
       />
     </Stack.Navigator>
   );
@@ -304,6 +330,11 @@ function SearchStack() {
         name="Settings" 
         component={SettingsScreen}
         options={{ title: 'Settings', headerBackTitle: 'Search' }}
+      />
+      <Stack.Screen 
+        name="AdminTools" 
+        component={AdminToolsScreen}
+        options={{ title: 'Admin Tools', headerBackTitle: 'Settings' }}
       />
     </Stack.Navigator>
   );

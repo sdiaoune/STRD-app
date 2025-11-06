@@ -8,6 +8,8 @@ export type User = {
   followingOrgs: string[]; // derived from user_following_organizations
   bio?: string | null;
   isSuperAdmin?: boolean;
+  isCertified?: boolean;
+  sponsoredUntil?: string | null;
 };
 
 export type Organization = {
@@ -18,6 +20,7 @@ export type Organization = {
   city: string;
   website?: string | null;
   ownerId?: string;
+  isCertified?: boolean;
 };
 
 export type Event = {
@@ -36,6 +39,8 @@ export type Event = {
   distanceFromUserKm: number | null;
   coverImage?: string | null;
   createdByUserId?: string;
+  sponsoredFrom?: string | null;
+  sponsoredUntil?: string | null;
 };
 
 export type Comment = {
@@ -60,6 +65,8 @@ export type RunPost = {
   likedByCurrentUser: boolean;
   comments: Comment[];
   isFromPartner?: boolean;
+  sponsoredFrom?: string | null;
+  sponsoredUntil?: string | null;
 };
 
 export type PagePost = {
@@ -68,6 +75,8 @@ export type PagePost = {
   createdAtISO: string;
   content: string;
   imageUrl?: string | null;
+  sponsoredFrom?: string | null;
+  sponsoredUntil?: string | null;
 };
 
 export type TimelineItem = {

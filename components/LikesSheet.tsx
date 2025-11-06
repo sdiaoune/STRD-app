@@ -4,11 +4,12 @@ import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../supabase/client';
 import { colors, spacing, borderRadius, typography } from '../theme';
 import { openUserProfile } from '../utils/openUserProfile';
+import CertifiedBadge from './CertifiedBadge';
 
 interface LikesSheetProps { postId: string; onClose: () => void }
 
 export default function LikesSheet({ postId, onClose }: LikesSheetProps) {
-  const [users, setUsers] = useState<Array<{ id: string; name: string | null; handle: string | null; avatar: string | null }>>([]);
+  const [users, setUsers] = useState<Array<{ id: string; name: string | null; handle: string | null; avatar: string | null; isCertified?: boolean }>>([]);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
@@ -28,9 +29,9 @@ export default function LikesSheet({ postId, onClose }: LikesSheetProps) {
       }
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, name, handle, avatar_url')
+        .select('id, name, handle, avatar_url, is_certified')
         .in('id', ids as any);
-      const mapped = (profiles || []).map(p => ({ id: p.id, name: p.name, handle: p.handle, avatar: p.avatar_url }));
+      const mapped = (profiles || []).map(p => ({ id: p.id, name: p.name, handle: p.handle, avatar: p.avatar_url, isCertified: (p as any).is_certified ?? false }));
       if (mounted) setUsers(mapped);
       setLoading(false);
     })();
@@ -65,7 +66,10 @@ export default function LikesSheet({ postId, onClose }: LikesSheetProps) {
                 >
                   <Image source={{ uri: item.avatar || '' }} style={styles.avatar} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.name}>{item.name || 'User'}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.name}>{item.name || 'User'}</Text>
+                      {item.isCertified ? <CertifiedBadge /> : null}
+                    </View>
                     {!!item.handle && <Text style={styles.handle}>@{item.handle}</Text>}
                   </View>
                 </TouchableOpacity>

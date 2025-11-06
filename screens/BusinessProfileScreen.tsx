@@ -17,6 +17,7 @@ import { RunPostCard } from '../components/RunPostCard';
 import { PagePostCard } from '../components/PagePostCard';
 import { EmptyState } from '../components/EmptyState';
 import { useStore } from '../state/store';
+import CertifiedBadge from '../components/CertifiedBadge';
 
 export const BusinessProfileScreen: React.FC = () => {
   const navigation = useNavigation<BusinessProfileScreenNavigationProp>();
@@ -111,7 +112,10 @@ export const BusinessProfileScreen: React.FC = () => {
         {/* Organization Header */}
         <View style={[styles.orgHeader, { backgroundColor: theme.mode === 'light' ? '#ffffff' : undefined }] }>
           <Avatar source={organization.logo} size={80} />
-          <Text style={[styles.orgName, { color: theme.mode === 'light' ? '#000000' : colors.text.primary }]}>{organization.name}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[styles.orgName, { color: theme.mode === 'light' ? '#000000' : colors.text.primary }]}>{organization.name}</Text>
+            {organization.isCertified ? <CertifiedBadge /> : null}
+          </View>
           {organization.type === 'partner' && (
             <View style={styles.partnerBadge}>
               <Text style={styles.partnerText}>Partner</Text>

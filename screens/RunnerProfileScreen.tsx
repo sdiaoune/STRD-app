@@ -5,6 +5,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../types/navigation';
 import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme } from '../theme';
+import CertifiedBadge from '../components/CertifiedBadge';
 import { useStore } from '../state/store';
 import { StatsRow } from '../components/StatsRow';
 import { Avatar } from '../components/Avatar';
@@ -21,10 +22,10 @@ export const RunnerProfileScreen: React.FC = () => {
     (async () => {
       if (!userById(userId)) {
         const { supabase } = await import('../supabase/client');
-        const { data } = await supabase.from('profiles').select('id, name, handle, avatar_url').eq('id', userId).maybeSingle();
+        const { data } = await supabase.from('profiles').select('id, name, handle, avatar_url, is_certified, sponsored_until').eq('id', userId).maybeSingle();
         if (data) {
           // hydrate minimal user into store cache for display
-          const u = { id: data.id, name: data.name, handle: data.handle, avatar: data.avatar_url, city: null, interests: [], followingOrgs: [] } as any;
+          const u = { id: data.id, name: data.name, handle: data.handle, avatar: data.avatar_url, city: null, interests: [], followingOrgs: [], isCertified: (data as any).is_certified ?? false, sponsoredUntil: (data as any).sponsored_until ?? null } as any;
           const prev = useStore.getState().users;
           useStore.setState({ users: [...prev.filter(p => p.id !== userId), u] });
         }
@@ -40,6 +41,7 @@ export const RunnerProfileScreen: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState<boolean | null>(
     followingUserIds.includes(userId) ? true : null
   );
+  
 
   const user = userById(userId);
 
@@ -79,16 +81,20 @@ export const RunnerProfileScreen: React.FC = () => {
   const weeklyStreak = streak;
 
   const theme = useTokensTheme();
+  const isSuperAdmin = useStore(s => s.currentUser.isSuperAdmin);
   return (
     <SafeAreaView edges={['left', 'right', 'bottom']} style={[styles.container, { backgroundColor: theme.mode === 'light' ? theme.colors.surface : theme.colors.bg }]}>
       <ScrollView contentInsetAdjustmentBehavior="never" contentContainerStyle={{ padding: spacing.md }}>
         <View style={styles.header}>
           <Avatar source={user?.avatar || undefined} size={80} label={user?.name || undefined} />
-          <Text style={[styles.name, { color: theme.colors.text.primary }]}>{user?.name || 'Runner'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[styles.name, { color: theme.colors.text.primary }]}>{user?.name || 'Runner'}</Text>
+            {user?.isCertified ? <CertifiedBadge /> : null}
+          </View>
           <Text style={[styles.handle, { color: theme.colors.text.secondary }]}>{user?.handle || ''}</Text>
           {userId !== currentUser.id && (
             <TouchableOpacity
-              style={[styles.followBtn, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }, isFollowing ? styles.following : null]}
+              style={[styles.followBtn, { backgroundColor: colors.card, borderColor: theme.colors.border }, isFollowing ? styles.following : null]}
               onPress={async () => {
                 if (isFollowing) {
                   const ok = await unfollowUser(userId);
@@ -102,6 +108,23 @@ export const RunnerProfileScreen: React.FC = () => {
             >
               <Text style={[styles.followText, { color: theme.colors.primary }]}>{isFollowing ? 'Following' : 'Follow'}</Text>
             </TouchableOpacity>
+          )}
+          {isSuperAdmin && userId !== currentUser.id && (
+            <View style={{ flexDirection: 'row', marginTop: spacing.sm }}>
+              <TouchableOpacity
+                style={[styles.followBtn, { backgroundColor: colors.card, borderColor: theme.colors.border }]}
+                onPress={async () => {
+                  const { supabase } = await import('../supabase/client');
+                  const { data } = await supabase.from('profiles').select('is_certified').eq('id', userId).maybeSingle();
+                  const next = !(data?.is_certified);
+                  await supabase.from('profiles').update({ is_certified: next }).eq('id', userId);
+                  const prev = useStore.getState().users;
+                  useStore.setState({ users: prev.map(u => u.id === userId ? { ...u, isCertified: next } : u) });
+                }}
+              >
+                <Text style={[styles.followText, { color: theme.colors.primary }]}>{user?.isCertified ? 'Certified ✓' : 'Make Certified'}</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -119,6 +142,7 @@ export const RunnerProfileScreen: React.FC = () => {
             </View>
           ))
         )}
+        
       </ScrollView>
     </SafeAreaView>
   );
@@ -133,7 +157,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.card,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.card,
@@ -145,5 +169,8 @@ const styles = StyleSheet.create({
   postRow: { paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   postText: { ...typography.body, color: colors.text.primary },
 });
+
+// Date picker mounted at end to keep layout simple
+export const SponsorPicker = () => null;
 
 

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 // We mirror RunPostCard visual language instead of reusing Card
 import { TagPill } from './TagPill';
 import { Badge } from './Badge';
+import CertifiedBadge from './CertifiedBadge';
 import { spacing, typography, colors, borderRadius } from '../theme';
 import { formatEventDate, formatEventTime, formatDistance } from '../utils/format';
 import type { Event } from '../types/models';
@@ -11,6 +12,8 @@ import { useStore } from '../state/store';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
+import { supabase } from '../supabase/client';
+import SponsorDurationModal from './SponsorDurationModal';
 import * as Location from 'expo-location';
 
 interface Props {
@@ -22,6 +25,7 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   const orgById = useStore((s) => s.orgById);
   const organization = orgById(event.orgId);
   const unit = useStore(s => s.unitPreference);
+  const isSuperAdmin = useStore(s => s.currentUser.isSuperAdmin);
   const [fallbackMeters, setFallbackMeters] = useState<number | null>(null);
   const distanceLabel = (() => {
     const km = event.distanceFromUserKm != null ? event.distanceFromUserKm : (fallbackMeters != null ? fallbackMeters / 1000 : null);
@@ -29,6 +33,23 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   })();
 
   const styles = useLegacyStyles(createStyles);
+  const nowTs = Date.now();
+  const isSponsored = !!(
+    event.sponsoredUntil &&
+    new Date(event.sponsoredUntil).getTime() > nowTs &&
+    (!event.sponsoredFrom || new Date(event.sponsoredFrom).getTime() <= nowTs)
+  );
+  const [showSponsorPicker, setShowSponsorPicker] = useState(false);
+
+  const setSponsoredUntil = async (untilISO: string | null) => {
+    try {
+      const { error } = await supabase.from('events').update({ sponsored_until: untilISO }).eq('id', event.id);
+      if (error) return;
+      const prev = useStore.getState().events;
+      useStore.setState({ events: prev.map(e => e.id === event.id ? { ...e, sponsoredUntil: untilISO } : e) });
+    } catch {}
+  };
+  const openSponsorPicker = () => setShowSponsorPicker(true);
 
   useEffect(() => {
     let mounted = true;
@@ -59,16 +80,32 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text accessibilityRole="header" numberOfLines={1} style={styles.orgName}>
-              {organization?.name}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text accessibilityRole="header" numberOfLines={1} style={styles.orgName}>
+                {organization?.name}
+              </Text>
+              {organization?.isCertified ? <CertifiedBadge /> : null}
+            </View>
             {organization?.type === 'partner' && (
               <Badge label="Partner" style={{ marginLeft: spacing[2] }} />
             )}
           </View>
-          <View style={styles.distanceChip}>
-            <Ionicons name="location" size={16} color={colors.icon.secondary} />
-            <Text style={styles.distanceText}>{distanceLabel}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {isSponsored && (
+              <View style={styles.pinnedPill}>
+                <Ionicons name="pricetag" size={12} color={colors.primary} />
+                <Text style={styles.pinnedText}>Sponsored</Text>
+              </View>
+            )}
+            <View style={styles.distanceChip}>
+              <Ionicons name="location" size={16} color={colors.icon.secondary} />
+              <Text style={styles.distanceText}>{distanceLabel}</Text>
+            </View>
+            {isSuperAdmin ? (
+              <TouchableOpacity onPress={openSponsorPicker} style={{ marginLeft: spacing.xs }} accessibilityRole="button" hitSlop={12}>
+                <Ionicons name={'pricetag-outline'} size={18} color={colors.primary} />
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
 
@@ -112,6 +149,20 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
         </View>
 
       </TouchableOpacity>
+      <SponsorDurationModal
+        visible={showSponsorPicker}
+        onClose={() => setShowSponsorPicker(false)}
+        onConfirm={async (startISO, untilISO) => {
+          setShowSponsorPicker(false);
+          try {
+            const { error } = await supabase.from('events').update({ sponsored_from: startISO, sponsored_until: untilISO }).eq('id', event.id);
+            if (!error) {
+              const prev = useStore.getState().events;
+              useStore.setState({ events: prev.map(e => e.id === event.id ? { ...e, sponsoredFrom: startISO, sponsoredUntil: untilISO } : e) });
+            }
+          } catch {}
+        }}
+      />
     </Animated.View>
   );
 };
@@ -189,5 +240,22 @@ const createStyles = () =>
     tag: {
       marginRight: spacing[1],
       marginBottom: spacing[1],
+    },
+    pinnedPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.bg,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing[2],
+      paddingVertical: spacing[1],
+      marginRight: spacing.xs,
+    },
+    pinnedText: {
+      ...typography.caption,
+      color: colors.primary,
+      marginLeft: spacing[1],
+      fontWeight: '700',
     },
   });

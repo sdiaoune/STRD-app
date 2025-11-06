@@ -10,6 +10,7 @@ import TopBar from '../components/ui/TopBar';
 import { Avatar } from '../components/Avatar';
 import Input from '../src/design/components/Input';
 import { openUserProfile } from '../utils/openUserProfile';
+import CertifiedBadge from '../components/CertifiedBadge';
 
 export const UserSearchScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -83,7 +84,10 @@ export const UserSearchScreen: React.FC = () => {
             <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }} onPress={() => openUserProfile(navigation as any, item.id)}>
               <Avatar source={item.avatar || undefined} size={40} label={item.name || undefined} />
               <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <Text style={styles.name}>{item.name || 'Unnamed Runner'}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.name}>{item.name || 'Unnamed Runner'}</Text>
+                  {item.isCertified ? <CertifiedBadge /> : null}
+                </View>
                 <Text style={styles.handle}>{item.handle || ''}</Text>
               </View>
             </TouchableOpacity>

@@ -1,6 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, TouchableOpacity, View, TextInput, Alert, ScrollView } from 'react-native';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View, TextInput, Alert, ScrollView, Modal } from 'react-native';
+import ColorPicker from '../components/ui/ColorPicker';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../state/store';
 import { borderRadius, colors, spacing, typography } from '../theme';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
@@ -13,11 +15,16 @@ export const SettingsScreen: React.FC = () => {
   const setUnit = useStore(state => state.setUnitPreference);
   const theme = useStore(state => state.themePreference);
   const setTheme = useStore(state => state.setThemePreference);
+  const accent = useStore(state => state.accentPreference);
+  const setAccent = useStore(state => state.setAccentPreference);
   const currentUser = useStore(state => state.currentUser);
+  const [customPickerVisible, setCustomPickerVisible] = React.useState(false);
+  const [customHex, setCustomHex] = React.useState('');
   const { setMode } = useDesignTheme();
   // Admin tools removed
   const styles = useLegacyStyles(createStyles);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView
@@ -48,8 +55,127 @@ export const SettingsScreen: React.FC = () => {
             <Text style={[styles.unitText, theme === 'light' && styles.unitTextActive]}>Light</Text>
           </Pressable>
         </View>
+        <View style={{ height: spacing.md }} />
+        <Text style={styles.smallLabel}>Accent color</Text>
+        <View style={[styles.row, { marginTop: spacing.sm }]}> 
+          {(
+            [
+              { key: 'blue',   light: '#2D5BFF', dark: '#5B86FF' },
+              { key: 'teal',   light: '#14B8A6', dark: '#2DD4BF' },
+              { key: 'violet', light: '#7C3AED', dark: '#A78BFA' },
+              { key: 'pink',   light: '#EC4899', dark: '#F472B6' },
+              { key: 'orange', light: '#F97316', dark: '#FB923C' },
+              { key: 'green',  light: '#16A34A', dark: '#22C55E' },
+            ] as const
+          ).map(opt => {
+            const color = theme === 'dark' ? opt.dark : opt.light;
+            const isActive = accent === opt.key;
+            return (
+              <Pressable
+                key={opt.key}
+                onPress={() => setAccent(opt.key as any)}
+                accessibilityRole="button"
+                hitSlop={10}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: color,
+                  marginRight: spacing.sm,
+                  borderWidth: isActive ? 3 : 1,
+                  borderColor: isActive ? colors.primary : colors.border,
+                }}
+              />
+            );
+          })}
+          {/* Custom color circle */}
+          <Pressable
+            onPress={() => { setCustomHex(typeof accent === 'string' && accent.startsWith('#') ? accent : '#A855F7'); setCustomPickerVisible(true); }}
+            accessibilityRole="button"
+            hitSlop={10}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: typeof accent === 'string' && accent.startsWith('#') ? (accent as string) : 'transparent',
+              marginRight: spacing.sm,
+              borderWidth: 2,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: typeof accent === 'string' && accent.startsWith('#') ? colors.onPrimary : colors.text.secondary, fontWeight: '800' }}>＋</Text>
+          </Pressable>
+        </View>
       </View>
-      {/* Admin tools removed */}
+      {/* Custom color modal */}
+      <Modal visible={customPickerVisible} transparent animationType="fade" onRequestClose={() => setCustomPickerVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: spacing.lg, width: '85%', borderWidth: 1, borderColor: colors.border }}>
+            <Text style={{ ...typography.h3, color: colors.text.primary, marginBottom: spacing.md }}>Custom accent color</Text>
+            <Text style={{ ...typography.body, color: colors.text.secondary }}>Enter a HEX color like #A855F7</Text>
+            <View style={{ height: spacing.sm }} />
+            <TextInput
+              value={customHex}
+              onChangeText={setCustomHex}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="#A855F7"
+              placeholderTextColor={colors.text.secondary}
+              style={{
+                backgroundColor: colors.bg,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: borderRadius.md,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.sm,
+                color: colors.text.primary,
+              }}
+            />
+            <View style={{ height: spacing.md }} />
+            <ColorPicker initialHex={customHex || (typeof accent === 'string' && accent.startsWith('#') ? (accent as string) : '#A855F7')} onChange={setCustomHex} />
+            <View style={{ height: spacing.md }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(customHex) ? customHex : colors.border, marginRight: spacing.sm, borderWidth: 1, borderColor: colors.border }} />
+              <Text style={{ ...typography.caption, color: colors.text.secondary }}>Preview</Text>
+            </View>
+            <View style={{ height: spacing.md }} />
+            <View style={{ flexDirection: 'row' }}>
+              <TouchableOpacity style={[styles.actionBtn, { flex: 1, marginRight: spacing.sm }]} onPress={() => setCustomPickerVisible(false)}>
+                <Text style={styles.actionBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, { flex: 1 }]}
+                onPress={() => {
+                  const hex = customHex.trim();
+                  if (!/^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(hex)) {
+                    Alert.alert('Invalid color', 'Please enter a valid HEX like #A855F7.');
+                    return;
+                  }
+                  setAccent(hex);
+                  setCustomPickerVisible(false);
+                }}
+              >
+                <Text style={styles.actionBtnText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      {currentUser.isSuperAdmin ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Admin</Text>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate('AdminTools')}
+            accessibilityRole="button"
+            hitSlop={12}
+          >
+            <Text style={styles.actionBtnText}>Open Admin Tools</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
         <TouchableOpacity

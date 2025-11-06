@@ -10,10 +10,11 @@ export function useLegacyStyles<T>(
   const { name } = useDesignTheme();
   const themePreference = useStore((state) => state.themePreference);
   const hasHydratedTheme = useStore((state) => state.hasHydratedTheme);
+  const accentPreference = useStore((state) => state.accentPreference);
 
   return React.useMemo(
     () => factory(),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [name, themePreference, hasHydratedTheme, ...deps],
+    [name, themePreference, hasHydratedTheme, accentPreference, ...deps],
   );
 }

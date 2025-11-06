@@ -33,6 +33,7 @@ interface RunState {
 
 const UNIT_PREFERENCE_KEY = 'strd_unit_preference';
 const THEME_PREFERENCE_KEY = 'strd_theme_preference';
+const ACCENT_PREFERENCE_KEY = 'strd_accent_preference';
 // Reuse avatars bucket for run media to avoid relying on missing storage buckets in staging
 const RUN_MEDIA_BUCKET = 'avatars';
 
@@ -93,6 +94,9 @@ const uploadImageToStorage = async (bucket: string, path: string, uri: string, m
   }
 };
 
+type AccentName = 'blue' | 'teal' | 'violet' | 'pink' | 'orange' | 'green';
+type AccentPreference = AccentName | string; // hex like #RRGGBB is allowed
+
 interface AppState {
   // Data
   users: User[];
@@ -113,6 +117,7 @@ interface AppState {
   // Preferences
   unitPreference: 'metric' | 'imperial';
   themePreference: 'dark' | 'light';
+  accentPreference: AccentPreference;
   hasHydratedTheme: boolean;
   
   // Session tracking (avoid race conditions)
@@ -139,6 +144,7 @@ interface AppState {
   clearReminder: (eventId: string) => Promise<boolean>;
   setUnitPreference: (unit: 'metric' | 'imperial') => void;
   setThemePreference: (theme: 'dark' | 'light') => void;
+  setAccentPreference: (accent: AccentPreference) => void;
   setDistanceRadiusMi: (mi: number) => void;
   signIn: (method: 'email' | 'google', email?: string, password?: string) => Promise<void>;
   signUp: (name: string, email: string, password?: string) => Promise<void>;
@@ -196,6 +202,7 @@ export const useStore = create<AppState>((set, get) => ({
   followingUserIds: [],
   unitPreference: 'metric',
   themePreference: 'dark',
+  accentPreference: 'blue',
   hasHydratedTheme: false,
   distanceRadiusMi: 10,
   
@@ -213,6 +220,10 @@ export const useStore = create<AppState>((set, get) => ({
   setThemePreference: (theme: 'dark' | 'light') => {
     set({ themePreference: theme, hasHydratedTheme: true });
     AsyncStorage.setItem(THEME_PREFERENCE_KEY, theme).catch(() => {});
+  },
+  setAccentPreference: (accent: AccentPreference) => {
+    set({ accentPreference: accent });
+    AsyncStorage.setItem(ACCENT_PREFERENCE_KEY, accent).catch(() => {});
   },
   setDistanceRadiusMi: (mi: number) => {
     const clamped = Math.min(30, Math.max(10, Math.round(mi)));
@@ -342,6 +353,8 @@ export const useStore = create<AppState>((set, get) => ({
         bio: (profile as any).bio ?? null,
         followingOrgs,
         isSuperAdmin,
+        isCertified: (profile as any).is_certified ?? false,
+        sponsoredUntil: (profile as any).sponsored_until ?? null,
       }] : []);
 
   const organizations: Organization[] = (orgs || []).map(o => ({
@@ -352,9 +365,10 @@ export const useStore = create<AppState>((set, get) => ({
       city: o.city,
       website: (o as any).website_url ?? null,
       ownerId: (o as any).owner_id ?? undefined,
+      isCertified: (o as any).is_certified ?? false,
     }));
 
-      const eventsMapped: Event[] = (events || []).map(e => ({
+    const eventsMapped: Event[] = (events || []).map(e => ({
       id: e.id,
       title: e.title,
       orgId: e.org_id,
@@ -370,6 +384,8 @@ export const useStore = create<AppState>((set, get) => ({
       distanceFromUserKm: e.distance_from_user_km ?? null,
       coverImage: e.cover_image_url ?? e.cover_image ?? null,
       createdByUserId: (e as any).created_by ?? undefined,
+      sponsoredFrom: (e as any).sponsored_from ?? null,
+      sponsoredUntil: (e as any).sponsored_until ?? null,
     }));
 
     const followingUsers = (userFollowRows || []).map((row: any) => row.followee_id as string);
@@ -398,6 +414,8 @@ export const useStore = create<AppState>((set, get) => ({
       likedByCurrentUser: likesByPostId.has(p.id),
       comments: commentsByPostId.get(p.id) || [],
       isFromPartner: p.is_from_partner,
+      sponsoredFrom: (p as any).sponsored_from ?? null,
+      sponsoredUntil: (p as any).sponsored_until ?? null,
     }));
 
     const pagePosts: PagePost[] = (orgPosts || []).map(op => ({
@@ -406,6 +424,8 @@ export const useStore = create<AppState>((set, get) => ({
       createdAtISO: op.created_at,
       content: op.content,
       imageUrl: op.image_url ?? null,
+      sponsoredFrom: (op as any).sponsored_from ?? null,
+      sponsoredUntil: (op as any).sponsored_until ?? null,
     }));
 
     // Timeline: latest posts + events
@@ -427,7 +447,7 @@ export const useStore = create<AppState>((set, get) => ({
     if (neededIds.length > 0) {
       const { data: profilesNeeded } = await supabase
         .from('profiles')
-        .select('id, name, handle, avatar_url, city, interests, bio')
+        .select('id, name, handle, avatar_url, city, interests, bio, is_certified')
         .in('id', neededIds as any);
       extraUsers = (profilesNeeded || []).map(p => ({
         id: p.id,
@@ -438,6 +458,7 @@ export const useStore = create<AppState>((set, get) => ({
         interests: p.interests ?? [],
         followingOrgs: [],
         bio: (p as any).bio ?? null,
+        isCertified: (p as any).is_certified ?? false,
       }));
     }
 
@@ -1183,6 +1204,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const unit = await AsyncStorage.getItem(UNIT_PREFERENCE_KEY);
       const theme = await AsyncStorage.getItem(THEME_PREFERENCE_KEY);
+      const accent = await AsyncStorage.getItem(ACCENT_PREFERENCE_KEY);
       const updates: Partial<AppState> = { hasHydratedTheme: true };
 
       if (unit === 'metric' || unit === 'imperial') {
@@ -1190,6 +1212,11 @@ export const useStore = create<AppState>((set, get) => ({
       }
       if (theme === 'dark' || theme === 'light') {
         updates.themePreference = theme;
+      }
+      const isNamed = accent === 'blue' || accent === 'teal' || accent === 'violet' || accent === 'pink' || accent === 'orange' || accent === 'green';
+      const isHex = !!accent && /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(accent);
+      if (isNamed || isHex) {
+        updates.accentPreference = accent as AccentPreference;
       }
 
       set(updates);
@@ -1236,7 +1263,7 @@ export const useStore = create<AppState>((set, get) => ({
     const uid = get().currentUser.id;
     const { data } = await supabase
       .from('profiles')
-      .select('id, name, handle, avatar_url, city, interests')
+      .select('id, name, handle, avatar_url, city, interests, is_certified')
       .ilike('name', `%${query}%`);
     // fetch following map
     const { data: following } = await supabase
@@ -1244,7 +1271,7 @@ export const useStore = create<AppState>((set, get) => ({
       .select('followee_id')
       .eq('follower_id', uid);
     const followingSet = new Set((following || []).map(f => f.followee_id));
-    return (data || []).map(p => ({ id: p.id, name: p.name, handle: p.handle, avatar: p.avatar_url, city: p.city, interests: p.interests ?? [], followingOrgs: [], __following: followingSet.has(p.id) } as any));
+    return (data || []).map(p => ({ id: p.id, name: p.name, handle: p.handle, avatar: p.avatar_url, city: p.city, interests: p.interests ?? [], followingOrgs: [], isCertified: (p as any).is_certified ?? false, __following: followingSet.has(p.id) } as any));
   },
   followUser: async (userIdToFollow: string) => {
     const userId = get().currentUser.id;
@@ -1530,12 +1557,17 @@ export const useStore = create<AppState>((set, get) => ({
   getFilteredEvents: () => {
     const state = get();
     const radiusKm = (state.distanceRadiusMi || 10) * 1.60934;
-    const sortForSuperAdmin = (list: Event[]) => {
-      if (!state.currentUser?.isSuperAdmin) return list;
+    const sortEvents = (list: Event[]) => {
+      const now = Date.now();
       return [...list].sort((a, b) => {
-        const aPartner = state.orgById(a.orgId)?.type === 'partner' ? 1 : 0;
-        const bPartner = state.orgById(b.orgId)?.type === 'partner' ? 1 : 0;
-        if (aPartner !== bPartner) return bPartner - aPartner;
+        const aSponsored = !!(a.sponsoredUntil && new Date(a.sponsoredUntil).getTime() > now && (!a.sponsoredFrom || new Date(a.sponsoredFrom).getTime() <= now));
+        const bSponsored = !!(b.sponsoredUntil && new Date(b.sponsoredUntil).getTime() > now && (!b.sponsoredFrom || new Date(b.sponsoredFrom).getTime() <= now));
+        if (aSponsored !== bSponsored) return aSponsored ? -1 : 1;
+        if (state.currentUser?.isSuperAdmin) {
+          const aPartner = state.orgById(a.orgId)?.type === 'partner' ? 1 : 0;
+          const bPartner = state.orgById(b.orgId)?.type === 'partner' ? 1 : 0;
+          if (aPartner !== bPartner) return bPartner - aPartner;
+        }
         return 0;
       });
     };
@@ -1543,7 +1575,7 @@ export const useStore = create<AppState>((set, get) => ({
     const byRadius = state.events.filter(e => e.distanceFromUserKm == null || e.distanceFromUserKm <= radiusKm);
 
     if (state.eventFilter === 'all') {
-      return sortForSuperAdmin(byRadius);
+      return sortEvents(byRadius);
     }
 
     // For You logic: item's orgId ∈ currentUser.followingOrgs OR tag intersects currentUser.interests
@@ -1556,7 +1588,7 @@ export const useStore = create<AppState>((set, get) => ({
       return isFollowingOrg || hasMatchingTags;
     });
 
-    return sortForSuperAdmin(personalized);
+    return sortEvents(personalized);
   },
 
   getTimelineItems: (scope: 'all' | 'forYou') => {
@@ -1575,7 +1607,35 @@ export const useStore = create<AppState>((set, get) => ({
       ...pagePosts.map(pp => ({ type: 'page_post' as const, refId: pp.id, createdAtISO: pp.createdAtISO })),
     ];
 
-    return items.sort((a, b) => new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime());
+    const now = Date.now();
+    const isSponsoredActive = (item: TimelineItem): boolean => {
+      if (item.type === 'run') {
+        const p = runPosts.find(r => r.id === item.refId);
+        if (!p?.sponsoredUntil) return false;
+        const from = p.sponsoredFrom ? new Date(p.sponsoredFrom).getTime() : -Infinity;
+        const until = new Date(p.sponsoredUntil).getTime();
+        return from <= now && until > now;
+      } else if (item.type === 'event') {
+        const e = events.find(ev => ev.id === item.refId);
+        if (!e?.sponsoredUntil) return false;
+        const from = e.sponsoredFrom ? new Date(e.sponsoredFrom).getTime() : -Infinity;
+        const until = new Date(e.sponsoredUntil).getTime();
+        return from <= now && until > now;
+      } else {
+        const pp = pagePosts.find(x => x.id === item.refId);
+        if (!pp?.sponsoredUntil) return false;
+        const from = pp.sponsoredFrom ? new Date(pp.sponsoredFrom).getTime() : -Infinity;
+        const until = new Date(pp.sponsoredUntil).getTime();
+        return from <= now && until > now;
+      }
+    };
+
+    return items.sort((a, b) => {
+      const aSponsored = isSponsoredActive(a);
+      const bSponsored = isSponsoredActive(b);
+      if (aSponsored !== bSponsored) return aSponsored ? -1 : 1;
+      return new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime();
+    });
   },
 
   ownedOrganizations: () => {

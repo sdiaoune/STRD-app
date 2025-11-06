@@ -128,6 +128,31 @@ const getCurrentTheme = (): ThemeName => {
 export const colors = new Proxy({} as any, {
   get(_target, prop: string) {
     const palette = themePalettes[getCurrentTheme()];
+    if (prop === 'primary' || prop === 'accent') {
+      // Read accent from store at runtime and map to theme-specific hex
+      type AccentName = 'blue' | 'teal' | 'violet' | 'pink' | 'orange' | 'green';
+      let accent: string = 'blue';
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { useStore } = require('./state/store');
+        const pref = useStore.getState?.()?.accentPreference as string | undefined;
+        if (pref) accent = pref;
+      } catch {}
+      const accentPalette: Record<AccentName, { light: string; dark: string }> = {
+        blue:   { light: '#2563EB', dark: '#60A5FA' },
+        teal:   { light: '#14B8A6', dark: '#2DD4BF' },
+        violet: { light: '#7C3AED', dark: '#A78BFA' },
+        pink:   { light: '#EC4899', dark: '#F472B6' },
+        orange: { light: '#F97316', dark: '#FB923C' },
+        green:  { light: '#16A34A', dark: '#22C55E' },
+      };
+      const mode = getCurrentTheme();
+      if (typeof accent === 'string' && /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(accent)) {
+        return accent;
+      }
+      const named = (accent as AccentName) in accentPalette ? (accent as AccentName) : 'blue';
+      return mode === 'dark' ? accentPalette[named].dark : accentPalette[named].light;
+    }
     return (palette as any)[prop];
   },
 });
