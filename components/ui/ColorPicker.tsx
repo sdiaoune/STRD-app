@@ -55,7 +55,7 @@ const hsvToHex = ({ h, s, v }: HSV): string => {
   return `#${toHex(R)}${toHex(G)}${toHex(B)}`.toUpperCase();
 };
 
-export const ColorPicker: React.FC<Props> = ({ initialHex = '#A855F7', onChange }) => {
+export const ColorPicker: React.FC<Props> = ({ initialHex = '#A855F7', onChange }) => { // color-literal-ok
   const [svSize, setSvSize] = useState({ w: 1, h: 1 });
   const [hueWidth, setHueWidth] = useState(1);
   const initial = useMemo(() => hexToHsv(initialHex), [initialHex]);
@@ -112,7 +112,7 @@ export const ColorPicker: React.FC<Props> = ({ initialHex = '#A855F7', onChange 
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#ffffff',
+    borderColor: '#ffffff', // color-literal-ok
     backgroundColor: hueColor,
     left: hsv.s * svSize.w - 11,
     top: (1 - hsv.v) * svSize.h - 11,
@@ -124,7 +124,7 @@ export const ColorPicker: React.FC<Props> = ({ initialHex = '#A855F7', onChange 
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#ffffff',
+    borderColor: '#ffffff', // color-literal-ok
     backgroundColor: hueColor,
     left: (hsv.h / 360) * hueWidth - 10,
     top: -6,
@@ -135,12 +135,12 @@ export const ColorPicker: React.FC<Props> = ({ initialHex = '#A855F7', onChange 
       {/* SV square */}
       <View onLayout={onSvLayout} {...svResponder.panHandlers} style={{ height: 180, borderRadius: borderRadius.md, overflow: 'hidden', borderWidth: 1, borderColor: colors.border }}>
         <LinearGradient
-          colors={[ '#ffffff', hueColor ]}
+          colors={[ '#ffffff', hueColor ]} // color-literal-ok
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           style={{ flex: 1 }}
         />
         <LinearGradient
-          colors={[ 'transparent', '#000000' ]}
+          colors={[ 'transparent', '#000000' ]} // color-literal-ok
           start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
           style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
         />
@@ -150,7 +150,7 @@ export const ColorPicker: React.FC<Props> = ({ initialHex = '#A855F7', onChange 
       {/* Hue bar */}
       <View onLayout={(e) => setHueWidth(Math.max(1, e.nativeEvent.layout.width))} {...hueResponder.panHandlers} style={{ height: 8, borderRadius: 4, overflow: 'hidden', borderWidth: 1, borderColor: colors.border }}>
         <LinearGradient
-          colors={[ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000' ]}
+          colors={[ '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000' ]} // color-literal-ok
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           style={{ flex: 1 }}
         />

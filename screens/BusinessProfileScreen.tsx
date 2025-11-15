@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -10,7 +10,7 @@ type BusinessProfileScreenNavigationProp = NativeStackNavigationProp<EventsStack
 type BusinessProfileScreenRouteProp = RouteProp<EventsStackParamList, 'BusinessProfile'>;
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import { colors, spacing, borderRadius, typography, useTheme as useTokensTheme } from '../theme';
+import { useTheme as useTokensTheme } from '../theme';
 import { Avatar } from '../components/Avatar';
 import { EventCard } from '../components/EventCard';
 import { RunPostCard } from '../components/RunPostCard';
@@ -26,6 +26,8 @@ export const BusinessProfileScreen: React.FC = () => {
   
   const { orgById, events, runPosts, postById, eventById, deletePage, currentUser, followPage, unfollowPage, pagePosts } = useStore();
   const theme = useTokensTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const [followPending, setFollowPending] = React.useState(false);
   const organization = orgById(orgId);
   const isOwner = organization && organization.ownerId === currentUser.id;
   const isFollowingPage = !!organization && currentUser.followingOrgs.includes(organization.id);
@@ -107,13 +109,13 @@ export const BusinessProfileScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView edges={['left', 'right', 'bottom']} style={[styles.container, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.bg }]}> 
+    <SafeAreaView edges={['left', 'right', 'bottom']} style={styles.container}>
       <ScrollView contentInsetAdjustmentBehavior="never" style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Organization Header */}
-        <View style={[styles.orgHeader, { backgroundColor: theme.mode === 'light' ? '#ffffff' : undefined }] }>
+        <View style={styles.orgHeader}>
           <Avatar source={organization.logo} size={80} />
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={[styles.orgName, { color: theme.mode === 'light' ? '#000000' : colors.text.primary }]}>{organization.name}</Text>
+            <Text style={styles.orgName}>{organization.name}</Text>
             {organization.isCertified ? <CertifiedBadge /> : null}
           </View>
           {organization.type === 'partner' && (
@@ -121,8 +123,8 @@ export const BusinessProfileScreen: React.FC = () => {
               <Text style={styles.partnerText}>Partner</Text>
             </View>
           )}
-          <Text style={[styles.orgLocation, { color: theme.mode === 'light' ? '#000000' : colors.muted }]}>{organization.city}</Text>
-          <Text style={[styles.orgDescription, { color: theme.mode === 'light' ? '#000000' : colors.text.primary }]}>
+          <Text style={styles.orgLocation}>{organization.city}</Text>
+          <Text style={styles.orgDescription}>
             {organization.type === 'partner' 
               ? 'Official partner organization dedicated to promoting running and wellness in the community.'
               : 'Community organization bringing runners together for events and activities.'
@@ -130,39 +132,45 @@ export const BusinessProfileScreen: React.FC = () => {
           </Text>
           
           {organization.website ? (
-            <TouchableOpacity style={[styles.websiteButton, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]} onPress={handleWebsitePress}>
-              <Ionicons name="globe" size={20} color={theme.mode === 'light' ? '#000000' : colors.primary} />
-              <Text style={[styles.websiteText, { color: theme.mode === 'light' ? '#000000' : colors.primary }]}>Visit Website</Text>
+            <TouchableOpacity style={styles.websiteButton} onPress={handleWebsitePress}>
+              <Ionicons name="globe" size={20} color={theme.colors.primary} />
+              <Text style={styles.websiteText}>Visit Website</Text>
             </TouchableOpacity>
           ) : null}
 
           {!isOwner && (
-            <TouchableOpacity
-              style={[styles.followBtn, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }, isFollowingPage ? styles.following : null]}
+              <TouchableOpacity
+              style={[styles.followBtn, isFollowingPage ? styles.following : null, followPending ? { opacity: 0.5 } : null]}
               onPress={async () => {
-                if (!organization) return;
-                if (isFollowingPage) {
-                  await unfollowPage(organization.id);
-                } else {
-                  await followPage(organization.id);
+                if (!organization || followPending) return;
+                setFollowPending(true);
+                try {
+                  if (isFollowingPage) {
+                    await unfollowPage(organization.id);
+                  } else {
+                    await followPage(organization.id);
+                  }
+                } finally {
+                  setFollowPending(false);
                 }
               }}
               accessibilityRole="button"
+              disabled={followPending}
             >
-              <Ionicons name={isFollowingPage ? 'checkmark' : 'add'} size={18} color={theme.mode === 'light' ? '#000000' : colors.primary} />
-              <Text style={[styles.followBtnText, { color: theme.mode === 'light' ? '#000000' : colors.primary }]}>{isFollowingPage ? 'Following' : 'Follow'}</Text>
+              <Ionicons name={isFollowingPage ? 'checkmark' : 'add'} size={18} color={theme.colors.primary} />
+              <Text style={styles.followBtnText}>{isFollowingPage ? 'Following' : 'Follow'}</Text>
             </TouchableOpacity>
           )}
 
           {isOwner && (
             <View style={styles.ownerActions}>
-              <TouchableOpacity style={[styles.actionButton, styles.editButton, { marginRight: spacing.sm }]} onPress={handleEditPress}>
-                <Ionicons name="create-outline" size={18} color="#ffffff" />
+              <TouchableOpacity style={[styles.actionButton, styles.editButton, styles.editButtonSpacing]} onPress={handleEditPress}>
+                <Ionicons name="create-outline" size={18} color={theme.colors.onPrimary} />
                 <Text style={styles.actionButtonText}>Edit</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={handleDeletePress}>
-                <Ionicons name="trash-outline" size={18} color={colors.bg} />
-                <Text style={[styles.actionButtonText, { color: colors.bg }]}>Delete</Text>
+                <Ionicons name="trash-outline" size={18} color={theme.colors.onDanger} />
+                <Text style={[styles.actionButtonText, styles.deleteText]}>Delete</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -214,125 +222,133 @@ export const BusinessProfileScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  orgHeader: {
-    alignItems: 'center',
-    padding: spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  orgName: {
-    ...typography.h2,
-    color: colors.text.primary,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  partnerBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.card,
-    marginBottom: spacing.sm,
-  },
-  partnerText: {
-    ...typography.caption,
-    color: colors.bg,
-    fontWeight: 'bold',
-  },
-  orgLocation: {
-    ...typography.body,
-    color: colors.muted,
-    marginBottom: spacing.md,
-  },
-  orgDescription: {
-    ...typography.body,
-    color: colors.text.primary,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: spacing.lg,
-    paddingHorizontal: spacing.lg,
-  },
-  websiteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  websiteText: {
-    ...typography.body,
-    color: colors.primary,
-    marginLeft: spacing.sm,
-    fontWeight: '600',
-  },
-  followBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.sm,
-  },
-  following: { opacity: 0.9 },
-  followBtnText: { ...typography.body, marginLeft: spacing.sm, fontWeight: '600', color: colors.primary },
-  section: {
-    padding: spacing.md,
-  },
-  sectionTitle: {
-    ...typography.h2,
-    color: colors.text.primary,
-    marginBottom: spacing.md,
-  },
-  errorContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  errorText: {
-    ...typography.h2,
-    color: colors.muted,
-  },
-  ownerActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  editButton: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  deleteButton: {
-    backgroundColor: colors.danger,
-    borderColor: colors.danger,
-  },
-  actionButtonText: {
-    ...typography.body,
-    marginLeft: spacing.sm,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-});
+const createStyles = (theme: ReturnType<typeof useTokensTheme>) => {
+  const { colors, spacing, radius, typography } = theme;
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    orgHeader: {
+      alignItems: 'center',
+      padding: spacing.xl,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    orgName: {
+      ...typography.h2,
+      color: colors.text.primary,
+      marginTop: spacing.md,
+      marginBottom: spacing.sm,
+      textAlign: 'center',
+    },
+    partnerBadge: {
+      backgroundColor: colors.primary,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.card,
+      marginBottom: spacing.sm,
+    },
+    partnerText: {
+      ...typography.caption,
+      color: colors.bg,
+      fontWeight: 'bold',
+    },
+    orgLocation: {
+      ...typography.body,
+      color: colors.text.secondary,
+      marginBottom: spacing.md,
+    },
+    orgDescription: {
+      ...typography.body,
+      color: colors.text.primary,
+      textAlign: 'center',
+      lineHeight: 24,
+      marginBottom: spacing.lg,
+      paddingHorizontal: spacing.lg,
+    },
+    websiteButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    websiteText: {
+      ...typography.body,
+      color: colors.primary,
+      marginLeft: spacing.sm,
+      fontWeight: '600',
+    },
+    followBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginTop: spacing.sm,
+    },
+    following: { opacity: 0.9 },
+    followBtnText: { ...typography.body, marginLeft: spacing.sm, fontWeight: '600', color: colors.primary },
+    section: {
+      padding: spacing.md,
+    },
+    sectionTitle: {
+      ...typography.h2,
+      color: colors.text.primary,
+      marginBottom: spacing.md,
+    },
+    errorContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    errorText: {
+      ...typography.h2,
+      color: colors.text.muted,
+    },
+    ownerActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginTop: spacing.md,
+      paddingHorizontal: spacing.lg,
+    },
+    actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    editButton: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    editButtonSpacing: {
+      marginRight: spacing.sm,
+    },
+    deleteButton: {
+      backgroundColor: colors.danger,
+      borderColor: colors.danger,
+    },
+    actionButtonText: {
+      ...typography.body,
+      marginLeft: spacing.sm,
+      fontWeight: '600',
+      color: colors.onPrimary,
+    },
+    deleteText: { color: colors.onDanger },
+  });
+};

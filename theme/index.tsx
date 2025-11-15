@@ -63,7 +63,16 @@ export function useTheme() {
 }
 
 // Back-compat exports used by existing components
-export const borderRadius = { card: radius.card, modal: radius.modal, lg: radius.card, xl: radius.modal } as const;
+export const borderRadius = {
+  card: radius.card,
+  modal: radius.modal,
+  control: radius.control,
+  full: radius.full,
+  sm: radius.control,
+  md: radius.card,
+  lg: radius.card,
+  xl: radius.modal,
+} as const;
 export const getCurrentThemeName = () => (useColorScheme() === 'dark' ? 'dark' : 'light');
 
 export function getNavigationTheme(mode: ThemeMode) {

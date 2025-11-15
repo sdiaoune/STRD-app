@@ -9,7 +9,7 @@ import { LikeButton } from './LikeButton';
 import { getRelativeTime, formatDistance, formatPace } from '../utils/format';
 import { formatDuration as fmtDuration } from '../utils/formatters';
 import { useStore } from '../state/store';
-import type { RunPost } from '../types/models';
+import type { RunPost, RunVisibility } from '../types/models';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TimelineStackParamList } from '../types/navigation';
 import Animated, { FadeIn, Easing, Layout } from 'react-native-reanimated';
@@ -27,6 +27,12 @@ interface RunPostCardProps {
   style?: any;
 }
 
+const VISIBILITY_META: Record<RunVisibility, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
+  public: { icon: 'globe-outline', label: 'Public' },
+  followers: { icon: 'people-outline', label: 'Followers' },
+  private: { icon: 'lock-closed-outline', label: 'Private' },
+};
+
 export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }) => {
   const [showLikes, setShowLikes] = useState(false);
   const userById = useStore(state => state.userById);
@@ -38,6 +44,7 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
   
   // Subscribe to runPosts to get real-time updates
   const runPosts = useStore(state => state.runPosts);
+  const currentUserId = useStore(state => state.currentUser.id);
   
   // Find the current post from the store to always have fresh like state
   const currentPost = runPosts.find(p => p.id === post.id) || post;
@@ -67,6 +74,8 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
     (!post.sponsoredFrom || new Date(post.sponsoredFrom).getTime() <= nowTs)
   );
   const [showSponsorPicker, setShowSponsorPicker] = useState(false);
+  const isOwner = currentUserId === post.userId;
+  const visibilityMeta = VISIBILITY_META[post.visibility ?? 'followers'];
 
   const setSponsoredUntil = async (untilISO: string | null) => {
     try {
@@ -103,6 +112,12 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
               <View style={styles.pinnedPill}>
                 <Ionicons name="pricetag" size={12} color={colors.primary} />
                 <Text style={styles.pinnedText}>Sponsored</Text>
+              </View>
+            )}
+            {isOwner && (
+              <View style={styles.visibilityPill}>
+                <Ionicons name={visibilityMeta.icon} size={12} color={colors.text.secondary} />
+                <Text style={styles.visibilityText}>{visibilityMeta.label}</Text>
               </View>
             )}
             <Text style={styles.timestamp}>{getRelativeTime(post.createdAtISO)}</Text>
@@ -242,6 +257,21 @@ const stylesFactory = () => StyleSheet.create({
     color: colors.primary,
     marginLeft: spacing[1],
     fontWeight: '700',
+  },
+  visibilityPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    marginRight: spacing.xs,
+  },
+  visibilityText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginLeft: spacing[1],
+    fontWeight: '600',
   },
   runStats: {
     flexDirection: 'row',

@@ -5,9 +5,10 @@ import type {
   Event,
   RunPost,
   TimelineItem,
-  Comment
+  Comment,
+  PagePost,
+  RunVisibility,
 } from '../types/models';
-import type { PagePost } from '../types/models';
 import { supabase } from '../supabase/client';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -101,6 +102,7 @@ interface RunState {
   lastLocation?: { latitude: number; longitude: number; timestamp: number } | null;
   path: { latitude: number; longitude: number; timestamp: number }[];
   activityType: 'run' | 'walk';
+  visibility: RunVisibility;
 }
 
 const UNIT_PREFERENCE_KEY = 'strd_unit_preference';
@@ -191,6 +193,7 @@ interface AppState {
   themePreference: 'dark' | 'light';
   accentPreference: AccentPreference;
   hasHydratedTheme: boolean;
+  defaultRunVisibility: RunVisibility;
   
   // Session tracking (avoid race conditions)
   _currentSessionId: string | null;
@@ -210,6 +213,8 @@ interface AppState {
   postRun: (caption: string, image?: string) => Promise<boolean>;
   deleteRunPost: (postId: string) => Promise<boolean>;
   setActivityType: (type: 'run' | 'walk') => void;
+  setRunVisibility: (visibility: RunVisibility) => void;
+  setDefaultRunVisibility: (visibility: RunVisibility) => Promise<boolean>;
   filterEvents: (scope: 'forYou' | 'all') => void;
   joinEvent: (eventId: string) => Promise<boolean>;
   leaveEvent: (eventId: string) => Promise<boolean>;
@@ -228,6 +233,7 @@ interface AppState {
   uploadAvatar: (uri: string) => Promise<string | null>;
   updateProfile: (fields: { name?: string | null; bio?: string | null }) => Promise<boolean>;
   searchUsers: (query: string) => Promise<User[]>;
+  searchOrganizations: (query: string) => Promise<Organization[]>;
   followUser: (userId: string) => Promise<boolean>;
   unfollowUser: (userId: string) => Promise<boolean>;
   followPage: (orgId: string) => Promise<boolean>;
@@ -245,7 +251,7 @@ interface AppState {
   postById: (id: string) => RunPost | undefined;
   orgById: (id: string) => Organization | undefined;
   userById: (id: string) => User | undefined;
-  getFilteredEvents: () => Event[];
+  getFilteredEvents: (scope?: 'forYou' | 'all') => Event[];
   getTimelineItems: (scope: 'all' | 'forYou') => TimelineItem[];
   ownedOrganizations: () => Organization[];
   manageableEvents: () => Event[];
@@ -277,6 +283,7 @@ export const useStore = create<AppState>((set, get) => ({
   themePreference: 'dark',
   accentPreference: 'blue',
   hasHydratedTheme: false,
+  defaultRunVisibility: 'followers',
   distanceRadiusMi: 10,
   
   // Session tracking to prevent race conditions
@@ -285,6 +292,39 @@ export const useStore = create<AppState>((set, get) => ({
 
   setActivityType: (type: 'run' | 'walk') => {
     set((state) => ({ runState: { ...state.runState, activityType: type } }));
+  },
+  setRunVisibility: (visibility: RunVisibility) => {
+    set((state) => ({
+      runState: {
+        ...state.runState,
+        visibility,
+      },
+    }));
+  },
+  setDefaultRunVisibility: async (visibility: RunVisibility) => {
+    const userId = get().currentUser.id;
+    if (!userId) {
+      console.warn('[setDefaultRunVisibility] Missing user ID');
+      return false;
+    }
+    const { error } = await supabase
+      .from('user_preferences')
+      .upsert(
+        { user_id: userId, default_run_visibility: visibility },
+        { onConflict: 'user_id' }
+      );
+    if (error) {
+      console.error('[setDefaultRunVisibility] Failed to persist preference:', error);
+      return false;
+    }
+    set((state) => ({
+      defaultRunVisibility: visibility,
+      runState: {
+        ...state.runState,
+        visibility,
+      },
+    }));
+    return true;
   },
   setUnitPreference: (unit: 'metric' | 'imperial') => {
     set({ unitPreference: unit });
@@ -314,7 +354,8 @@ export const useStore = create<AppState>((set, get) => ({
     currentSpeedKmh: 0,
     lastLocation: null,
     path: [],
-    activityType: 'run'
+    activityType: 'run',
+    visibility: 'followers',
   },
   isAuthenticated: false,
   authError: null,
@@ -327,6 +368,8 @@ export const useStore = create<AppState>((set, get) => ({
         console.log('[_loadInitialData] No user ID, skipping data load');
         return;
       }
+      const snapshotRunState = get().runState;
+      const fallbackRunVisibility = get().defaultRunVisibility || 'followers';
       console.log('[_loadInitialData] Loading data for user:', currentUserId);
 
     // profiles
@@ -339,6 +382,21 @@ export const useStore = create<AppState>((set, get) => ({
         hasProfile: !!profile,
         profileError,
       });
+
+    // user preferences
+      const { data: preferences, error: prefsError } = await supabase
+        .from('user_preferences')
+        .select('default_run_visibility')
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+      if (prefsError) {
+        console.error('[_loadInitialData] Preferences query error:', prefsError);
+      }
+      const resolvedRunVisibility: RunVisibility =
+        (preferences?.default_run_visibility as RunVisibility | undefined) ??
+        snapshotRunState.visibility ??
+        fallbackRunVisibility ??
+        'followers';
 
     // org follow
       const { data: follows, error: followsError } = await supabase
@@ -392,6 +450,19 @@ export const useStore = create<AppState>((set, get) => ({
       console.log('[_loadInitialData] Posts query:', {
         count: posts?.length ?? 0,
         postsError,
+      });
+
+    // owner-only route data
+      const { data: runRoutes, error: runRoutesError } = await supabase
+        .from('run_routes')
+        .select('run_id, route_polyline')
+        .eq('user_id', currentUserId);
+      if (runRoutesError) {
+        console.error('[_loadInitialData] Run routes query error:', runRoutesError);
+      }
+      console.log('[_loadInitialData] Run routes query:', {
+        count: runRoutes?.length ?? 0,
+        runRoutesError,
       });
 
     // Fetch fresh likes from database
@@ -494,6 +565,13 @@ export const useStore = create<AppState>((set, get) => ({
     // Convert post IDs to strings for consistent comparison (Supabase returns UUIDs as strings)
     // Use trim() for safety in case of any whitespace issues
     const normalizeId = (id: any): string => String(id).trim();
+
+    const routesByRunId = new Map<string, string | null>();
+    (runRoutes || []).forEach((rr: any) => {
+      const key = normalizeId(rr.run_id);
+      routesByRunId.set(key, rr.route_polyline ?? null);
+    });
+
     // likesByPostId is already set above (from cache or DB)
     console.log('[_loadInitialData] Likes Set:', {
       size: likesByPostId.size,
@@ -510,6 +588,7 @@ export const useStore = create<AppState>((set, get) => ({
     const runPosts: RunPost[] = (posts || []).map(p => {
       const postIdStr = normalizeId(p.id);
       const isLiked = likesByPostId.has(postIdStr);
+      const ownerRoute = routesByRunId.get(postIdStr);
       if (isLiked) {
         console.log('[_loadInitialData] Post is liked:', { 
           postId: p.id, 
@@ -525,8 +604,9 @@ export const useStore = create<AppState>((set, get) => ({
         distanceKm: p.distance_km,
         durationMin: p.duration_min,
         avgPaceMinPerKm: p.avg_pace_min_per_km,
-        routePolyline: p.route_polyline,
-        routePreview: p.route_preview_url,
+      visibility: (p.visibility as RunVisibility) ?? 'followers',
+        routePolyline: ownerRoute ?? null,
+        routePreview: p.route_preview_url ?? null,
         caption: p.caption,
         likes: p.likes_count,
         likedByCurrentUser: isLiked,
@@ -549,8 +629,9 @@ export const useStore = create<AppState>((set, get) => ({
 
     // Timeline: latest posts + events
     const timelineItems: TimelineItem[] = [
-      ...runPosts.map(p => ({ type: 'run' as const, refId: p.id, createdAtISO: p.createdAtISO })),
-      ...eventsWithinRadius.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO })),
+      ...runPosts.map(p => ({ type: 'run' as const, refId: p.id, createdAtISO: p.createdAtISO, orgId: null })),
+      ...eventsWithinRadius.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO, orgId: e.orgId })),
+      ...pagePosts.map(pp => ({ type: 'page_post' as const, refId: pp.id, createdAtISO: pp.createdAtISO, orgId: pp.orgId })),
     ].sort((a, b) => new Date(b.createdAtISO).getTime() - new Date(a.createdAtISO).getTime());
 
     // Fetch author and commenter profiles for visible posts (other than current user)
@@ -598,7 +679,7 @@ export const useStore = create<AppState>((set, get) => ({
       likedPostIds: likedPosts.map(p => ({ id: p.id, likedByCurrentUser: p.likedByCurrentUser }))
     });
 
-    set({
+    set((state) => ({
       users: [...users, ...extraUsers],
       organizations,
       events: eventsWithinRadius,
@@ -607,7 +688,12 @@ export const useStore = create<AppState>((set, get) => ({
       timelineItems,
       currentUser: hydratedCurrentUser,
       followingUserIds: followingUsers,
-    });
+      defaultRunVisibility: resolvedRunVisibility,
+      runState: {
+        ...state.runState,
+        visibility: resolvedRunVisibility,
+      },
+    }));
     } catch (error) {
       console.error('[_loadInitialData] Error loading data:', error);
       throw error;
@@ -794,6 +880,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   startRun: () => {
+    const defaultVisibility = get().defaultRunVisibility || 'followers';
     set((state) => ({
       runState: {
         ...state.runState,
@@ -806,7 +893,8 @@ export const useStore = create<AppState>((set, get) => ({
         currentPace: 5.5,
         currentSpeedKmh: 0,
         lastLocation: null,
-        path: []
+        path: [],
+        visibility: defaultVisibility,
       }
     }));
   },
@@ -904,6 +992,8 @@ export const useStore = create<AppState>((set, get) => ({
   endRun: () => {
     const state = get();
     const { distanceKm, elapsedSeconds, currentPace } = state.runState;
+    const currentVisibility: RunVisibility =
+      state.runState.visibility || state.defaultRunVisibility || 'followers';
 
     set((state) => ({
       runState: {
@@ -922,6 +1012,7 @@ export const useStore = create<AppState>((set, get) => ({
       distanceKm: Math.round(distanceKm * 100) / 100,
       durationMin: Math.round(elapsedSeconds / 60),
       avgPaceMinPerKm: Math.round(currentPace * 10) / 10,
+      visibility: currentVisibility,
       likes: 0,
       likedByCurrentUser: false,
       comments: []
@@ -979,13 +1070,16 @@ export const useStore = create<AppState>((set, get) => ({
       return false;
     }
 
+    const selectedVisibility: RunVisibility =
+      get().runState.visibility || get().defaultRunVisibility || 'followers';
+
     const newRun = {
       user_id: userId,
       distance_km: distanceKm,
       duration_min: durationMin,
       avg_pace_min_per_km: avgPaceMinPerKm,
       activity_type: get().runState.activityType,
-      route_polyline: routePolyline,
+      visibility: selectedVisibility,
       route_preview_url: mediaUrl,
       caption: caption || null,
       is_from_partner: false,
@@ -994,6 +1088,23 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const { data, error } = await supabase.from('run_posts').insert(newRun).select('*').single();
       if (error || !data) return false;
+
+      let savedRoutePolyline: string | null = null;
+      if (routePolyline) {
+        const { error: routeError } = await supabase
+          .from('run_routes')
+          .upsert({
+            run_id: data.id,
+            route_polyline: routePolyline,
+          });
+        if (routeError) {
+          console.error('[postRun] Failed to persist route geometry:', routeError);
+        } else {
+          savedRoutePolyline = routePolyline;
+        }
+      }
+      const savedRoutePreview = data.route_preview_url ?? mediaUrl ?? null;
+
       const post: RunPost = {
         id: data.id,
         userId: data.user_id,
@@ -1001,20 +1112,26 @@ export const useStore = create<AppState>((set, get) => ({
         distanceKm: data.distance_km,
         durationMin: data.duration_min,
         avgPaceMinPerKm: data.avg_pace_min_per_km,
+        visibility: (data.visibility as RunVisibility) || selectedVisibility,
         activityType: data.activity_type,
-        routePolyline: data.route_polyline ?? null,
-        routePreview: data.route_preview_url,
+        routePolyline: savedRoutePolyline,
+        routePreview: savedRoutePreview,
         caption: data.caption,
         likes: data.likes_count,
         likedByCurrentUser: false,
         comments: [],
       };
+      const defaultVisibilityAfterPost = get().defaultRunVisibility || 'followers';
       set((state) => ({
         runPosts: [post, ...state.runPosts],
         timelineItems: [
           { type: 'run', refId: post.id, createdAtISO: post.createdAtISO },
           ...state.timelineItems
-        ]
+        ],
+        runState: {
+          ...state.runState,
+          visibility: defaultVisibilityAfterPost,
+        },
       }));
       return true;
     } catch {
@@ -1524,6 +1641,28 @@ export const useStore = create<AppState>((set, get) => ({
     const followingSet = new Set((following || []).map(f => f.followee_id));
     return (data || []).map(p => ({ id: p.id, name: p.name, handle: p.handle, avatar: p.avatar_url, city: p.city, interests: p.interests ?? [], followingOrgs: [], isCertified: (p as any).is_certified ?? false, __following: followingSet.has(p.id) } as any));
   },
+  searchOrganizations: async (query: string) => {
+    const followingOrgs = new Set(get().currentUser.followingOrgs || []);
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('id, name, type, logo_url, city, website_url, owner_id, is_certified')
+      .ilike('name', `%${query}%`);
+    if (error) {
+      console.warn('[searchOrganizations] query failed', error);
+      return [];
+    }
+    return (data || []).map(o => ({
+      id: o.id,
+      name: o.name,
+      type: o.type,
+      logo: o.logo_url,
+      city: o.city,
+      website: o.website_url ?? null,
+      ownerId: o.owner_id ?? undefined,
+      isCertified: (o as any).is_certified ?? false,
+      __following: followingOrgs.has(o.id),
+    }) as any);
+  },
   followUser: async (userIdToFollow: string) => {
     const userId = get().currentUser.id;
     if (!userId || userIdToFollow === userId) return false;
@@ -1575,23 +1714,48 @@ export const useStore = create<AppState>((set, get) => ({
   followPage: async (orgId: string) => {
     const state = get();
     const userId = state.currentUser.id;
-    if (!userId) return false;
+    if (!userId || !orgId) return false;
     if (state.currentUser.followingOrgs.includes(orgId)) return true;
+
+    const prevFollowing = [...state.currentUser.followingOrgs];
+    const nextFollowing = [...prevFollowing, orgId];
+    const applyFollowing = (list: string[]) => {
+      set((s) => ({
+        currentUser: { ...s.currentUser, followingOrgs: list },
+        users: s.users.map(u => u.id === userId ? { ...u, followingOrgs: list } : u),
+      }));
+    };
+
+    applyFollowing(nextFollowing);
+
     const { error } = await supabase
       .from('user_following_organizations')
       .insert({ user_id: userId, org_id: orgId });
     if (error && error.code !== '23505') {
       console.warn('[followPage] insert failed', error);
+      applyFollowing(prevFollowing);
       return false;
     }
-    set((s) => ({
-      currentUser: { ...s.currentUser, followingOrgs: [...s.currentUser.followingOrgs, orgId] },
-    }));
     return true;
   },
   unfollowPage: async (orgId: string) => {
-    const userId = get().currentUser.id;
-    if (!userId) return false;
+    const state = get();
+    const userId = state.currentUser.id;
+    if (!userId || !orgId) return false;
+
+    const prevFollowing = [...state.currentUser.followingOrgs];
+    if (!prevFollowing.includes(orgId)) return true;
+
+    const nextFollowing = prevFollowing.filter(id => id !== orgId);
+    const applyFollowing = (list: string[]) => {
+      set((s) => ({
+        currentUser: { ...s.currentUser, followingOrgs: list },
+        users: s.users.map(u => u.id === userId ? { ...u, followingOrgs: list } : u),
+      }));
+    };
+
+    applyFollowing(nextFollowing);
+
     const { error } = await supabase
       .from('user_following_organizations')
       .delete()
@@ -1599,11 +1763,9 @@ export const useStore = create<AppState>((set, get) => ({
       .eq('org_id', orgId);
     if (error) {
       console.warn('[unfollowPage] delete failed', error);
+      applyFollowing(prevFollowing);
       return false;
     }
-    set((s) => ({
-      currentUser: { ...s.currentUser, followingOrgs: s.currentUser.followingOrgs.filter(id => id !== orgId) },
-    }));
     return true;
   },
 
@@ -1805,7 +1967,7 @@ export const useStore = create<AppState>((set, get) => ({
     return get().users.find(user => user.id === id);
   },
 
-  getFilteredEvents: () => {
+  getFilteredEvents: (scope: 'forYou' | 'all' = get().eventFilter ?? 'all') => {
     const state = get();
     const radiusKm = (state.distanceRadiusMi || 10) * 1.60934;
     const sortEvents = (list: Event[]) => {
@@ -1825,16 +1987,16 @@ export const useStore = create<AppState>((set, get) => ({
 
     const byRadius = state.events.filter(e => e.distanceFromUserKm == null || e.distanceFromUserKm <= radiusKm);
 
-    if (state.eventFilter === 'all') {
+    if (scope === 'all') {
       return sortEvents(byRadius);
     }
 
+    const followingOrgSet = new Set(state.currentUser.followingOrgs || []);
+    const interestSet = new Set((state.currentUser.interests || []) as string[]);
     // For You logic: item's orgId ∈ currentUser.followingOrgs OR tag intersects currentUser.interests
     const personalized = byRadius.filter(event => {
-      const isFollowingOrg = state.currentUser.followingOrgs.includes(event.orgId);
-      const hasMatchingTags = event.tags.some(tag =>
-        (state.currentUser.interests || []).includes(tag)
-      );
+      const isFollowingOrg = followingOrgSet.has(event.orgId);
+      const hasMatchingTags = event.tags.some(tag => interestSet.has(tag));
 
       return isFollowingOrg || hasMatchingTags;
     });
@@ -1844,18 +2006,20 @@ export const useStore = create<AppState>((set, get) => ({
 
   getTimelineItems: (scope: 'all' | 'forYou') => {
     const state = get();
-    const events = scope === 'all' ? state.events : state.getFilteredEvents();
+    const followingOrgSet = new Set(state.currentUser.followingOrgs || []);
+    const followingUserSet = new Set(state.followingUserIds || []);
+    const events = scope === 'all' ? state.events : state.getFilteredEvents('forYou');
     const runPosts = scope === 'all'
       ? state.runPosts
-      : state.runPosts.filter(p => state.followingUserIds.includes(p.userId));
+      : state.runPosts.filter(p => followingUserSet.has(p.userId));
     const pagePosts = scope === 'all'
       ? state.pagePosts
-      : state.pagePosts.filter(pp => state.currentUser.followingOrgs.includes(pp.orgId));
+      : state.pagePosts.filter(pp => followingOrgSet.has(pp.orgId));
 
     const items: TimelineItem[] = [
-      ...runPosts.map(p => ({ type: 'run' as const, refId: p.id, createdAtISO: p.createdAtISO })),
-      ...events.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO })),
-      ...pagePosts.map(pp => ({ type: 'page_post' as const, refId: pp.id, createdAtISO: pp.createdAtISO })),
+      ...runPosts.map(p => ({ type: 'run' as const, refId: p.id, createdAtISO: p.createdAtISO, orgId: null })),
+      ...events.map(e => ({ type: 'event' as const, refId: e.id, createdAtISO: e.dateISO, orgId: e.orgId })),
+      ...pagePosts.map(pp => ({ type: 'page_post' as const, refId: pp.id, createdAtISO: pp.createdAtISO, orgId: pp.orgId })),
     ];
 
     const now = Date.now();

@@ -4,23 +4,29 @@ import TopBar from '../components/ui/TopBar';
 import Button from '../components/ui/Button';
 import Stat from '../components/ui/Stat';
 import EmptyState from '../components/ui/EmptyState';
+import { ThemeProvider as TokensThemeProvider, type ThemeMode } from '../theme';
+
+function renderWithTheme(node: React.ReactNode, mode: ThemeMode) {
+  return renderer.create(<TokensThemeProvider mode={mode}>{node}</TokensThemeProvider>).toJSON();
+}
 
 describe('UI snapshots', () => {
-  it('TopBar renders', () => {
-    const tree = renderer.create(<TopBar title="Title" />).toJSON();
-    expect(tree).toMatchSnapshot();
-  });
-  it('Button renders', () => {
-    const tree = renderer.create(<Button title="Press" />).toJSON();
-    expect(tree).toMatchSnapshot();
-  });
-  it('Stat renders', () => {
-    const tree = renderer.create(<Stat value="24" label="Runs" />).toJSON();
-    expect(tree).toMatchSnapshot();
-  });
-  it('EmptyState renders', () => {
-    const tree = renderer.create(<EmptyState icon="image" title="Empty" body="Nothing here" />).toJSON();
-    expect(tree).toMatchSnapshot();
+  const cases: Array<[string, React.ReactNode]> = [
+    ['TopBar', <TopBar title="Title" />],
+    ['Button', <Button title="Press" />],
+    ['Stat', <Stat value="24" label="Runs" />],
+    ['EmptyState', <EmptyState icon="image" title="Empty" body="Nothing here" />],
+  ];
+
+  const modes: ThemeMode[] = ['light', 'dark'];
+
+  cases.forEach(([name, element]) => {
+    modes.forEach((mode) => {
+      it(`${name} renders in ${mode}`, () => {
+        const tree = renderWithTheme(element, mode);
+        expect(tree).toMatchSnapshot();
+      });
+    });
   });
 });
 

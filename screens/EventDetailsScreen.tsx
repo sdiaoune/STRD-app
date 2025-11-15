@@ -27,7 +27,7 @@ export const EventDetailsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabOverflow?.() ?? 0;
   
-  const { eventById, orgById, joinEvent, leaveEvent, setReminder, clearReminder, currentUser } = useStore();
+  const { eventById, orgById, joinEvent, leaveEvent, setReminder, clearReminder, currentUser, followPage, unfollowPage } = useStore();
   const unit = useStore(state => state.unitPreference);
   const event = eventById(eventId);
   const organization = event ? orgById(event.orgId) : null;
@@ -36,6 +36,7 @@ export const EventDetailsScreen: React.FC = () => {
   const [isJoined, setIsJoined] = useState(false);
   const [isReminded, setIsReminded] = useState(false);
   const [localDistanceKm, setLocalDistanceKm] = useState<number | null>(null);
+  const [followBusy, setFollowBusy] = useState(false);
   const styles = useLegacyStyles(createStyles);
 
   useEffect(() => {
@@ -98,6 +99,23 @@ export const EventDetailsScreen: React.FC = () => {
     navigation.navigate('BusinessProfile', { orgId: organization.id });
   };
 
+  const isFollowingOrg = !!organization && currentUser.followingOrgs.includes(organization.id);
+
+  const toggleOrgFollow = async () => {
+    if (!organization || followBusy) return;
+    setFollowBusy(true);
+    try {
+      const ok = isFollowingOrg
+        ? await unfollowPage(organization.id)
+        : await followPage(organization.id);
+      if (!ok) {
+        Alert.alert('Error', 'Unable to update your follow for this organization. Please try again.');
+      }
+    } finally {
+      setFollowBusy(false);
+    }
+  };
+
   const handleImIn = async () => {
     const ok = isJoined ? await leaveEvent(event.id) : await joinEvent(event.id);
     if (ok) {
@@ -142,7 +160,28 @@ export const EventDetailsScreen: React.FC = () => {
                 </View>
               )}
             </View>
-
+            {!isOwnerOrCreator && (
+              <TouchableOpacity
+                style={[
+                  styles.followOrgButton,
+                  isFollowingOrg && styles.followOrgButtonActive,
+                  followBusy && styles.followOrgButtonDisabled,
+                ]}
+                onPress={toggleOrgFollow}
+                disabled={followBusy}
+                accessibilityRole="button"
+              >
+                <Ionicons
+                  name={isFollowingOrg ? 'checkmark' : 'add'}
+                  size={16}
+                  color={isFollowingOrg ? colors.bg : colors.primary}
+                  style={{ marginRight: spacing.xs }}
+                />
+                <Text style={[styles.followOrgButtonText, isFollowingOrg && styles.followOrgButtonTextActive]}>
+                  {isFollowingOrg ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </TouchableOpacity>
 
           {/* Event Title */}
@@ -339,6 +378,30 @@ const createStyles = () => StyleSheet.create({
     color: colors.text.secondary,
     marginLeft: spacing.sm,
   },
+  followOrgButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.bg,
+  },
+  followOrgButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  followOrgButtonText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  followOrgButtonTextActive: {
+    color: colors.bg,
+  },
+  followOrgButtonDisabled: {
+    opacity: 0.6,
+  },
   actionButtons: {
     flexDirection: 'row',
     padding: spacing.md,
@@ -358,7 +421,7 @@ const createStyles = () => StyleSheet.create({
     borderRadius: borderRadius.md,
     marginRight: spacing.sm,
     backgroundColor: colors.surface,
-    shadowColor: '#000',
+    shadowColor: colors.scrim,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -386,7 +449,7 @@ const createStyles = () => StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: borderRadius.md,
     marginLeft: spacing.sm,
-    shadowColor: '#000',
+    shadowColor: colors.scrim,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
@@ -412,7 +475,7 @@ const createStyles = () => StyleSheet.create({
     marginLeft: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: '#000',
+    shadowColor: colors.scrim,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,

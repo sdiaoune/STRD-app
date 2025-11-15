@@ -27,6 +27,11 @@ Inline quick actions
 Sorting behavior
 - Timeline and Events screens surface pinned items first (active while `pinned_until > now()`). Remaining items follow previous ordering rules.
 
+Organization follow + timeline context
+- Followers are stored in `user_following_organizations (user_id, org_id, created_at)` with strict RLS mirroring `user_follows`.
+- `public.app_timeline_items` now emits `orgId` for both events and organization posts, so the client can filter “For You” timelines without refetching extra metadata.
+- When a user follows an organization its future events and posts automatically unlock in the “For You” tab; unfollowing removes them immediately from the personalized feed.
+
 Initial Super Admins
 - Migrations set Super Admin for:
   - romanroberts4@gmail.com

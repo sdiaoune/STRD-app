@@ -67,6 +67,8 @@ export const Toast: React.FC<Props> = ({
   }, [duration, onDismiss, position, alpha, translateY]);
 
   const palette = typeStyles[type];
+  const elevatedBackground = theme.mode === 'light' ? colors.card : colors.surface;
+  const elevatedBorder = theme.mode === 'light' ? colors.border : colors.border;
 
   return (
     <Animated.View
@@ -78,9 +80,9 @@ export const Toast: React.FC<Props> = ({
           top: position === 'top' ? spacing[8] : undefined,
           bottom: position === 'bottom' ? spacing[8] : undefined,
           borderLeftColor: palette.color,
-          // Light mode: solid white with subtle border; Dark mode: elevated dark surface
-          backgroundColor: theme.mode === 'light' ? '#FFFFFF' : colors.surface,
-          borderColor: theme.mode === 'light' ? '#E6EAF0' : colors.border,
+          // Light mode: solid surface with subtle border; Dark mode: elevated dark surface
+          backgroundColor: elevatedBackground,
+          borderColor: elevatedBorder,
           // Keep light mode fully opaque to avoid appearing gray over white screens
           ...(theme.mode === 'light' ? { opacity: 1 } : {}),
         },

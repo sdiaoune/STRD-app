@@ -22,11 +22,14 @@ export const TimelineScreen: React.FC = () => {
   const getTimelineItems = useStore(s => s.getTimelineItems);
   const postById = useStore(s => s.postById);
   const eventById = useStore(s => s.eventById);
+  const events = useStore(s => s.events);
   const currentUser = useStore(s => s.currentUser);
   const reload = useStore(s => s._loadInitialData);
   const pagePosts = useStore(s => s.pagePosts);
   // Subscribe to runPosts to ensure re-renders when posts are updated (e.g., when likes change)
   const runPosts = useStore(s => s.runPosts);
+  const followingOrgIds = useStore(s => s.currentUser.followingOrgs);
+  const followingUserIds = useStore(s => s.followingUserIds);
   const [refreshing, setRefreshing] = React.useState(false);
   const insets = useSafeAreaInsets();
   const tabBarHeight = insets.bottom;
@@ -34,13 +37,23 @@ export const TimelineScreen: React.FC = () => {
   const themedStyles = React.useMemo(() => createStyles(), [themeName, getCurrentThemeName()]);
 
   const [scope, setScope] = React.useState<'forYou' | 'all'>('forYou');
-  const items = React.useMemo(() => getTimelineItems(scope), [getTimelineItems, scope, runPosts]);
+  const items = React.useMemo(
+    () => getTimelineItems(scope),
+    [getTimelineItems, scope, runPosts, events, pagePosts, followingOrgIds, followingUserIds]
+  );
 
   const handlePostPress = (postId: string) => {
     navigation.navigate('PostDetails', { postId });
   };
 
   const handleEventPress = (eventId: string) => {
+    const event = eventById(eventId);
+    if (event && followingOrgIds.includes(event.orgId)) {
+      console.debug('[TimelineScreen] Followed org event tapped', {
+        eventId: event.id,
+        orgId: event.orgId,
+      });
+    }
     navigation.navigate('EventDetails', { eventId });
   };
 
@@ -64,6 +77,12 @@ export const TimelineScreen: React.FC = () => {
       if (!event) {
         console.log('[TimelineScreen] Missing event for refId:', item.refId);
         return null;
+      }
+      if (scope === 'forYou' && followingOrgIds.includes(event.orgId)) {
+        console.debug('[TimelineScreen] Rendering followed org event in For You', {
+          eventId: event.id,
+          orgId: event.orgId,
+        });
       }
       
       return (

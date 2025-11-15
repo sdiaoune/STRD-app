@@ -50,6 +50,8 @@ export type Comment = {
   createdAtISO: string;
 };
 
+export type RunVisibility = 'public' | 'followers' | 'private';
+
 export type RunPost = {
   id: string;
   userId: string;
@@ -58,6 +60,7 @@ export type RunPost = {
   durationMin: number;
   avgPaceMinPerKm: number;
   activityType?: 'run' | 'walk';
+  visibility: RunVisibility;
   routePolyline?: string | null;
   routePreview?: string | null;
   caption?: string | null;
@@ -83,6 +86,7 @@ export type TimelineItem = {
   type: 'run' | 'event' | 'page_post';
   refId: string;
   createdAtISO: string;
+  orgId?: string | null;
 };
 
 

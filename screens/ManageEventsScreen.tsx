@@ -42,12 +42,12 @@ export const ManageEventsScreen: React.FC = () => {
                 <Text style={styles.subtitle}>{ev.city}</Text>
               </View>
               <TouchableOpacity accessibilityRole="button" style={[styles.action, styles.edit]} onPress={() => navigation.navigate('EditEvent' as any, { eventId: ev.id } as any)}>
-                <Ionicons name="create-outline" size={18} color="#fff" />
+                <Ionicons name="create-outline" size={18} color={colors.onPrimary} />
                 <Text style={styles.actionText}>Edit</Text>
               </TouchableOpacity>
               <TouchableOpacity accessibilityRole="button" style={[styles.action, styles.delete]} onPress={() => handleDelete(ev.id)}>
-                <Ionicons name="trash-outline" size={18} color="#fff" />
-                <Text style={styles.actionText}>Delete</Text>
+                <Ionicons name="trash-outline" size={18} color={colors.onDanger} />
+                <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
               </TouchableOpacity>
             </View>
           ))
@@ -77,12 +77,13 @@ const styles = StyleSheet.create({
   },
   edit: { backgroundColor: colors.primary },
   delete: { backgroundColor: colors.danger },
-  actionText: { ...typography.body, color: '#ffffff', marginLeft: spacing.xs, fontWeight: '600' },
+  actionText: { ...typography.body, color: colors.onPrimary, marginLeft: spacing.xs, fontWeight: '600' },
+  deleteText: { color: colors.onDanger },
   emptyState: { alignItems: 'center', marginTop: spacing.xl },
   emptyTitle: { ...typography.h3, color: colors.text.primary, marginTop: spacing.sm },
   emptyBody: { ...typography.body, color: colors.text.secondary, marginTop: spacing.xs, marginBottom: spacing.md },
   primaryBtn: { backgroundColor: colors.primary, borderRadius: borderRadius.md, paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
-  primaryText: { ...typography.body, color: '#ffffff', fontWeight: '700' },
+  primaryText: { ...typography.body, color: colors.onPrimary, fontWeight: '700' },
 });
 
 export default ManageEventsScreen;

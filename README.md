@@ -115,6 +115,10 @@ The app includes comprehensive mock data:
 - Mixed timeline of runs and events
 - User and organization profiles
 
+### Run Visibility
+- Pick who can see each run (Public, Followers, Private) before posting
+- Visibility badges on your posts make it obvious when a run is limited to followers or just you
+
 ### Event Discovery
 - "For You" and "All" filtering
 - Event details with organization info
@@ -136,6 +140,13 @@ The app is built with modern React Native practices:
 - Consistent design system with theme file
 - Reusable components with proper props
 - Clean navigation structure
+
+## Contributing
+
+- **Theme linting**: run `yarn lint:colors` (or `yarn lint:ci`) to ensure no hard-coded colors slip into `screens/`, `components/`, or `app/`.
+- **Snapshots**: update `__tests__/ui.snap.test.tsx` snapshots after UI changes with `yarn test __tests__/ui.snap.test.tsx --updateSnapshot`.
+- **Manual QA**: open `ComponentGallery` inside the app and flip the Light/Dark segmented control at the top to visually confirm new components respect tokens in both schemes.
+- **Docs**: keep `docs/ui-theming.md` in sync when adding new primitives or tokens.
 
 ## License
 

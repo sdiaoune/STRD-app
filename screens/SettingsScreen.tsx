@@ -5,9 +5,13 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../state/store';
 import { borderRadius, colors, spacing, typography } from '../theme';
+import { accentPalette, type AccentName } from '../theme/colors';
 import { useLegacyStyles } from '../theme/useLegacyStyles';
 // removed admin tools; no direct supabase usage here
 import { useTheme as useDesignTheme } from '../src/design/useTheme';
+
+const ACCENT_OPTIONS = Object.entries(accentPalette) as [AccentName, { light: string; dark: string }][];
+const DEFAULT_CUSTOM_ACCENT = accentPalette.violet.light;
 
 export const SettingsScreen: React.FC = () => {
   const signOut = useStore(state => state.signOut);
@@ -58,22 +62,13 @@ export const SettingsScreen: React.FC = () => {
         <View style={{ height: spacing.md }} />
         <Text style={styles.smallLabel}>Accent color</Text>
         <View style={[styles.row, { marginTop: spacing.sm }]}> 
-          {(
-            [
-              { key: 'blue',   light: '#2D5BFF', dark: '#5B86FF' },
-              { key: 'teal',   light: '#14B8A6', dark: '#2DD4BF' },
-              { key: 'violet', light: '#7C3AED', dark: '#A78BFA' },
-              { key: 'pink',   light: '#EC4899', dark: '#F472B6' },
-              { key: 'orange', light: '#F97316', dark: '#FB923C' },
-              { key: 'green',  light: '#16A34A', dark: '#22C55E' },
-            ] as const
-          ).map(opt => {
-            const color = theme === 'dark' ? opt.dark : opt.light;
-            const isActive = accent === opt.key;
+          {ACCENT_OPTIONS.map(([key, paletteEntry]) => {
+            const color = theme === 'dark' ? paletteEntry.dark : paletteEntry.light;
+            const isActive = accent === key;
             return (
               <Pressable
-                key={opt.key}
-                onPress={() => setAccent(opt.key as any)}
+                key={key}
+                onPress={() => setAccent(key)}
                 accessibilityRole="button"
                 hitSlop={10}
                 style={{
@@ -90,7 +85,7 @@ export const SettingsScreen: React.FC = () => {
           })}
           {/* Custom color circle */}
           <Pressable
-            onPress={() => { setCustomHex(typeof accent === 'string' && accent.startsWith('#') ? accent : '#A855F7'); setCustomPickerVisible(true); }}
+            onPress={() => { setCustomHex(typeof accent === 'string' && accent.startsWith('#') ? accent : DEFAULT_CUSTOM_ACCENT); setCustomPickerVisible(true); }}
             accessibilityRole="button"
             hitSlop={10}
             style={{
@@ -109,19 +104,30 @@ export const SettingsScreen: React.FC = () => {
           </Pressable>
         </View>
       </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Personalization</Text>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => navigation.navigate('OnboardingSurvey' as never, { mode: 'review' } as never)}
+          accessibilityRole="button"
+          hitSlop={12}
+        >
+          <Text style={styles.actionBtnText}>Onboarding preferences</Text>
+        </TouchableOpacity>
+      </View>
       {/* Custom color modal */}
       <Modal visible={customPickerVisible} transparent animationType="fade" onRequestClose={() => setCustomPickerVisible(false)}>
         <View style={{ flex: 1, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: spacing.lg, width: '85%', borderWidth: 1, borderColor: colors.border }}>
             <Text style={{ ...typography.h3, color: colors.text.primary, marginBottom: spacing.md }}>Custom accent color</Text>
-            <Text style={{ ...typography.body, color: colors.text.secondary }}>Enter a HEX color like #A855F7</Text>
+            <Text style={{ ...typography.body, color: colors.text.secondary }}>Enter a HEX color like {DEFAULT_CUSTOM_ACCENT}</Text>
             <View style={{ height: spacing.sm }} />
             <TextInput
               value={customHex}
               onChangeText={setCustomHex}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="#A855F7"
+              placeholder={DEFAULT_CUSTOM_ACCENT}
               placeholderTextColor={colors.text.secondary}
               style={{
                 backgroundColor: colors.bg,
@@ -134,7 +140,7 @@ export const SettingsScreen: React.FC = () => {
               }}
             />
             <View style={{ height: spacing.md }} />
-            <ColorPicker initialHex={customHex || (typeof accent === 'string' && accent.startsWith('#') ? (accent as string) : '#A855F7')} onChange={setCustomHex} />
+            <ColorPicker initialHex={customHex || (typeof accent === 'string' && accent.startsWith('#') ? (accent as string) : DEFAULT_CUSTOM_ACCENT)} onChange={setCustomHex} />
             <View style={{ height: spacing.md }} />
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(customHex) ? customHex : colors.border, marginRight: spacing.sm, borderWidth: 1, borderColor: colors.border }} />
@@ -150,7 +156,7 @@ export const SettingsScreen: React.FC = () => {
                 onPress={() => {
                   const hex = customHex.trim();
                   if (!/^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(hex)) {
-                    Alert.alert('Invalid color', 'Please enter a valid HEX like #A855F7.');
+                    Alert.alert('Invalid color', `Please enter a valid HEX like ${DEFAULT_CUSTOM_ACCENT}.`);
                     return;
                   }
                   setAccent(hex);

@@ -9,6 +9,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "lint:colors": "tsx scripts/find-hardcoded-colors.ts",
+    "lint:ci": "yarn lint && yarn lint:colors",
     "eas-build-pre-install": "echo 'Node:' $(node -v); echo 'Yarn:' $(yarn -v); yarn config set network-timeout 600000 -g || true",
     "eas-build-install": "yarn install --frozen-lockfile --non-interactive --network-timeout 600000 --verbose || yarn install --non-interactive --network-timeout 600000"
   },
@@ -58,6 +60,7 @@
     "@types/react": "~19.1.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "tsx": "^4.19.2",
     "tailwindcss": "^3.4.13",
     "typescript": "~5.9.2"
   },

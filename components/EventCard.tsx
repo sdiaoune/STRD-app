@@ -26,6 +26,8 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
   const organization = orgById(event.orgId);
   const unit = useStore(s => s.unitPreference);
   const isSuperAdmin = useStore(s => s.currentUser.isSuperAdmin);
+  const followingOrgIds = useStore(s => s.currentUser.followingOrgs);
+  const isFollowingOrg = followingOrgIds.includes(event.orgId);
   const [fallbackMeters, setFallbackMeters] = useState<number | null>(null);
   const distanceLabel = (() => {
     const km = event.distanceFromUserKm != null ? event.distanceFromUserKm : (fallbackMeters != null ? fallbackMeters / 1000 : null);
@@ -95,6 +97,12 @@ export const EventCard: React.FC<Props> = ({ event, onPress }) => {
               <View style={styles.pinnedPill}>
                 <Ionicons name="pricetag" size={12} color={colors.primary} />
                 <Text style={styles.pinnedText}>Sponsored</Text>
+              </View>
+            )}
+            {isFollowingOrg && (
+              <View style={styles.followingPill}>
+                <Ionicons name="checkmark" size={12} color={colors.primary} />
+                <Text style={styles.followingText}>Following</Text>
               </View>
             )}
             <View style={styles.distanceChip}>
@@ -253,6 +261,23 @@ const createStyles = () =>
       marginRight: spacing.xs,
     },
     pinnedText: {
+      ...typography.caption,
+      color: colors.primary,
+      marginLeft: spacing[1],
+      fontWeight: '700',
+    },
+    followingPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.bg,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing[2],
+      paddingVertical: spacing[1],
+      marginRight: spacing.xs,
+    },
+    followingText: {
       ...typography.caption,
       color: colors.primary,
       marginLeft: spacing[1],

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import type { TimelineStackParamList } from '../types/navigation';
 import { formatDistance, formatPace, getRelativeTime } from '../utils/format';
 import { decodePolyline, regionForCoordinates } from '../utils/geo';
 import { openUserProfile } from '../utils/openUserProfile';
+import { supabase } from '../supabase/client';
 
 
 type RunStatsScreenNavigationProp = NativeStackNavigationProp<TimelineStackParamList, 'RunStats'>;
@@ -45,18 +46,46 @@ export const RunStatsScreen: React.FC = () => {
     );
   }
 
-  const coords = run.routePolyline ? decodePolyline(run.routePolyline) : [];
-  const [routeSize, setRouteSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const isOwner = !!run && currentUser.id === run.userId;
+  const [routePolyline, setRoutePolyline] = useState<string | null>(run?.routePolyline ?? null);
+
+  useEffect(() => {
+    setRoutePolyline(run?.routePolyline ?? null);
+  }, [run?.routePolyline]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchRoute = async () => {
+      if (!isOwner || !run || run.routePolyline) return;
+      try {
+        const { data } = await supabase
+          .from('run_routes')
+          .select('route_polyline')
+          .eq('run_id', run.id)
+          .maybeSingle();
+        if (isMounted && data?.route_polyline) {
+          setRoutePolyline(data.route_polyline);
+        }
+      } catch (error) {
+        console.warn('[RunStats] Failed to hydrate route polyline', error);
+      }
+    };
+    fetchRoute();
+    return () => {
+      isMounted = false;
+    };
+  }, [isOwner, run]);
+
+  const coords = isOwner && routePolyline ? decodePolyline(routePolyline) : [];
+  const hasRoute = coords.length > 1;
 
   const renderTrajectory = () => {
-    const isOwner = currentUser.id === run.userId;
-    const isFollower = useStore.getState().followingUserIds.includes(run.userId);
-    const canShowMap = isOwner;
-    const canShowRoute = isOwner || isFollower;
     return (
           <View style={styles.trajectoryContainer}>
             <Text style={styles.sectionTitle}>Run Route</Text>
-            {canShowMap ? (
+            {!isOwner ? (
+              <Text style={{ ...typography.caption, color: colors.text.secondary }}>Only you can view your route details.</Text>
+            ) : hasRoute ? (
               <MapCard>
                 <MapView
                   style={{ width: '100%', height: '100%' }}
@@ -66,84 +95,19 @@ export const RunStatsScreen: React.FC = () => {
                   zoomEnabled={false}
                   pitchEnabled={false}
                   rotateEnabled={false}
-                  initialRegion={{ latitude: coords[0]?.latitude || 37.78825, longitude: coords[0]?.longitude || -122.4324, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
-                  region={coords.length > 1 ? regionForCoordinates(coords) : undefined as any}
+                  initialRegion={{
+                    latitude: coords[0]?.latitude || 37.78825,
+                    longitude: coords[0]?.longitude || -122.4324,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05
+                  }}
+                  region={regionForCoordinates(coords)}
                 >
-                  {coords.length > 1 && (
-                    <Polyline coordinates={coords} strokeColor={colors.primary} strokeWidth={4} />
-                  )}
+                  <Polyline coordinates={coords} strokeColor={colors.primary} strokeWidth={4} />
                 </MapView>
               </MapCard>
-            ) : canShowRoute ? (
-              <MapCard>
-                <View style={{ width: '100%', height: '100%' }}>
-                  <MapView
-                    style={{ width: '100%', height: '100%' }}
-                    provider={PROVIDER_DEFAULT}
-                    scrollEnabled={false}
-                    zoomEnabled={false}
-                    pitchEnabled={false}
-                    rotateEnabled={false}
-                    region={coords.length > 1 ? regionForCoordinates(coords) : undefined as any}
-                    initialRegion={{ latitude: coords[0]?.latitude || 37.78825, longitude: coords[0]?.longitude || -122.4324, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
-                  />
-                  <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, backgroundColor: '#000' }} />
-                  <View
-                    style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}
-                    onLayout={(e) => setRouteSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
-                  >
-                    {coords.length > 1 ? (
-                      <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }}>
-                        {(() => {
-                          const pad = 12;
-                          const fitted = regionForCoordinates(coords);
-                          const minLon = fitted.longitude - fitted.longitudeDelta / 2;
-                          const maxLon = fitted.longitude + fitted.longitudeDelta / 2;
-                          const minLat = fitted.latitude - fitted.latitudeDelta / 2;
-                          const maxLat = fitted.latitude + fitted.latitudeDelta / 2;
-                          const w = Math.max(1, routeSize.width - pad * 2);
-                          const h = Math.max(1, routeSize.height - pad * 2);
-                          const toXY = (lat: number, lon: number) => {
-                            const nx = (lon - minLon) / Math.max(1e-9, (maxLon - minLon));
-                            const ny = (maxLat - lat) / Math.max(1e-9, (maxLat - minLat));
-                            const x = pad + nx * w;
-                            const y = pad + ny * h;
-                            return { x, y };
-                          };
-                          const points = coords.map(p => toXY(p.latitude, p.longitude));
-                          const segs: any[] = [];
-                          for (let i = 0; i < points.length - 1; i++) {
-                            const a = points[i];
-                            const b = points[i + 1];
-                            const dx = b.x - a.x; const dy = b.y - a.y;
-                            const len = Math.max(1, Math.hypot(dx, dy));
-                            const ang = Math.atan2(dy, dx) + 'rad';
-                            segs.push(
-                              <View
-                                key={`seg-${i}`}
-                                style={{ position: 'absolute', left: a.x, top: a.y, width: len, height: 3, backgroundColor: colors.primary, borderRadius: 2, transform: [{ rotateZ: ang }] }}
-                              />
-                            );
-                          }
-                          return (
-                            <>
-                              {segs}
-                              <View style={{ position: 'absolute', left: points[0].x - 4, top: points[0].y - 4, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
-                              <View style={{ position: 'absolute', left: points[points.length - 1].x - 4, top: points[points.length - 1].y - 4, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
-                            </>
-                          );
-                        })()}
-                      </View>
-                    ) : (
-                      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ ...typography.caption, color: colors.text.secondary }}>No route recorded</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </MapCard>
             ) : (
-              <Text style={{ ...typography.caption, color: colors.text.secondary }}>Only followers can view the route.</Text>
+              <Text style={{ ...typography.caption, color: colors.text.secondary }}>No route recorded for this run.</Text>
             )}
           </View>
     );

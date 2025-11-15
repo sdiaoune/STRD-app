@@ -35,12 +35,12 @@ export const CreateEventScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabOverflow?.() ?? 0;
   const isLight = theme.mode === 'light';
-  const fieldStyle = { backgroundColor: isLight ? '#ffffff' : colors.card, color: isLight ? '#000000' : colors.text.primary, borderColor: isLight ? '#e5e5e5' : colors.border } as const;
-  const labelStyle = { color: isLight ? '#000000' : colors.text.secondary } as const;
-  const pressableStyle = { backgroundColor: isLight ? '#ffffff' : colors.card, borderColor: isLight ? '#e5e5e5' : colors.border } as const;
-  const dropdownStyle = { backgroundColor: isLight ? '#ffffff' : colors.card, borderColor: isLight ? '#e5e5e5' : colors.border } as const;
-  const neutralBtnStyle = { backgroundColor: isLight ? '#ffffff' : colors.card, borderColor: isLight ? '#e5e5e5' : colors.border } as const;
-  const neutralBtnText = { color: isLight ? '#000000' : colors.text.primary } as const;
+  const fieldStyle = { backgroundColor: colors.card, color: colors.text.primary, borderColor: colors.border } as const;
+  const labelStyle = { color: colors.text.secondary } as const;
+  const pressableStyle = { backgroundColor: colors.card, borderColor: colors.border } as const;
+  const dropdownStyle = { backgroundColor: colors.card, borderColor: colors.border } as const;
+  const neutralBtnStyle = { backgroundColor: colors.card, borderColor: colors.border } as const;
+  const neutralBtnText = { color: colors.text.primary } as const;
 
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.9 });
@@ -94,7 +94,7 @@ export const CreateEventScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.bg }]} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['bottom']}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: spacing.sm, paddingBottom: insets.bottom + tabBarHeight + spacing.xl }}
@@ -125,13 +125,13 @@ export const CreateEventScreen: React.FC = () => {
                   onPress={() => { setOrgId(p.id); setOrgOpen(false); }}
                 >
                   <Text style={[styles.dropdownOptionText, { color: fieldStyle.color }]}>{p.name}</Text>
-                  <Text style={[styles.dropdownOptionSub, { color: isLight ? '#666666' : colors.text.secondary }]}>{p.city} · {p.id.slice(0,8)}…</Text>
+                  <Text style={[styles.dropdownOptionSub, { color: colors.text.secondary }]}>{p.city} · {p.id.slice(0,8)}…</Text>
                 </TouchableOpacity>
               ))}
             </View>
           ) : null}
         </View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Title</Text><TextInput value={title} onChangeText={setTitle} style={[styles.input, fieldStyle]} placeholder="Morning Run" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Title</Text><TextInput value={title} onChangeText={setTitle} style={[styles.input, fieldStyle]} placeholder="Morning Run" placeholderTextColor={colors.text.secondary} /></View>
         <View style={styles.formRow}>
           <Text style={[styles.label, labelStyle]}>Date & Time</Text>
           <Pressable
@@ -196,8 +196,8 @@ export const CreateEventScreen: React.FC = () => {
             </Modal>
           )}
         </View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>City</Text><TextInput value={city} onChangeText={setCity} style={[styles.input, fieldStyle]} placeholder="Charlotte" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Location name</Text><TextInput value={locationName} onChangeText={setLocationName} style={[styles.input, fieldStyle]} placeholder="Park" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>City</Text><TextInput value={city} onChangeText={setCity} style={[styles.input, fieldStyle]} placeholder="Charlotte" placeholderTextColor={colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Location name</Text><TextInput value={locationName} onChangeText={setLocationName} style={[styles.input, fieldStyle]} placeholder="Park" placeholderTextColor={colors.text.secondary} /></View>
         <View style={styles.formRow}>
           <Text style={[styles.label, labelStyle]}>Address</Text>
           <View style={styles.inlineRow}>
@@ -206,7 +206,7 @@ export const CreateEventScreen: React.FC = () => {
               onChangeText={setAddress}
               style={[styles.input, fieldStyle, { flex: 1, marginRight: spacing.sm }]}
               placeholder="Search address"
-              placeholderTextColor={isLight ? '#666666' : colors.text.secondary}
+              placeholderTextColor={colors.text.secondary}
               autoCapitalize="none"
             />
             <TouchableOpacity
@@ -306,11 +306,11 @@ export const CreateEventScreen: React.FC = () => {
           </View>
         </View>
         <View style={styles.row}>
-          <View style={[styles.formRow, { flex: 1, marginRight: spacing.sm }]}><Text style={[styles.label, labelStyle]}>Lat</Text><TextInput value={lat} onChangeText={setLat} style={[styles.input, fieldStyle]} placeholder="35.22" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} keyboardType="decimal-pad" /></View>
-          <View style={[styles.formRow, { flex: 1 }]}><Text style={[styles.label, labelStyle]}>Lon</Text><TextInput value={lon} onChangeText={setLon} style={[styles.input, fieldStyle]} placeholder="-80.84" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} keyboardType="decimal-pad" /></View>
+          <View style={[styles.formRow, { flex: 1, marginRight: spacing.sm }]}><Text style={[styles.label, labelStyle]}>Lat</Text><TextInput value={lat} onChangeText={setLat} style={[styles.input, fieldStyle]} placeholder="35.22" placeholderTextColor={colors.text.secondary} keyboardType="decimal-pad" /></View>
+          <View style={[styles.formRow, { flex: 1 }]}><Text style={[styles.label, labelStyle]}>Lon</Text><TextInput value={lon} onChangeText={setLon} style={[styles.input, fieldStyle]} placeholder="-80.84" placeholderTextColor={colors.text.secondary} keyboardType="decimal-pad" /></View>
         </View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Tags (comma-separated)</Text><TextInput value={tags} onChangeText={setTags} style={[styles.input, fieldStyle]} placeholder="5k, group, hills" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Description</Text><TextInput value={description} onChangeText={setDescription} style={[styles.input, fieldStyle, { height: 100 }]} placeholder="About the run" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} multiline /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Tags (comma-separated)</Text><TextInput value={tags} onChangeText={setTags} style={[styles.input, fieldStyle]} placeholder="5k, group, hills" placeholderTextColor={colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Description</Text><TextInput value={description} onChangeText={setDescription} style={[styles.input, fieldStyle, { height: 100 }]} placeholder="About the run" placeholderTextColor={colors.text.secondary} multiline /></View>
         <TouchableOpacity style={[styles.btn, neutralBtnStyle]} onPress={pickImage}><Text style={[styles.btnText, neutralBtnText]}>{coverUri ? 'Change Cover' : 'Pick Cover'}</Text></TouchableOpacity>
         <TouchableOpacity style={[styles.btn, styles.primary]} onPress={submit}><Text style={[styles.btnText, styles.primaryText]}>Create Event</Text></TouchableOpacity>
       </ScrollView>
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: 'center', marginTop: spacing.md },
   btnText: { ...typography.body, color: colors.text.primary, fontWeight: '600' },
   primary: { backgroundColor: colors.primary, borderColor: colors.primary },
-  primaryText: { color: '#ffffff' },
+  primaryText: { color: colors.onPrimary },
 });
 
 export default CreateEventScreen;

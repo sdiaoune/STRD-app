@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RunStackParamList } from '../types/navigation';
+import type { RunVisibility } from '../types/models';
 
 type RunScreenNavigationProp = NativeStackNavigationProp<RunStackParamList, 'RunTracker'>;
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +19,14 @@ import { regionForCoordinates } from '../utils/geo';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import TopBar from '../components/TopBar';
+import { SegmentedControl } from '../components/SegmentedControl';
 import { useBottomTabOverflow } from '../components/ui/TabBarBackground.ios';
+
+const RUN_VISIBILITY_OPTIONS: { value: RunVisibility; label: string; helper: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'public', label: 'Public', helper: 'Visible to anyone on STRD.', icon: 'globe-outline' },
+  { value: 'followers', label: 'Followers', helper: 'Shared with your followers.', icon: 'people-outline' },
+  { value: 'private', label: 'Private', helper: 'Only you can see this run.', icon: 'lock-closed-outline' },
+];
 
 export const RunScreen: React.FC = () => {
   const navigation = useNavigation<RunScreenNavigationProp>();
@@ -43,6 +51,16 @@ export const RunScreen: React.FC = () => {
   const pauseRun = useStore((s) => s.pauseRun);
   const resumeRun = useStore((s) => s.resumeRun);
   const unit = useStore((s) => s.unitPreference);
+  const defaultRunVisibility = useStore((s) => s.defaultRunVisibility);
+  const setRunVisibilityPreference = useStore((s) => s.setRunVisibility);
+  const visibilitySegments = RUN_VISIBILITY_OPTIONS.map((opt) => opt.label);
+  const selectedVisibilityOption = RUN_VISIBILITY_OPTIONS.find((opt) => opt.value === runState.visibility) ?? RUN_VISIBILITY_OPTIONS[1];
+  const handleVisibilityChange = useCallback((label: string) => {
+    const next = RUN_VISIBILITY_OPTIONS.find((opt) => opt.label === label);
+    if (next) {
+      setRunVisibilityPreference(next.value);
+    }
+  }, [setRunVisibilityPreference]);
   const tabBarHeight = useBottomTabOverflow?.() ?? 0;
   const styles = useLegacyStyles(createStyles);
   const tokensTheme = useTokensTheme();
@@ -174,6 +192,7 @@ export const RunScreen: React.FC = () => {
         setCaption('');
         setSelectedImage(undefined);
         setShowPostForm(false);
+        setRunVisibilityPreference(defaultRunVisibility);
         Alert.alert('Success', 'Run posted!');
       } else {
         // Check if it was an image upload failure
@@ -196,6 +215,7 @@ export const RunScreen: React.FC = () => {
     setCaption('');
     setSelectedImage(undefined);
     setShowPostForm(false);
+    setRunVisibilityPreference(defaultRunVisibility);
   };
 
   const handleAddPhoto = () => {
@@ -323,6 +343,19 @@ export const RunScreen: React.FC = () => {
                     multiline
                     numberOfLines={4}
                   />
+                </View>
+
+                <View style={styles.visibilitySection}>
+                  <Text style={styles.visibilityLabel}>Who can see this run?</Text>
+                  <SegmentedControl
+                    segments={visibilitySegments}
+                    value={selectedVisibilityOption.label}
+                    onChange={handleVisibilityChange}
+                  />
+                  <View style={styles.visibilityHelperRow}>
+                    <Ionicons name={selectedVisibilityOption.icon} size={16} color={colors.text.secondary} style={{ marginRight: spacing.xs }} />
+                    <Text style={styles.visibilityHelperText}>{selectedVisibilityOption.helper}</Text>
+                  </View>
                 </View>
 
                 <View style={styles.photoSection}>
@@ -785,6 +818,25 @@ const createStyles = () => StyleSheet.create({
     color: colors.text.primary,
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  visibilitySection: {
+    marginBottom: spacing.lg,
+  },
+  visibilityLabel: {
+    ...typography.body,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+    fontWeight: '600',
+  },
+  visibilityHelperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  visibilityHelperText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    flex: 1,
   },
   photoSection: {
     marginBottom: spacing.lg,

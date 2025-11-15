@@ -26,9 +26,9 @@ const darkBase = {
   scrim: 'rgba(0,0,0,0.7)',
 } as const;
 
-type AccentName = 'blue' | 'teal' | 'violet' | 'pink' | 'orange' | 'green';
+export type AccentName = 'blue' | 'teal' | 'violet' | 'pink' | 'orange' | 'green';
 
-const accentPalette: Record<AccentName, { light: string; dark: string }> = {
+export const accentPalette: Record<AccentName, { light: string; dark: string }> = {
   blue:   { light: '#2D5BFF', dark: '#5B86FF' },
   teal:   { light: '#14B8A6', dark: '#2DD4BF' },
   violet: { light: '#7C3AED', dark: '#A78BFA' },

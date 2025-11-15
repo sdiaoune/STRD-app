@@ -57,7 +57,7 @@ export const TopBar: React.FC<Props> = ({ title, leftIcon, rightActions = [], ri
       borderColor: colors.border,
       paddingVertical: spacing.sm,
       minWidth: 200,
-      shadowColor: '#000',
+      shadowColor: colors.scrim,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.2,
       shadowRadius: 4,

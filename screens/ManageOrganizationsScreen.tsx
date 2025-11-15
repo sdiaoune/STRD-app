@@ -47,12 +47,12 @@ export const ManageOrganizationsScreen: React.FC = () => {
                   <Text style={[styles.actionText, { color: colors.text.primary }]}>View</Text>
                 </TouchableOpacity>
                 <TouchableOpacity accessibilityRole="button" style={[styles.action, styles.edit]} onPress={() => navigation.navigate('EditOrganization' as any, { orgId: org.id } as any)}>
-                  <Ionicons name="create-outline" size={18} color="#fff" />
+                  <Ionicons name="create-outline" size={18} color={colors.onPrimary} />
                   <Text style={styles.actionText}>Edit</Text>
                 </TouchableOpacity>
                 <TouchableOpacity accessibilityRole="button" style={[styles.action, styles.delete]} onPress={() => handleDelete(org.id)}>
-                  <Ionicons name="trash-outline" size={18} color="#fff" />
-                  <Text style={styles.actionText}>Delete</Text>
+                  <Ionicons name="trash-outline" size={18} color={colors.onDanger} />
+                  <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -92,12 +92,13 @@ const styles = StyleSheet.create({
   view: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   edit: { backgroundColor: colors.primary },
   delete: { backgroundColor: colors.danger },
-  actionText: { ...typography.body, color: '#ffffff', marginLeft: spacing.xs, fontWeight: '600' },
+  actionText: { ...typography.body, color: colors.onPrimary, marginLeft: spacing.xs, fontWeight: '600' },
+  deleteText: { color: colors.onDanger },
   emptyState: { alignItems: 'center', marginTop: spacing.xl },
   emptyTitle: { ...typography.h3, color: colors.text.primary, marginTop: spacing.sm },
   emptyBody: { ...typography.body, color: colors.text.secondary, marginTop: spacing.xs, marginBottom: spacing.md },
   primaryBtn: { backgroundColor: colors.primary, borderRadius: borderRadius.md, paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
-  primaryText: { ...typography.body, color: '#ffffff', fontWeight: '700' },
+  primaryText: { ...typography.body, color: colors.onPrimary, fontWeight: '700' },
 });
 
 export default ManageOrganizationsScreen;

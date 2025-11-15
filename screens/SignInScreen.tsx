@@ -26,8 +26,12 @@ export const SignInScreen: React.FC = () => {
     }
   }, [authError]);
 
+  const toggleBg = theme.mode === 'light' ? colors.surfaceMuted : colors.card;
+  const toggleIcon = theme.mode === 'light' ? 'moon' : 'sunny';
+  const subtitleOpacity = theme.mode === 'light' ? 0.7 : 1;
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.bg }]} edges={["top"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={{ alignItems: 'flex-end' }}>
           <Pressable
@@ -40,38 +44,38 @@ export const SignInScreen: React.FC = () => {
               borderRadius: 18,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: theme.mode === 'light' ? '#f2f2f2' : colors.card,
+              backgroundColor: toggleBg,
               borderWidth: 1,
-              borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border,
+              borderColor: colors.border,
             }}
           >
-            <Ionicons name={theme.mode === 'light' ? 'moon' : 'sunny'} size={18} color={theme.mode === 'light' ? '#000000' : colors.text.primary} />
+            <Ionicons name={toggleIcon} size={18} color={colors.text.primary} />
           </Pressable>
         </View>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.mode === 'light' ? '#000000' : colors.text.primary }]}>Welcome back</Text>
-          <Text style={[styles.subtitle, { color: theme.mode === 'light' ? '#000000' : colors.text.secondary, opacity: theme.mode === 'light' ? 0.7 : 1 }]}>Sign in to continue</Text>
+          <Text style={styles.title}>Welcome back</Text>
+          <Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>Sign in to continue</Text>
         </View>
 
         <View style={styles.inputs}>
-          <Text style={[styles.label, { color: theme.mode === 'light' ? '#000000' : colors.text.secondary }]}>Email</Text>
+          <Text style={styles.label}>Email</Text>
           <TextInput
             value={email}
             onChangeText={setEmail}
             placeholder="you@example.com"
-            placeholderTextColor={theme.mode === 'light' ? '#666666' : colors.text.secondary}
+            placeholderTextColor={colors.text.secondary}
             keyboardType="email-address"
             autoCapitalize="none"
-            style={[styles.input, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, color: theme.mode === 'light' ? '#000000' : colors.text.primary, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]}
+            style={styles.input}
           />
-          <Text style={[styles.label, { marginTop: spacing.md, color: theme.mode === 'light' ? '#000000' : colors.text.secondary }]}>Password</Text>
+          <Text style={[styles.label, { marginTop: spacing.md }]}>Password</Text>
           <TextInput
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            placeholderTextColor={theme.mode === 'light' ? '#666666' : colors.text.secondary}
+            placeholderTextColor={colors.text.secondary}
             secureTextEntry
-            style={[styles.input, { backgroundColor: theme.mode === 'light' ? '#ffffff' : colors.card, color: theme.mode === 'light' ? '#000000' : colors.text.primary, borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border }]}
+            style={styles.input}
           />
           <View style={{ alignItems: 'flex-end', marginTop: spacing.sm }}>
             <Pressable onPress={() => navigation.navigate('ForgotPassword' as never)} accessibilityRole="button">
@@ -92,8 +96,8 @@ export const SignInScreen: React.FC = () => {
           style={[
             styles.googleButton,
             {
-              backgroundColor: theme.mode === 'light' ? '#ffffff' : 'transparent',
-              borderColor: theme.mode === 'light' ? '#e5e5e5' : colors.border,
+              backgroundColor: colors.card,
+              borderColor: colors.border,
             },
           ]}
           onPress={() => signIn('google')}
@@ -102,13 +106,13 @@ export const SignInScreen: React.FC = () => {
           <Ionicons
             name="logo-google"
             size={18}
-            color={theme.mode === 'light' ? '#000000' : colors.text.primary}
+            color={colors.text.primary}
             style={{ marginRight: spacing.sm }}
           />
           <Text
             style={[
               styles.googleText,
-              { color: theme.mode === 'light' ? '#000000' : colors.text.primary },
+              { color: colors.text.primary },
             ]}
           >
             Continue with Google
@@ -116,7 +120,7 @@ export const SignInScreen: React.FC = () => {
         </Pressable>
 
         <View style={styles.footerRow}>
-          <Text style={[styles.footerText, { color: theme.mode === 'light' ? '#000000' : colors.text.secondary }]}>Don't have an account?</Text>
+          <Text style={styles.footerText}>Don't have an account?</Text>
           <Pressable onPress={() => navigation.navigate('SignUp' as never)} accessibilityRole="button">
             <Text style={styles.footerLink}>Create one</Text>
           </Pressable>

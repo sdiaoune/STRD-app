@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -37,19 +37,20 @@ import CustomTabBar from './components/CustomTabBar';
 import { HapticTab } from './components/HapticTab';
 import { SignInScreen } from './screens/SignInScreen';
 import { SignUpScreen } from './screens/SignUpScreen';
+import { OnboardingSurveyScreen } from './screens/OnboardingSurveyScreen';
 import { useStore } from './state/store';
-import { OnboardingSurveyModal } from './components/OnboardingSurveyModal';
 import { ForgotPasswordScreen } from './screens/ForgotPasswordScreen';
 import { AuthConfirmScreen } from './screens/AuthConfirmScreen';
 import { AuthCodeErrorScreen } from './screens/AuthCodeErrorScreen';
 import { RecoveryCodeScreen } from './screens/RecoveryCodeScreen';
 import { SignupCodeScreen } from './screens/SignupCodeScreen';
+import { SurveyProvider, useOnboardingSurvey } from './hooks/useOnboardingSurvey';
 
 const LOCATION_PROMPT_KEY = 'strd_location_prompted';
-const SURVEY_STORAGE_KEY = 'strd_onboarding_survey';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 function EventsStack() {
   const theme = useTokensTheme();
@@ -327,6 +328,26 @@ function SearchStack() {
         options={{ title: 'Runner', headerBackTitle: 'Search' }}
       />
       <Stack.Screen 
+        name="BusinessProfile" 
+        component={BusinessProfileScreen}
+        options={{ title: 'Organization', headerBackTitle: 'Search' }}
+      />
+      <Stack.Screen 
+        name="EditEvent" 
+        component={EditEventScreen}
+        options={{ title: 'Edit Event', headerBackTitle: 'Search' }}
+      />
+      <Stack.Screen 
+        name="EventDetails" 
+        component={EventDetailsScreen}
+        options={{ title: 'Event Details', headerBackTitle: 'Search' }}
+      />
+      <Stack.Screen 
+        name="EditOrganization" 
+        component={EditOrganizationScreen}
+        options={{ title: 'Edit Organization', headerBackTitle: 'Search' }}
+      />
+      <Stack.Screen 
         name="Settings" 
         component={SettingsScreen}
         options={{ title: 'Settings', headerBackTitle: 'Search' }}
@@ -389,19 +410,100 @@ function AuthStack() {
   );
 }
 
+function MainTabs() {
+  const theme = useTokensTheme();
+  return (
+    <Tab.Navigator
+      initialRouteName="Run"
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap;
+
+          if (route.name === 'Events') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
+          } else if (route.name === 'Timeline') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Run') {
+            iconName = focused ? 'flash' : 'flash-outline';
+          } else if (route.name === 'Notifications') {
+            iconName = focused ? 'notifications' : 'notifications-outline';
+          } else if (route.name === 'Search') {
+            iconName = focused ? 'search' : 'search-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          } else {
+            iconName = 'help-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.text.muted,
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          borderTopWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarLabelStyle: { fontWeight: '600' },
+        headerShown: false,
+      })}
+      tabBar={(props) => <CustomTabBar {...props} />}
+    >
+      <Tab.Screen name="Timeline" component={TimelineStack} />
+      <Tab.Screen name="Events" component={EventsStack} />
+      <Tab.Screen name="Search" component={SearchStack} />
+      <Tab.Screen name="Run" component={RunStack} options={{ tabBarLabel: 'STRD' }} />
+      <Tab.Screen name="Notifications" component={NotificationsStack} />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileStack}
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+type NavigationRootProps = {
+  linking: React.ComponentProps<typeof NavigationContainer>['linking'];
+};
+
+function NavigationRoot({ linking }: NavigationRootProps) {
+  const theme = useTokensTheme();
+  const isAuthenticated = useStore(state => state.isAuthenticated);
+  const { hasCompleted, loading, sessionDeferred } = useOnboardingSurvey();
+
+  const navigationTheme = useMemo(() => getTokensNavigationTheme(theme.mode), [theme.mode]);
+  const needsSurvey = isAuthenticated && !loading && !hasCompleted && !sessionDeferred;
+  const appStage = !isAuthenticated ? 'auth' : needsSurvey ? 'survey' : 'main';
+  const navigationKey = `root-${appStage}`;
+  const initialRouteName = appStage === 'auth' ? 'Auth' : appStage === 'survey' ? 'OnboardingSurvey' : 'Main';
+
+  return (
+    <NavigationContainer key={navigationKey} theme={navigationTheme} linking={linking}>
+      <RootStack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="Auth" component={AuthStack} />
+        <RootStack.Screen
+          name="OnboardingSurvey"
+          component={OnboardingSurveyScreen}
+          initialParams={{ mode: 'onboarding' }}
+        />
+        <RootStack.Screen name="Main" component={MainTabs} />
+      </RootStack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 function AppContainer() {
   const legacyTheme = useLegacyDesignTheme();
   const theme = useTokensTheme();
   const themeName = theme.mode;
   const setThemeMode = legacyTheme.setMode;
-  const isAuthenticated = useStore(state => state.isAuthenticated);
   const initializeAuth = useStore(state => state.initializeAuth);
   const hydratePreferences = useStore(state => state.hydratePreferences);
   const reloadInitialData = useStore(state => state._loadInitialData);
   const themePreference = useStore(state => state.themePreference);
   const hasHydratedTheme = useStore(state => state.hasHydratedTheme);
-  const [showSurvey, setShowSurvey] = useState(false);
-  const [hasCheckedSurvey, setHasCheckedSurvey] = useState(false);
 
   useEffect(() => {
     hydratePreferences();
@@ -482,31 +584,6 @@ function AppContainer() {
     }
   }, [hasHydratedTheme, themePreference, themeName, setThemeMode]);
 
-  useEffect(() => {
-    if (hasCheckedSurvey) return;
-    (async () => {
-      try {
-        const stored = await AsyncStorage.getItem(SURVEY_STORAGE_KEY);
-        if (!stored) {
-          setShowSurvey(true);
-        }
-      } finally {
-        setHasCheckedSurvey(true);
-      }
-    })();
-  }, [hasCheckedSurvey]);
-
-  const handleSurveySubmit = async (answers: Record<string, string>) => {
-    await AsyncStorage.setItem(SURVEY_STORAGE_KEY, JSON.stringify({ answers, completedAt: new Date().toISOString() }));
-    setShowSurvey(false);
-  };
-
-  const handleSurveySkip = async () => {
-    await AsyncStorage.setItem(SURVEY_STORAGE_KEY, JSON.stringify({ skipped: true, completedAt: new Date().toISOString() }));
-    setShowSurvey(false);
-  };
-
-  const navigationTheme = useMemo(() => getTokensNavigationTheme(theme.mode), [theme.mode]);
 
   // React Navigation deep link config to expose web paths
   const linking = {
@@ -521,6 +598,7 @@ function AppContainer() {
         RecoveryCode: 'auth/recovery-code',
         AuthConfirm: 'auth/confirm',
         AuthCodeError: 'auth/auth-code-error',
+        OnboardingSurvey: 'onboarding/preference',
         // Basic mappings for main tabs if needed
         Timeline: 'timeline',
         Events: 'events',
@@ -534,67 +612,10 @@ function AppContainer() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={navigationTheme} linking={linking}>
-        {isAuthenticated ? (
-          <Tab.Navigator
-            initialRouteName="Run"
-            screenOptions={({ route }) => ({
-              tabBarIcon: ({ focused, color, size }) => {
-                let iconName: keyof typeof Ionicons.glyphMap;
-
-                if (route.name === 'Events') {
-                  iconName = focused ? 'calendar' : 'calendar-outline';
-                } else if (route.name === 'Timeline') {
-                  iconName = focused ? 'home' : 'home-outline';
-                } else if (route.name === 'Run') {
-                  iconName = focused ? 'flash' : 'flash-outline';
-                } else if (route.name === 'Notifications') {
-                  iconName = focused ? 'notifications' : 'notifications-outline';
-                } else if (route.name === 'Search') {
-                  iconName = focused ? 'search' : 'search-outline';
-                } else if (route.name === 'Profile') {
-                  iconName = focused ? 'person' : 'person-outline';
-                } else {
-                  iconName = 'help-outline';
-                }
-
-                return <Ionicons name={iconName} size={size} color={color} />;
-              },
-              tabBarActiveTintColor: theme.colors.primary,
-              tabBarInactiveTintColor: theme.colors.text.muted,
-              tabBarStyle: {
-                backgroundColor: theme.colors.surface,
-                borderTopWidth: 0,
-                elevation: 0,
-                shadowOpacity: 0,
-              },
-              tabBarLabelStyle: { fontWeight: '600' },
-              headerShown: false,
-            })}
-            tabBar={(props) => <CustomTabBar {...props} />}
-          >
-            <Tab.Screen name="Timeline" component={TimelineStack} />
-            <Tab.Screen name="Events" component={EventsStack} />
-            <Tab.Screen name="Search" component={SearchStack} />
-            <Tab.Screen name="Run" component={RunStack} options={{ tabBarLabel: 'STRD' }} />
-            <Tab.Screen name="Notifications" component={NotificationsStack} />
-            {/* Hidden Profile route for avatar navigation across the app */}
-            <Tab.Screen
-              name="Profile"
-              component={ProfileStack}
-              options={{ tabBarButton: () => null, headerShown: false }}
-            />
-          </Tab.Navigator>
-        ) : (
-          <AuthStack />
-        )}
-      </NavigationContainer>
-      <StatusBar style={theme.mode === 'light' ? 'dark' : 'light'} />
-      <OnboardingSurveyModal
-        visible={showSurvey}
-        onSubmit={handleSurveySubmit}
-        onSkip={handleSurveySkip}
-      />
+      <SurveyProvider>
+        <NavigationRoot linking={linking} />
+        <StatusBar style={theme.mode === 'light' ? 'dark' : 'light'} />
+      </SurveyProvider>
     </SafeAreaProvider>
   );
 }

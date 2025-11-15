@@ -18,9 +18,8 @@ export const EditOrganizationScreen: React.FC = () => {
   const { orgId } = route.params;
   
   const theme = useTokensTheme();
-  const isLight = theme.mode === 'light';
-  const fieldStyle = { backgroundColor: isLight ? '#ffffff' : colors.card, color: isLight ? '#000000' : colors.text.primary, borderColor: isLight ? '#e5e5e5' : colors.border } as const;
-  const labelStyle = { color: isLight ? '#000000' : colors.text.secondary } as const;
+  const fieldStyle = { backgroundColor: colors.card, color: colors.text.primary, borderColor: colors.border } as const;
+  const labelStyle = { color: colors.text.secondary } as const;
   
   const { orgById, updatePage } = useStore();
   const organization = orgById(orgId);
@@ -64,16 +63,16 @@ export const EditOrganizationScreen: React.FC = () => {
 
   if (!organization) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: isLight ? '#ffffff' : colors.bg }]} edges={['bottom']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['bottom']}>
         <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: isLight ? '#000000' : colors.text.secondary }]}>Organization not found</Text>
+          <Text style={styles.errorText}>Organization not found</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isLight ? '#ffffff' : colors.bg }]} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['bottom']}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: spacing.sm, paddingBottom: spacing.xl }}
@@ -87,7 +86,7 @@ export const EditOrganizationScreen: React.FC = () => {
             onChangeText={setName} 
             style={[styles.input, fieldStyle]} 
             placeholder="Organization name" 
-            placeholderTextColor={isLight ? '#666666' : colors.text.secondary} 
+            placeholderTextColor={colors.text.secondary}
           />
         </View>
         <View style={styles.formRow}>
@@ -97,7 +96,7 @@ export const EditOrganizationScreen: React.FC = () => {
             onChangeText={setWebsite}
             style={[styles.input, fieldStyle]}
             placeholder="https://example.org"
-            placeholderTextColor={isLight ? '#666666' : colors.text.secondary}
+            placeholderTextColor={colors.text.secondary}
             autoCapitalize="none"
             keyboardType="url"
           />
@@ -109,11 +108,11 @@ export const EditOrganizationScreen: React.FC = () => {
             onChangeText={setCity} 
             style={[styles.input, fieldStyle]} 
             placeholder="City" 
-            placeholderTextColor={isLight ? '#666666' : colors.text.secondary} 
+            placeholderTextColor={colors.text.secondary}
           />
         </View>
-        <TouchableOpacity style={[styles.btn, fieldStyle]} onPress={pickImage}>
-          <Text style={[styles.btnText, { color: fieldStyle.color }]}>
+        <TouchableOpacity style={styles.btn} onPress={pickImage}>
+          <Text style={styles.btnText}>
             {organization?.logo ? 'Change Logo' : 'Pick Logo'}
           </Text>
         </TouchableOpacity>
@@ -133,7 +132,7 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: 'center', marginTop: spacing.md },
   btnText: { ...typography.body, color: colors.text.primary, fontWeight: '600' },
   primary: { backgroundColor: colors.primary, borderColor: colors.primary },
-  primaryText: { color: '#ffffff' },
+  primaryText: { color: colors.onPrimary },
   errorContainer: {
     flex: 1,
     alignItems: 'center',
@@ -141,7 +140,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...typography.h2,
-    color: colors.muted,
+    color: colors.text.secondary,
   },
 });
 

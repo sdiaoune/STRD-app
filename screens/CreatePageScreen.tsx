@@ -7,9 +7,8 @@ import { borderRadius, colors, spacing, typography, useTheme as useTokensTheme }
 
 export const CreatePageScreen: React.FC = () => {
   const theme = useTokensTheme();
-  const isLight = theme.mode === 'light';
-  const fieldStyle = { backgroundColor: isLight ? '#ffffff' : colors.card, color: isLight ? '#000000' : colors.text.primary, borderColor: isLight ? '#e5e5e5' : colors.border } as const;
-  const labelStyle = { color: isLight ? '#000000' : colors.text.secondary } as const;
+  const fieldStyle = { backgroundColor: colors.card, color: colors.text.primary, borderColor: colors.border } as const;
+  const labelStyle = { color: colors.text.secondary } as const;
   const createPage = useStore(state => (state as any).createPage);
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
@@ -36,18 +35,18 @@ export const CreatePageScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isLight ? '#ffffff' : colors.bg }]} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['bottom']}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: spacing.sm, paddingBottom: spacing.xl }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Name</Text><TextInput value={name} onChangeText={setName} style={[styles.input, fieldStyle]} placeholder="Your page name" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>City</Text><TextInput value={city} onChangeText={setCity} style={[styles.input, fieldStyle]} placeholder="City" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Website (optional)</Text><TextInput value={website} onChangeText={setWebsite} style={[styles.input, fieldStyle]} placeholder="https://example.org" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} autoCapitalize="none" keyboardType="url" /></View>
-        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Type</Text><TextInput value={type} onChangeText={(t) => setType((t as any) || 'community')} style={[styles.input, fieldStyle]} placeholder="community | partner | sponsor | run_club" placeholderTextColor={isLight ? '#666666' : colors.text.secondary} /></View>
-        <TouchableOpacity style={[styles.btn, fieldStyle]} onPress={pickImage}><Text style={[styles.btnText, { color: fieldStyle.color }]}>{logoUri ? 'Change Logo' : 'Pick Logo'}</Text></TouchableOpacity>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Name</Text><TextInput value={name} onChangeText={setName} style={[styles.input, fieldStyle]} placeholder="Your page name" placeholderTextColor={colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>City</Text><TextInput value={city} onChangeText={setCity} style={[styles.input, fieldStyle]} placeholder="City" placeholderTextColor={colors.text.secondary} /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Website (optional)</Text><TextInput value={website} onChangeText={setWebsite} style={[styles.input, fieldStyle]} placeholder="https://example.org" placeholderTextColor={colors.text.secondary} autoCapitalize="none" keyboardType="url" /></View>
+        <View style={styles.formRow}><Text style={[styles.label, labelStyle]}>Type</Text><TextInput value={type} onChangeText={(t) => setType((t as any) || 'community')} style={[styles.input, fieldStyle]} placeholder="community | partner | sponsor | run_club" placeholderTextColor={colors.text.secondary} /></View>
+        <TouchableOpacity style={styles.btn} onPress={pickImage}><Text style={styles.btnText}>{logoUri ? 'Change Logo' : 'Pick Logo'}</Text></TouchableOpacity>
         <TouchableOpacity style={[styles.btn, styles.primary]} onPress={submit}><Text style={[styles.btnText, styles.primaryText]}>Create Page</Text></TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -62,7 +61,7 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: 'center', marginTop: spacing.md },
   btnText: { ...typography.body, color: colors.text.primary, fontWeight: '600' },
   primary: { backgroundColor: colors.primary, borderColor: colors.primary },
-  primaryText: { color: '#ffffff' },
+  primaryText: { color: colors.onPrimary },
 });
 
 export default CreatePageScreen;
