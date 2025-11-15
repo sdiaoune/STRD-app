@@ -17,6 +17,78 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { compressAvatarImage } from '../utils/image';
 
+// Storage keys for caching liked posts
+const LIKED_POSTS_CACHE_KEY = 'strd:liked_posts';
+const LIKED_POSTS_CACHE_TIMESTAMP_KEY = 'strd:liked_posts_timestamp';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+
+// Helper functions for caching liked posts
+const getLikedPostsCacheKey = (userId: string) => `${LIKED_POSTS_CACHE_KEY}:${userId}`;
+const getLikedPostsTimestampKey = (userId: string) => `${LIKED_POSTS_CACHE_TIMESTAMP_KEY}:${userId}`;
+
+const loadCachedLikedPosts = async (userId: string): Promise<Set<string> | null> => {
+  try {
+    const cacheKey = getLikedPostsCacheKey(userId);
+    const timestampKey = getLikedPostsTimestampKey(userId);
+    
+    const [cachedData, timestamp] = await Promise.all([
+      AsyncStorage.getItem(cacheKey),
+      AsyncStorage.getItem(timestampKey)
+    ]);
+    
+    if (!cachedData || !timestamp) {
+      return null;
+    }
+    
+    const cacheAge = Date.now() - parseInt(timestamp, 10);
+    if (cacheAge > CACHE_TTL_MS) {
+      // Cache expired, remove it
+      await Promise.all([
+        AsyncStorage.removeItem(cacheKey),
+        AsyncStorage.removeItem(timestampKey)
+      ]);
+      return null;
+    }
+    
+    const likedPostIds = JSON.parse(cachedData) as string[];
+    return new Set(likedPostIds);
+  } catch (error) {
+    console.error('[loadCachedLikedPosts] Error loading cache:', error);
+    return null;
+  }
+};
+
+const saveLikedPostsCache = async (userId: string, likedPostIds: string[]): Promise<void> => {
+  try {
+    const cacheKey = getLikedPostsCacheKey(userId);
+    const timestampKey = getLikedPostsTimestampKey(userId);
+    
+    await Promise.all([
+      AsyncStorage.setItem(cacheKey, JSON.stringify(likedPostIds)),
+      AsyncStorage.setItem(timestampKey, Date.now().toString())
+    ]);
+  } catch (error) {
+    console.error('[saveLikedPostsCache] Error saving cache:', error);
+  }
+};
+
+const updateLikedPostsCache = async (userId: string, postId: string, isLiked: boolean): Promise<void> => {
+  try {
+    const cached = await loadCachedLikedPosts(userId);
+    if (!cached) return; // No cache to update
+    
+    if (isLiked) {
+      cached.add(postId);
+    } else {
+      cached.delete(postId);
+    }
+    
+    await saveLikedPostsCache(userId, Array.from(cached));
+  } catch (error) {
+    console.error('[updateLikedPostsCache] Error updating cache:', error);
+  }
+};
+
 interface RunState {
   isRunning: boolean;
   isPaused: boolean;
@@ -54,7 +126,7 @@ const uploadImageToStorage = async (bucket: string, path: string, uri: string, m
     formData.append('file', {
       uri: uri,
       type: mimeType,
-      name: path.split('/').pop() || `image.${fileType}`,
+      name: path.split('/').pop() || `image.${inferredFileType}`,
     } as any);
     
     // Use Supabase client's upload method with FormData
@@ -125,6 +197,7 @@ interface AppState {
   _isLoadingData: boolean;
   
   // Actions
+  _syncPostLikeState: (postId: string) => Promise<boolean>;
   likeToggle: (postId: string) => Promise<void>;
   addComment: (postId: string, text: string) => Promise<void>;
   deleteComment: (postId: string, commentId: string) => Promise<void>;
@@ -321,43 +394,69 @@ export const useStore = create<AppState>((set, get) => ({
         postsError,
       });
 
-    // likes by current user
-      const { data: likes, error: likesError } = await supabase
-        .from('run_post_likes')
-        .select('*')
-        .eq('user_id', currentUserId);
-      if (likesError) {
-        console.error('[_loadInitialData] Likes query error:', likesError);
-      }
+    // Fetch fresh likes from database
+    console.log('[_loadInitialData] Fetching likes for user:', {
+      userId: currentUserId,
+      userIdType: typeof currentUserId,
+      userIdLength: currentUserId?.length
+    });
+    
+    const { data: likes, error: likesError } = await supabase
+      .from('run_post_likes')
+      .select('*')
+      .eq('user_id', currentUserId);
+    if (likesError) {
+      console.error('[_loadInitialData] Likes query error:', likesError);
+    }
+    
+    console.log('[_loadInitialData] Likes fetched from DB:', {
+      count: likes?.length ?? 0,
+      likesData: likes,
+      likes: likes?.map(l => ({ post_id: l.post_id, user_id: l.user_id, post_id_type: typeof l.post_id }))
+    });
+    
+    const likedPostIds = (likes || []).map(l => String(l.post_id).trim());
+    const likesByPostId = new Set(likedPostIds);
+    
+    console.log('[_loadInitialData] Built likesByPostId Set:', {
+      setSize: likesByPostId.size,
+      setContents: Array.from(likesByPostId)
+    });
+    
+    // Update cache with fresh data for next load
+    await saveLikedPostsCache(currentUserId, likedPostIds);
+    console.log('[_loadInitialData] Likes cached for future use:', {
+      count: likedPostIds.length
+    });
 
     // comments per post
-      const { data: comments, error: commentsError } = await supabase
-        .from('comments')
-        .select('*')
-        .order('created_at', { ascending: true });
-      if (commentsError) {
-        console.error('[_loadInitialData] Comments query error:', commentsError);
-      }
+    const { data: comments, error: commentsError } = await supabase
+      .from('comments')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (commentsError) {
+      console.error('[_loadInitialData] Comments query error:', commentsError);
+    }
 
-      const followingOrgs = (follows || []).map(f => f.org_id);
+    const followingOrgs = (follows || []).map(f => f.org_id);
 
     const isSuperAdmin = !!(profile && ((profile as any).role === 'super_admin' || (profile as any).is_super_admin));
 
-      const users: User[] = (profile ? [{
-        id: profile.id,
-        name: profile.name,
-        handle: profile.handle,
-        avatar: profile.avatar_url,
-        city: profile.city,
-        interests: profile.interests ?? [],
-        bio: (profile as any).bio ?? null,
-        followingOrgs,
-        isSuperAdmin,
-        isCertified: (profile as any).is_certified ?? false,
-        sponsoredUntil: (profile as any).sponsored_until ?? null,
-      }] : []);
+    const users: User[] = (profile ? [{
+      id: profile.id,
+      name: profile.name,
+      handle: profile.handle,
+      avatar: profile.avatar_url,
+      city: profile.city,
+      interests: profile.interests ?? [],
+      bio: (profile as any).bio ?? null,
+      followingOrgs,
+      isSuperAdmin,
+      isCertified: (profile as any).is_certified ?? false,
+      sponsoredUntil: (profile as any).sponsored_until ?? null,
+    }] : []);
 
-  const organizations: Organization[] = (orgs || []).map(o => ({
+    const organizations: Organization[] = (orgs || []).map(o => ({
       id: o.id,
       name: o.name,
       type: o.type,
@@ -392,7 +491,15 @@ export const useStore = create<AppState>((set, get) => ({
 
     const eventsWithinRadius = eventsMapped; // filter by radius later so user can adjust
 
-    const likesByPostId = new Set((likes || []).map(l => `${l.post_id}`));
+    // Convert post IDs to strings for consistent comparison (Supabase returns UUIDs as strings)
+    // Use trim() for safety in case of any whitespace issues
+    const normalizeId = (id: any): string => String(id).trim();
+    // likesByPostId is already set above (from cache or DB)
+    console.log('[_loadInitialData] Likes Set:', {
+      size: likesByPostId.size,
+      sampleLikes: Array.from(likesByPostId).slice(0, 3)
+    });
+    
     const commentsByPostId = new Map<string, Comment[]>();
     (comments || []).forEach(c => {
       const arr = commentsByPostId.get(c.post_id) || [];
@@ -400,23 +507,35 @@ export const useStore = create<AppState>((set, get) => ({
       commentsByPostId.set(c.post_id, arr);
     });
 
-    const runPosts: RunPost[] = (posts || []).map(p => ({
-      id: p.id,
-      userId: p.user_id,
-      createdAtISO: p.created_at,
-      distanceKm: p.distance_km,
-      durationMin: p.duration_min,
-      avgPaceMinPerKm: p.avg_pace_min_per_km,
-      routePolyline: p.route_polyline,
-      routePreview: p.route_preview_url,
-      caption: p.caption,
-      likes: p.likes_count,
-      likedByCurrentUser: likesByPostId.has(p.id),
-      comments: commentsByPostId.get(p.id) || [],
-      isFromPartner: p.is_from_partner,
-      sponsoredFrom: (p as any).sponsored_from ?? null,
-      sponsoredUntil: (p as any).sponsored_until ?? null,
-    }));
+    const runPosts: RunPost[] = (posts || []).map(p => {
+      const postIdStr = normalizeId(p.id);
+      const isLiked = likesByPostId.has(postIdStr);
+      if (isLiked) {
+        console.log('[_loadInitialData] Post is liked:', { 
+          postId: p.id, 
+          postIdStr,
+          postIdType: typeof p.id,
+          inSet: likesByPostId.has(postIdStr)
+        });
+      }
+      return {
+        id: p.id,
+        userId: p.user_id,
+        createdAtISO: p.created_at,
+        distanceKm: p.distance_km,
+        durationMin: p.duration_min,
+        avgPaceMinPerKm: p.avg_pace_min_per_km,
+        routePolyline: p.route_polyline,
+        routePreview: p.route_preview_url,
+        caption: p.caption,
+        likes: p.likes_count,
+        likedByCurrentUser: isLiked,
+        comments: commentsByPostId.get(p.id) || [],
+        isFromPartner: p.is_from_partner,
+        sponsoredFrom: (p as any).sponsored_from ?? null,
+        sponsoredUntil: (p as any).sponsored_until ?? null,
+      };
+    });
 
     const pagePosts: PagePost[] = (orgPosts || []).map(op => ({
       id: op.id,
@@ -472,6 +591,13 @@ export const useStore = create<AppState>((set, get) => ({
       timelineItems: timelineItems.length,
     });
 
+    // DEBUG: Log which posts have likedByCurrentUser set to true
+    const likedPosts = runPosts.filter(p => p.likedByCurrentUser);
+    console.log('[_loadInitialData] Posts marked as liked in state:', {
+      totalLikedPosts: likedPosts.length,
+      likedPostIds: likedPosts.map(p => ({ id: p.id, likedByCurrentUser: p.likedByCurrentUser }))
+    });
+
     set({
       users: [...users, ...extraUsers],
       organizations,
@@ -488,29 +614,141 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
+  // Helper: Sync post like state from database
+  _syncPostLikeState: async (postId: string) => {
+    const state = get();
+    const userId = state.currentUser.id;
+    if (!userId) return false;
+
+    // Query database to check if like actually exists
+    const { data: likeData, error } = await supabase
+      .from('run_post_likes')
+      .select('post_id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[_syncPostLikeState] Query failed:', error);
+      return false;
+    }
+
+    const actuallyLiked = !!likeData;
+    let target = state.runPosts.find(p => p.id === postId);
+    
+    if (target && target.likedByCurrentUser !== actuallyLiked) {
+      console.log('[_syncPostLikeState] State mismatch detected, syncing:', {
+        postId,
+        localState: target.likedByCurrentUser,
+        dbState: actuallyLiked
+      });
+
+      // Get current likes count from database
+      const { data: postData } = await supabase
+        .from('run_posts')
+        .select('likes_count')
+        .eq('id', postId)
+        .maybeSingle();
+
+      const dbLikesCount = postData?.likes_count ?? target.likes;
+
+      // Sync state to match database
+      set(({ runPosts }) => ({
+        runPosts: runPosts.map(p => p.id === postId ? {
+          ...p,
+          likedByCurrentUser: actuallyLiked,
+          likes: dbLikesCount,
+        } : p)
+      }));
+
+      // Update cache to match database state
+      await updateLikedPostsCache(userId, postId, actuallyLiked);
+
+      return true; // State was synced
+    }
+
+    return false; // No sync needed
+  },
+
   // Actions
   likeToggle: async (postId: string) => {
     const state = get();
     const userId = state.currentUser.id;
-    const target = state.runPosts.find(p => p.id === postId);
-    if (!target) return;
-    const willLike = !target.likedByCurrentUser;
-
-    // optimistic update
-    set(({ runPosts }) => ({
-      runPosts: runPosts.map(p => p.id === postId ? {
-        ...p,
-        likedByCurrentUser: willLike,
-        likes: p.likes + (willLike ? 1 : -1),
-      } : p)
-    }));
-
-    // Insert/delete the like - database trigger will automatically update likes_count
-    if (willLike) {
-      await supabase.from('run_post_likes').insert({ post_id: postId, user_id: userId });
-    } else {
-      await supabase.from('run_post_likes').delete().eq('post_id', postId).eq('user_id', userId);
+    if (!userId) {
+      console.error('[likeToggle] No user ID');
+      return;
     }
+    let target = state.runPosts.find(p => p.id === postId);
+    if (!target) {
+      console.error('[likeToggle] Post not found:', postId);
+      return;
+    }
+
+    const applyOptimisticUpdate = (nextLikedState: boolean) => {
+      set(({ runPosts }) => ({
+        runPosts: runPosts.map(p => p.id === postId ? {
+          ...p,
+          likedByCurrentUser: nextLikedState,
+          likes: p.likes + (nextLikedState ? 1 : -1),
+        } : p)
+      }));
+    };
+
+    const revertOptimisticUpdate = (nextLikedState: boolean) => {
+      set(({ runPosts }) => ({
+        runPosts: runPosts.map(p => p.id === postId ? {
+          ...p,
+          likedByCurrentUser: !nextLikedState,
+          likes: p.likes + (nextLikedState ? -1 : 1),
+        } : p)
+      }));
+    };
+
+    const persistLikeChange = async (nextLikedState: boolean) => {
+      if (nextLikedState) {
+        const { error } = await supabase.from('run_post_likes').insert({ post_id: postId, user_id: userId });
+        if (error) {
+          console.error('[likeToggle] Insert failed:', error);
+          // Revert optimistic update before syncing to avoid inflated counts
+          revertOptimisticUpdate(nextLikedState);
+          if (error.code === '23505') {
+            console.log('[likeToggle] Duplicate key error - like already exists, syncing state');
+            await get()._syncPostLikeState(postId);
+            await updateLikedPostsCache(userId, postId, true);
+          }
+          return;
+        }
+        await updateLikedPostsCache(userId, postId, true);
+      } else {
+        const { error } = await supabase.from('run_post_likes').delete().eq('post_id', postId).eq('user_id', userId);
+        if (error) {
+          console.error('[likeToggle] Delete failed:', error);
+          revertOptimisticUpdate(nextLikedState);
+          return;
+        }
+        await updateLikedPostsCache(userId, postId, false);
+      }
+    };
+
+    // Verify database state before toggling to prevent state desync
+    const stateSynced = await get()._syncPostLikeState(postId);
+    if (stateSynced) {
+      console.log('[likeToggle] State was synced, re-reading target');
+      const updatedState = get();
+      const updatedTarget = updatedState.runPosts.find(p => p.id === postId);
+      if (!updatedTarget) {
+        console.error('[likeToggle] Post not found after sync');
+        return;
+      }
+      target = updatedTarget;
+    }
+
+    const desiredLikedState = !target.likedByCurrentUser;
+
+    console.log('[likeToggle] Toggling like:', { postId, desiredLikedState });
+
+    applyOptimisticUpdate(desiredLikedState);
+    await persistLikeChange(desiredLikedState);
   },
 
   addComment: async (postId: string, text: string) => {
@@ -1049,6 +1287,19 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   signOut: async () => {
+    // Clear liked posts cache on sign out
+    const userId = get().currentUser.id;
+    if (userId) {
+      try {
+        await Promise.all([
+          AsyncStorage.removeItem(getLikedPostsCacheKey(userId)),
+          AsyncStorage.removeItem(getLikedPostsTimestampKey(userId))
+        ]);
+        console.log('[signOut] Cleared liked posts cache');
+      } catch (error) {
+        console.error('[signOut] Error clearing cache:', error);
+      }
+    }
     console.log('[signOut] Starting sign out...');
     try {
       // First clear local state immediately for responsive UI

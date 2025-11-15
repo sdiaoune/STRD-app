@@ -95,3 +95,4 @@ before insert on public.organization_posts
 for each row execute procedure public.set_org_post_creator();
 
 
+

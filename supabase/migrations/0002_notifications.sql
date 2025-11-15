@@ -29,7 +29,7 @@ create or replace function public.notify_like() returns trigger as $$
 begin
   if new.user_id <> (select user_id from public.run_posts where id = new.post_id) then
     insert into public.notifications (recipient_id, actor_id, type, target_type, target_id, data)
-    select rp.user_id, new.user_id, 'like', 'post', new.post_id, jsonb_build_object('postId', new.post_id);
+    select (select user_id from public.run_posts where id = new.post_id), new.user_id, 'like', 'post', new.post_id, jsonb_build_object('postId', new.post_id);
   end if;
   return new;
 end; $$ language plpgsql;

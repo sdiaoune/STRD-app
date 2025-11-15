@@ -35,6 +35,12 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
   const navigation = useNavigation<RunPostCardNavigationProp>();
   const unit = useStore(state => state.unitPreference);
   const isSuperAdmin = useStore(state => state.currentUser.isSuperAdmin);
+  
+  // Subscribe to runPosts to get real-time updates
+  const runPosts = useStore(state => state.runPosts);
+  
+  // Find the current post from the store to always have fresh like state
+  const currentPost = runPosts.find(p => p.id === post.id) || post;
 
   const handleLike = () => {
     likeToggle(post.id);
@@ -142,8 +148,8 @@ export const RunPostCard: React.FC<RunPostCardProps> = ({ post, onPress, style }
 
         <View style={styles.actions}>
           <LikeButton
-            isLiked={!!post.likedByCurrentUser}
-            likeCount={post.likes}
+            isLiked={!!currentPost.likedByCurrentUser}
+            likeCount={currentPost.likes}
             onPress={handleLike}
           />
           <TouchableOpacity style={styles.commentButton} onPress={() => setShowLikes(true)}>

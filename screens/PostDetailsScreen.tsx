@@ -38,10 +38,14 @@ export const PostDetailsScreen: React.FC = () => {
   
   const [commentText, setCommentText] = useState('');
   const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
-  const { postById, userById, likeToggle, addComment, deleteComment, deleteRunPost, currentUser } = useStore();
+  const post = useStore(state => state.postById(postId));
+  const user = useStore(state => post ? state.userById(post.userId) : null);
+  const likeToggle = useStore(state => state.likeToggle);
+  const addComment = useStore(state => state.addComment);
+  const deleteComment = useStore(state => state.deleteComment);
+  const deleteRunPost = useStore(state => state.deleteRunPost);
+  const currentUser = useStore(state => state.currentUser);
   const unit = useStore(state => state.unitPreference);
-  const post = postById(postId);
-  const user = post ? userById(post.userId) : null;
   const decodedPath = post?.routePolyline ? decodePolyline(post.routePolyline) : [];
   const [routeSize, setRouteSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const styles = useLegacyStyles(createStyles);

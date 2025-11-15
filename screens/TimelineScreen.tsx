@@ -34,7 +34,7 @@ export const TimelineScreen: React.FC = () => {
   const themedStyles = React.useMemo(() => createStyles(), [themeName, getCurrentThemeName()]);
 
   const [scope, setScope] = React.useState<'forYou' | 'all'>('forYou');
-  const items = React.useMemo(() => getTimelineItems(scope), [getTimelineItems, scope]);
+  const items = React.useMemo(() => getTimelineItems(scope), [getTimelineItems, scope, runPosts]);
 
   const handlePostPress = (postId: string) => {
     navigation.navigate('PostDetails', { postId });
