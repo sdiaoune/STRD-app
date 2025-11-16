@@ -41,6 +41,14 @@ export const CreateEventScreen: React.FC = () => {
   const dropdownStyle = { backgroundColor: colors.card, borderColor: colors.border } as const;
   const neutralBtnStyle = { backgroundColor: colors.card, borderColor: colors.border } as const;
   const neutralBtnText = { color: colors.text.primary } as const;
+  const iosSheetThemeStyle = useMemo(() => ({
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    paddingBottom: insets.bottom + spacing.md,
+  }), [theme.mode, insets.bottom]);
+  const modalBackdropStyle = useMemo(() => ({
+    backgroundColor: colors.scrim,
+  }), [theme.mode]);
 
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.9 });
@@ -160,37 +168,39 @@ export const CreateEventScreen: React.FC = () => {
           ) : null}
           {Platform.OS === 'ios' && (
             <Modal visible={showDatePicker} transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
-              <Pressable style={{ flex: 1 }} onPress={() => setShowDatePicker(false)} />
-              <View style={styles.iosSheet}>
-                <Text style={[styles.label, { marginBottom: spacing.sm }]}>Select date</Text>
-                <DateTimePicker
-                  value={iosTempDate}
-                  mode="date"
-                  display="spinner"
-                  themeVariant={isLight ? 'light' : 'dark'} as any
-                  style={{ height: 216 }}
-                  onChange={(_, d) => { if (d) setIosTempDate(prev => new Date(d.getFullYear(), d.getMonth(), d.getDate(), prev.getHours(), prev.getMinutes())); }}
-                />
-                <View style={{ height: spacing.md }} />
-                <Text style={[styles.label, { marginBottom: spacing.sm }]}>Select time</Text>
-                <DateTimePicker
-                  value={iosTempDate}
-                  mode="time"
-                  display="spinner"
-                  themeVariant={isLight ? 'light' : 'dark'} as any
-                  style={{ height: 216 }}
-                  onChange={(_, d) => { if (d) setIosTempDate(prev => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate(), d.getHours(), d.getMinutes())); }}
-                />
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing.md }}>
-                  <TouchableOpacity style={[styles.smallBtn, pressableStyle, { marginRight: spacing.sm }]} onPress={() => setShowDatePicker(false)}>
-                    <Text style={[styles.smallBtnText, neutralBtnText]}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.smallBtn, pressableStyle]}
-                    onPress={() => { setDateISO(iosTempDate.toISOString()); setShowDatePicker(false); }}
-                  >
-                    <Text style={[styles.smallBtnText, neutralBtnText]}>Done</Text>
-                  </TouchableOpacity>
+              <View style={[styles.modalBackdrop, modalBackdropStyle]}>
+                <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowDatePicker(false)} />
+                <View style={[styles.iosSheet, iosSheetThemeStyle]}>
+                  <Text style={[styles.label, { marginBottom: spacing.sm }]}>Select date</Text>
+                  <DateTimePicker
+                    value={iosTempDate}
+                    mode="date"
+                    display="spinner"
+                    themeVariant={isLight ? 'light' : 'dark'} as any
+                    style={{ height: 216 }}
+                    onChange={(_, d) => { if (d) setIosTempDate(prev => new Date(d.getFullYear(), d.getMonth(), d.getDate(), prev.getHours(), prev.getMinutes())); }}
+                  />
+                  <View style={{ height: spacing.md }} />
+                  <Text style={[styles.label, { marginBottom: spacing.sm }]}>Select time</Text>
+                  <DateTimePicker
+                    value={iosTempDate}
+                    mode="time"
+                    display="spinner"
+                    themeVariant={isLight ? 'light' : 'dark'} as any
+                    style={{ height: 216 }}
+                    onChange={(_, d) => { if (d) setIosTempDate(prev => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate(), d.getHours(), d.getMinutes())); }}
+                  />
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing.md }}>
+                    <TouchableOpacity style={[styles.smallBtn, pressableStyle, { marginRight: spacing.sm }]} onPress={() => setShowDatePicker(false)}>
+                      <Text style={[styles.smallBtnText, neutralBtnText]}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.smallBtn, pressableStyle]}
+                      onPress={() => { setDateISO(iosTempDate.toISOString()); setShowDatePicker(false); }}
+                    >
+                      <Text style={[styles.smallBtnText, neutralBtnText]}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             </Modal>
@@ -337,17 +347,15 @@ const styles = StyleSheet.create({
   inlineRow: { flexDirection: 'row', alignItems: 'center' },
   smallBtn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: borderRadius.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   smallBtnText: { ...typography.caption, color: colors.text.primary, fontWeight: '600' },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   iosSheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.card,
     borderTopLeftRadius: borderRadius.md,
     borderTopRightRadius: borderRadius.md,
     padding: spacing.md,
     borderTopWidth: 1,
-    borderColor: colors.border,
   },
   btn: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: 'center', marginTop: spacing.md },
   btnText: { ...typography.body, color: colors.text.primary, fontWeight: '600' },
