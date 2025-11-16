@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TextInput, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography, borderRadius, useTheme as useTokensTheme } from '../theme';
+import { spacing, typography, borderRadius, useTheme as useTokensTheme } from '../theme';
 import { Button } from '../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../state/store';
@@ -18,20 +18,15 @@ export const SignUpScreen: React.FC = () => {
   const [password, setPassword] = useState('');
 
   const theme = useTokensTheme();
-  const toggleBg = theme.mode === 'light' ? colors.surfaceMuted : colors.card;
+  const accentPreference = useStore(state => state.accentPreference);
+  const styles = useMemo(() => createStyles(theme.colors), [theme.mode, accentPreference]);
+  const toggleBg = theme.mode === 'light' ? theme.colors.surfaceMuted : theme.colors.card;
   const toggleIcon = theme.mode === 'light' ? 'moon' : 'sunny';
   const subtitleOpacity = theme.mode === 'light' ? 0.7 : 1;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Pressable
-            onPress={() => {
-              const { setThemePreference } = require('../state/store');
-            }}
-          />
-        </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Pressable
             onPress={() => (useStore.getState().setThemePreference(theme.mode === 'light' ? 'dark' : 'light'))}
@@ -45,10 +40,10 @@ export const SignUpScreen: React.FC = () => {
               justifyContent: 'center',
               backgroundColor: toggleBg,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: theme.colors.border,
             }}
           >
-            <Ionicons name={toggleIcon} size={18} color={colors.text.primary} />
+            <Ionicons name={toggleIcon} size={18} color={theme.colors.text.primary} />
           </Pressable>
         </View>
         <View style={styles.header}>
@@ -62,7 +57,7 @@ export const SignUpScreen: React.FC = () => {
             value={name}
             onChangeText={setName}
             placeholder="Your name"
-            placeholderTextColor={colors.text.secondary}
+            placeholderTextColor={theme.colors.text.secondary}
             style={styles.input}
           />
           <Text style={[styles.label, { marginTop: spacing.md }]}>Email</Text>
@@ -70,7 +65,7 @@ export const SignUpScreen: React.FC = () => {
             value={email}
             onChangeText={setEmail}
             placeholder="you@example.com"
-            placeholderTextColor={colors.text.secondary}
+            placeholderTextColor={theme.colors.text.secondary}
             keyboardType="email-address"
             autoCapitalize="none"
             style={styles.input}
@@ -80,7 +75,7 @@ export const SignUpScreen: React.FC = () => {
             value={password}
             onChangeText={setPassword}
             placeholder="Create a password"
-            placeholderTextColor={colors.text.secondary}
+            placeholderTextColor={theme.colors.text.secondary}
             secureTextEntry
             style={styles.input}
           />
@@ -104,12 +99,12 @@ export const SignUpScreen: React.FC = () => {
           <View style={styles.divider} />
         </View>
 
-        <Pressable style={[styles.googleButton, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => signIn('google')} accessibilityRole="button">
-        {!!authError && (
-          <Text style={{ color: colors.danger, textAlign: 'center', marginTop: spacing.md }}>{authError}</Text>
-        )}
-          <Ionicons name="logo-google" size={18} color={colors.text.primary} style={{ marginRight: spacing.sm }} />
-          <Text style={[styles.googleText, { color: colors.text.primary }]}>Sign up with Google</Text>
+        <Pressable style={styles.googleButton} onPress={() => signIn('google')} accessibilityRole="button">
+          {!!authError && (
+            <Text style={{ color: theme.colors.danger, textAlign: 'center', marginTop: spacing.md }}>{authError}</Text>
+          )}
+          <Ionicons name="logo-google" size={18} color={theme.colors.text.primary} style={{ marginRight: spacing.sm }} />
+          <Text style={styles.googleText}>Sign up with Google</Text>
         </Pressable>
 
         <View style={styles.footerRow}>
@@ -123,89 +118,90 @@ export const SignUpScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  content: {
-    padding: spacing.xl,
-    paddingTop: spacing.xl,
-  },
-  header: {
-    marginBottom: spacing.xl,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.text.primary,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.text.secondary,
-    marginTop: spacing.sm,
-  },
-  inputs: {
-    marginTop: spacing.lg,
-  },
-  label: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    marginBottom: spacing.sm,
-  },
-  input: {
-    ...typography.body,
-    color: colors.text.primary,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.xl,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    marginHorizontal: spacing.md,
-  },
-  googleButton: {
-    height: 56,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-    flexDirection: 'row',
-  },
-  googleText: {
-    ...typography.body,
-    color: colors.text.primary,
-    fontWeight: '600',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.lg,
-  },
-  footerText: {
-    ...typography.body,
-    color: colors.text.secondary,
-    marginRight: spacing.sm,
-  },
-  footerLink: {
-    ...typography.body,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-});
+const createStyles = (themeColors: ReturnType<typeof useTokensTheme>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: themeColors.bg,
+    },
+    content: {
+      padding: spacing.xl,
+      paddingTop: spacing.xl,
+    },
+    header: {
+      marginBottom: spacing.xl,
+    },
+    title: {
+      ...typography.h1,
+      color: themeColors.text.primary,
+    },
+    subtitle: {
+      ...typography.body,
+      color: themeColors.text.secondary,
+      marginTop: spacing.sm,
+    },
+    inputs: {
+      marginTop: spacing.lg,
+    },
+    label: {
+      ...typography.caption,
+      color: themeColors.text.secondary,
+      marginBottom: spacing.sm,
+    },
+    input: {
+      ...typography.body,
+      color: themeColors.text.primary,
+      backgroundColor: themeColors.card,
+      borderWidth: 1,
+      borderColor: themeColors.border,
+      borderRadius: borderRadius.lg,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    dividerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: spacing.xl,
+    },
+    divider: {
+      flex: 1,
+      height: 1,
+      backgroundColor: themeColors.border,
+    },
+    dividerText: {
+      ...typography.caption,
+      color: themeColors.text.secondary,
+      marginHorizontal: spacing.md,
+    },
+    googleButton: {
+      height: 56,
+      borderWidth: 1,
+      borderColor: themeColors.border,
+      borderRadius: borderRadius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: themeColors.card,
+      flexDirection: 'row',
+    },
+    googleText: {
+      ...typography.body,
+      color: themeColors.text.primary,
+      fontWeight: '600',
+    },
+    footerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: spacing.lg,
+    },
+    footerText: {
+      ...typography.body,
+      color: themeColors.text.secondary,
+      marginRight: spacing.sm,
+    },
+    footerLink: {
+      ...typography.body,
+      color: themeColors.primary,
+      fontWeight: '600',
+    },
+  });

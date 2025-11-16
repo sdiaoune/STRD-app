@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TextInput, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography, borderRadius, useTheme as useTokensTheme } from '../theme';
+import { spacing, typography, borderRadius, useTheme as useTokensTheme } from '../theme';
 import { Button } from '../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../state/store';
@@ -17,6 +17,8 @@ export const SignInScreen: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const theme = useTokensTheme();
   const setThemePreference = useStore(s => s.setThemePreference);
+  const accentPreference = useStore(s => s.accentPreference);
+  const styles = useMemo(() => createStyles(theme.colors), [theme.mode, accentPreference]);
 
   useEffect(() => {
     if (authError) {
@@ -26,12 +28,12 @@ export const SignInScreen: React.FC = () => {
     }
   }, [authError]);
 
-  const toggleBg = theme.mode === 'light' ? colors.surfaceMuted : colors.card;
+  const toggleBg = theme.mode === 'light' ? theme.colors.surfaceMuted : theme.colors.card;
   const toggleIcon = theme.mode === 'light' ? 'moon' : 'sunny';
   const subtitleOpacity = theme.mode === 'light' ? 0.7 : 1;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={{ alignItems: 'flex-end' }}>
           <Pressable
@@ -46,10 +48,10 @@ export const SignInScreen: React.FC = () => {
               justifyContent: 'center',
               backgroundColor: toggleBg,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: theme.colors.border,
             }}
           >
-            <Ionicons name={toggleIcon} size={18} color={colors.text.primary} />
+            <Ionicons name={toggleIcon} size={18} color={theme.colors.text.primary} />
           </Pressable>
         </View>
         <View style={styles.header}>
@@ -63,7 +65,7 @@ export const SignInScreen: React.FC = () => {
             value={email}
             onChangeText={setEmail}
             placeholder="you@example.com"
-            placeholderTextColor={colors.text.secondary}
+            placeholderTextColor={theme.colors.text.secondary}
             keyboardType="email-address"
             autoCapitalize="none"
             style={styles.input}
@@ -73,13 +75,13 @@ export const SignInScreen: React.FC = () => {
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            placeholderTextColor={colors.text.secondary}
+            placeholderTextColor={theme.colors.text.secondary}
             secureTextEntry
             style={styles.input}
           />
           <View style={{ alignItems: 'flex-end', marginTop: spacing.sm }}>
             <Pressable onPress={() => navigation.navigate('ForgotPassword' as never)} accessibilityRole="button">
-              <Text style={{ color: colors.primary, fontWeight: '600' }}>Forgot password?</Text>
+              <Text style={{ color: theme.colors.primary, fontWeight: '600' }}>Forgot password?</Text>
             </Pressable>
           </View>
           <View style={{ height: spacing.lg }} />
@@ -93,26 +95,20 @@ export const SignInScreen: React.FC = () => {
         </View>
 
         <Pressable
-          style={[
-            styles.googleButton,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            },
-          ]}
+          style={styles.googleButton}
           onPress={() => signIn('google')}
           accessibilityRole="button"
         >
           <Ionicons
             name="logo-google"
             size={18}
-            color={colors.text.primary}
+            color={theme.colors.text.primary}
             style={{ marginRight: spacing.sm }}
           />
           <Text
             style={[
               styles.googleText,
-              { color: colors.text.primary },
+              { color: theme.colors.text.primary },
             ]}
           >
             Continue with Google
@@ -133,89 +129,90 @@ export const SignInScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  content: {
-    padding: spacing.xl,
-    paddingTop: spacing.xl,
-  },
-  header: {
-    marginBottom: spacing.xl,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.text.primary,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.text.secondary,
-    marginTop: spacing.sm,
-  },
-  inputs: {
-    marginTop: spacing.lg,
-  },
-  label: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    marginBottom: spacing.sm,
-  },
-  input: {
-    ...typography.body,
-    color: colors.text.primary,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.xl,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    marginHorizontal: spacing.md,
-  },
-  googleButton: {
-    height: 56,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-    flexDirection: 'row',
-  },
-  googleText: {
-    ...typography.body,
-    color: colors.text.primary,
-    fontWeight: '600',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.lg,
-  },
-  footerText: {
-    ...typography.body,
-    color: colors.text.secondary,
-    marginRight: spacing.sm,
-  },
-  footerLink: {
-    ...typography.body,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-});
+const createStyles = (themeColors: ReturnType<typeof useTokensTheme>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: themeColors.bg,
+    },
+    content: {
+      padding: spacing.xl,
+      paddingTop: spacing.xl,
+    },
+    header: {
+      marginBottom: spacing.xl,
+    },
+    title: {
+      ...typography.h1,
+      color: themeColors.text.primary,
+    },
+    subtitle: {
+      ...typography.body,
+      color: themeColors.text.secondary,
+      marginTop: spacing.sm,
+    },
+    inputs: {
+      marginTop: spacing.lg,
+    },
+    label: {
+      ...typography.caption,
+      color: themeColors.text.secondary,
+      marginBottom: spacing.sm,
+    },
+    input: {
+      ...typography.body,
+      color: themeColors.text.primary,
+      backgroundColor: themeColors.card,
+      borderWidth: 1,
+      borderColor: themeColors.border,
+      borderRadius: borderRadius.lg,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    dividerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: spacing.xl,
+    },
+    divider: {
+      flex: 1,
+      height: 1,
+      backgroundColor: themeColors.border,
+    },
+    dividerText: {
+      ...typography.caption,
+      color: themeColors.text.secondary,
+      marginHorizontal: spacing.md,
+    },
+    googleButton: {
+      height: 56,
+      borderWidth: 1,
+      borderColor: themeColors.border,
+      borderRadius: borderRadius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: themeColors.card,
+      flexDirection: 'row',
+    },
+    googleText: {
+      ...typography.body,
+      color: themeColors.text.primary,
+      fontWeight: '600',
+    },
+    footerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: spacing.lg,
+    },
+    footerText: {
+      ...typography.body,
+      color: themeColors.text.secondary,
+      marginRight: spacing.sm,
+    },
+    footerLink: {
+      ...typography.body,
+      color: themeColors.primary,
+      fontWeight: '600',
+    },
+  });

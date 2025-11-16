@@ -15,6 +15,7 @@ type Notif = {
   type: 'like' | 'follow';
   target_type: 'post' | 'user';
   target_id: string;
+  actor_id?: string | null;
   data: any;
   is_read: boolean;
   created_at: string;
@@ -31,7 +32,7 @@ export const NotificationsScreen: React.FC = () => {
     setLoading(true);
     const { data } = await supabase
       .from('notifications')
-      .select('id, type, target_type, target_id, data, is_read, created_at')
+      .select('id, type, target_type, target_id, actor_id, data, is_read, created_at')
       .order('created_at', { ascending: false })
       .limit(100);
     setItems((data as any) || []);
@@ -55,7 +56,7 @@ export const NotificationsScreen: React.FC = () => {
       // @ts-ignore
       navigation.navigate('Timeline' as never, { screen: 'PostDetails', params: { postId: n.target_id } } as never);
     } else if (n.target_type === 'user') {
-      openUserProfile(navigation as any, n.target_id);
+      openUserProfile(navigation as any, n.actor_id || n.target_id);
     }
   };
 
