@@ -21,6 +21,13 @@ import { Image } from 'expo-image';
 import TopBar from '../components/TopBar';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { useBottomTabOverflow } from '../components/ui/TabBarBackground.ios';
+import {
+  requestBackgroundLocationPermission,
+  hasBackgroundLocationPermission,
+  startBackgroundLocationTracking,
+  stopBackgroundLocationTracking,
+  getCurrentLocation,
+} from '../utils/backgroundLocation';
 
 const RUN_VISIBILITY_OPTIONS: { value: RunVisibility; label: string; helper: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: 'public', label: 'Public', helper: 'Visible to anyone on STRD.', icon: 'globe-outline' },
@@ -36,6 +43,7 @@ export const RunScreen: React.FC = () => {
   const [caption, setCaption] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | undefined>();
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [hasBackgroundPermission, setHasBackgroundPermission] = useState(false);
   const [hasMotionPermission, setHasMotionPermission] = useState(true); // mock
   const [isLowPowerMode, setIsLowPowerMode] = useState(false); // mock
   const [isCountingDown, setIsCountingDown] = useState(false);
@@ -68,11 +76,18 @@ export const RunScreen: React.FC = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    Location.getForegroundPermissionsAsync()
-      .then(({ status }) => {
-        setHasLocationPermission(status === 'granted');
-      })
-      .catch(() => {});
+    // Check both foreground and background permissions
+    (async () => {
+      try {
+        const { status: foreground } = await Location.getForegroundPermissionsAsync();
+        setHasLocationPermission(foreground === 'granted');
+        
+        const hasBackground = await hasBackgroundLocationPermission();
+        setHasBackgroundPermission(hasBackground);
+      } catch (err) {
+        console.error('[RunScreen] Error checking permissions:', err);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -94,51 +109,62 @@ export const RunScreen: React.FC = () => {
     };
   }, [runState.isRunning, runState.isPaused]);
 
-  const locationWatchRef = useRef<Location.LocationSubscription | null>(null);
+  const isTrackingRef = useRef(false);
 
-  const stopLocationWatch = async () => {
-    if (locationWatchRef.current) {
-      locationWatchRef.current.remove();
-      locationWatchRef.current = null;
+  const stopLocationTracking = useCallback(async () => {
+    if (isTrackingRef.current) {
+      await stopBackgroundLocationTracking();
+      isTrackingRef.current = false;
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
-      stopLocationWatch();
+      stopLocationTracking();
     };
-  }, []);
+  }, [stopLocationTracking]);
 
-  const startTracking = useCallback(() => {
-    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation })
-      .then((pos) => {
-        const { latitude, longitude } = pos.coords;
-        onLocationUpdate(latitude, longitude, pos.timestamp);
-      })
-      .catch(() => {});
-    Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.BestForNavigation,
-        timeInterval: 1000,
-        distanceInterval: 1,
-      },
-      (pos) => {
-        const { latitude, longitude, speed, accuracy } = pos.coords;
-        onLocationUpdate(latitude, longitude, pos.timestamp, accuracy ?? undefined, speed ?? null);
-      }
-    )
-      .then((sub) => {
-        locationWatchRef.current = sub;
-      })
-      .catch(() => {});
+  const startTracking = useCallback(async () => {
+    // Get initial position
+    const initialPos = await getCurrentLocation();
+    if (initialPos) {
+      const { latitude, longitude } = initialPos.coords;
+      onLocationUpdate(latitude, longitude, initialPos.timestamp);
+    }
+    
+    // Start background location tracking
+    const started = await startBackgroundLocationTracking(onLocationUpdate);
+    if (started) {
+      isTrackingRef.current = true;
+      console.log('[RunScreen] Background location tracking started');
+    } else {
+      console.warn('[RunScreen] Failed to start background location tracking');
+      // Fallback: background tracking failed, but run will still work when app is in foreground
+    }
   }, [onLocationUpdate]);
 
   const handleStartRun = async () => {
+    // Request foreground permission first
     if (!hasLocationPermission) {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
       setHasLocationPermission(true);
     }
+    
+    // Request background permission for tracking while phone is locked/in pocket
+    if (!hasBackgroundPermission) {
+      const granted = await requestBackgroundLocationPermission();
+      setHasBackgroundPermission(granted);
+      if (!granted) {
+        // Show a warning but allow the run to start (foreground tracking will still work)
+        Alert.alert(
+          'Background Location',
+          'For best tracking when your phone is locked or in your pocket, please enable "Always" location access in Settings.',
+          [{ text: 'OK' }]
+        );
+      }
+    }
+    
     setIsCountingDown(true);
     setCountdown(3);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -173,7 +199,7 @@ export const RunScreen: React.FC = () => {
           onPress: () => {
             endRun();
             setShowPostForm(true);
-            stopLocationWatch();
+            stopLocationTracking();
           }
         }
       ]
@@ -278,7 +304,7 @@ export const RunScreen: React.FC = () => {
 
   const handlePause = () => {
     pauseRun();
-    stopLocationWatch();
+    stopLocationTracking();
   };
 
   const handleResume = () => {
@@ -286,11 +312,16 @@ export const RunScreen: React.FC = () => {
     startTracking();
   };
 
-  const requestLocation = () => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') setHasLocationPermission(true);
-    })();
+  const requestLocation = async () => {
+    // Request foreground permission
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status === 'granted') {
+      setHasLocationPermission(true);
+      
+      // Also request background permission
+      const granted = await requestBackgroundLocationPermission();
+      setHasBackgroundPermission(granted);
+    }
   };
 
   if (showPostForm) {

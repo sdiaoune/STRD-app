@@ -18,19 +18,21 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
     <View
       style={{
         position: 'absolute',
-        left: spacing.md,
-        right: spacing.md,
-        bottom: Math.max(insets.bottom, spacing.md),
-        borderRadius: borderRadius.xl ?? 24,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: 0,
         overflow: 'hidden',
         // never block touches to content behind the bar
         pointerEvents: 'box-none',
       }}
     >
-      <BlurView tint={isLight ? 'light' : 'dark'} intensity={isLight ? 0 : 80} style={{ paddingVertical: spacing.sm, backgroundColor: colors.surface }}>
+      <BlurView tint={isLight ? 'light' : 'dark'} intensity={isLight ? 0 : 80} style={{ paddingTop: spacing.sm, paddingBottom: Math.max(insets.bottom, spacing.sm), backgroundColor: colors.surface }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md }}>
-          {state.routes.filter(r => r.name !== 'Profile').map((route, index) => {
-            const isFocused = state.index === index;
+          {state.routes.filter(r => r.name !== 'Profile' && r.name !== 'Search').map((route) => {
+            // Find the original index in the unfiltered routes array
+            const originalIndex = state.routes.findIndex(r => r.key === route.key);
+            const isFocused = state.index === originalIndex;
             const { options } = descriptors[route.key];
             const onPress = () => {
               const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -85,9 +87,9 @@ export const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, 
           right: 0,
           top: 0,
           bottom: 0,
-          borderRadius: borderRadius.xl ?? 24,
-          borderWidth: Platform.OS === 'ios' ? 0.5 : 1,
-          borderColor: colors.border,
+          borderRadius: 0,
+          borderTopWidth: Platform.OS === 'ios' ? 0.5 : 1,
+          borderTopColor: colors.border,
         }}
       />
     </View>

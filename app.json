@@ -15,7 +15,8 @@
         "NSPhotoLibraryUsageDescription": "We access your photo library to choose a profile photo.",
         "NSPhotoLibraryAddUsageDescription": "We need permission to save your profile photo.",
         "NSLocationWhenInUseUsageDescription": "We use your location to track your run distance and pace.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location to track your run distance and pace."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow STRD to track your runs even when the app is in the background.",
+        "UIBackgroundModes": ["location"]
       },
       "bundleIdentifier": "com.anonymous.strd-app"
     },
@@ -25,7 +26,14 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.strdapp"
+      "package": "com.anonymous.strdapp",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -42,7 +50,15 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow STRD to track your runs even when the app is in the background.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ]
     ],
     "extra": {
       "eas": {
